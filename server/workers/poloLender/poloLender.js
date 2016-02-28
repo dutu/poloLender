@@ -22,7 +22,6 @@ var PoloLender = function(name) {
 	var currencies = ["BTC", "ETH"];
 
 	var status = {
-		startDate: "",
 		restarted: Date.now(),
 		activeLoansCount: 0,
 		count: 0,
@@ -44,11 +43,11 @@ var PoloLender = function(name) {
 	var advisorInfo = {	};
 
 	var configDefault = {
-		hbTimerMinutes: 0.25,
+		startDate: "",		
 		reportEveryMinutes: 5,
 		minOrderSize: "0.001",
 		startBalance: {},
-		startTime: moment(),
+		restartTime: moment(),
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone"
 	};
@@ -158,12 +157,12 @@ var PoloLender = function(name) {
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTTIME";
-			config.startTime = moment(process.env[ev]);
+			config.restartTime = moment(process.env[ev]);
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			config.startTime = moment(0);
+			config.restartTime = moment(0);
 		}
-		val = config.startTime.utc().format();
+		val = config.restartTime.utc().format();
 		logger.info(`${self.me}: Using ${ev}=${val}`);
 	};
 
@@ -227,7 +226,6 @@ var PoloLender = function(name) {
 			msg += ", expires " + expires;
 			logger.info(self.me, msg);
 		};
-
 
 		var updateActiveLoans = function(callback) {
 			var updateWithNewActiveLoans = function (newActiveLoans) {
@@ -464,16 +462,16 @@ var PoloLender = function(name) {
 			status.offersCount = status.offersCount || status.activeLoansCount;
 
 			// since = startDate.fromNow(true);
-			since = now.diff(startDate, "days");
-			msg = "--- xBot runtime "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
-			msg += "--- Offers/Loans: " + self.status.offersCount + "/" + self.status.creditsCount + " ";
+			since = now.diff(config.startDate, "days");
+			msg = "--- xBot running for "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
+			msg += "--- Offers made/Loans taken: " + status.offersCount + "/" + status.activeLoansCount + " ";
 			msg += `, speed: ${speed}/min`;
 			msg += "---------------------------------------------------------------------------------------------------------".slice(msg.length);
-			logger.info(`${self.me}: ${msg}`);
+			logger.notice(`${self.me}: ${msg}`);
 
 			currencies.forEach(function (c, index, array) {
 				var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
-				var minutes = now.diff(config.startTime, "minutes", true);
+				var minutes = now.diff(config.restartTime, "minutes", true);
 				var activeLoansCount = 0;
 				var activeLoansAmount = new Big(0);
 				activeLoans.forEach(function (l, index, array) {
@@ -500,18 +498,19 @@ var PoloLender = function(name) {
 				}
 				bfxPublic.ticker("btcusd", function (err, result) {
 					if(err) {
-						logger.info(self.me, "bfxPublic.ticker: " + err.message);
+						logger.notice(self.me, "bfxPublic.ticker: " + err.message);
 						return;
 					}
 					var rateBTCUSD = new Big(result.last_price).toString();
-					msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved}, TOTAL: ${depositFunds[c]}, `;
+					msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
 					//msg += `Start: ${journalEntry.balance[c]}, `
-					msg += `PROFIT: BTC ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-					// msg += `equiv. USD: ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(days).toFixed(2)}/day)`;
+					msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+					if(c === "BTC")
+						msg += ` ≈ USD: ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
 					var wmrMsg = msgRate(status.wmr[c]);
 					var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
-					msg += `, wmr: ${wmrMsg} ewmr: ${ewmr}, alht: ${advisorInfo[c].averageLoanHoldingTime}`;
-					logger.info(self.me, msg);
+					msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
+					logger.notice(self.me, msg);
 				});
 			});
 		};
@@ -589,10 +588,10 @@ var PoloLender = function(name) {
 			logger.info(`${self.me}: Reconnected to server ${config.advisor}`);
 		});
 		socket.on("connect_error", function (err) {
-			logger.error(`${self.me}: Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
+			logger.warning(`${self.me}: Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
 		});
 		socket.on("reconnect_error", function (err) {
-			logger.error(`${self.me}: Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
+			logger.warning(`${self.me}: Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
 		});
 		socket.on("disconnect", function () {
 			logger.notice(`${self.me}: Disconnected from server ${config.advisor}`);
