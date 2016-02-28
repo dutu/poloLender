@@ -1,7 +1,7 @@
 {
 	"name": "poloLender",
 	"version": "0.1.0",
-	"description": "Bot for lending funds on Poloniex exchange",
+	"description": "Bot for automatically lending funds on Poloniex exchange",
 	"author": "Adrian Clinciu",
 	"main": "server.js",
 	"repository": {
