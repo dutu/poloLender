@@ -21,9 +21,9 @@ var Workers = function() {
 
     self.start = function () {
 
-	    var BfxTradeAdviser = require("./poloLender/poloLender");
-	    var bfxTradeAdviser = new BfxTradeAdviser("bfxTradeAdviser");
-	    startWorker(bfxTradeAdviser);
+	    var PoloLender = require("./poloLender/poloLender");
+	    var poloLender = new PoloLender("poloLender");
+	    startWorker(poloLender);
 
 // add additional workers as above
 
