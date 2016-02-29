@@ -80,9 +80,9 @@ var PoloLender = function(name) {
 				key: "",
 				secret: ""
 			};
-			logger.alert(`${self.me}: Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.alert(`Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
-			logger.alert(`${self.me}: Application will now exit. Correct the environment variable ${ev} and start the application again`);
+			logger.alert(`Application will now exit. Correct the environment variable ${ev} and start the application again`);
 			process.exit(1);
 		}
 
@@ -90,56 +90,56 @@ var PoloLender = function(name) {
 		ev = self.me.toUpperCase() + "_ADVISOR";
 		config.advisor = process.env[ev];
 		if (!config.advisor) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			config.advisor = configDefault.advisor
 		}
-		logger.info(`${self.me}: Using ${ev}=${config.advisor}`);
+		logger.info(`Using ${ev}=${config.advisor}`);
 */
 
 		try {
 			ev = self.me.toUpperCase() + "_REPORTINTERVAL";
 			val = parseFloat(process.env[ev]);
-			if(!_.isNumber()) {
+			if(!_.isNumber(val)) {
 				throw val;
 			}
 		}
 		catch (err) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 			config.reportEveryMinutes = configDefault.reportEveryMinutes;
 		}
-		logger.info(`${self.me}: Using ${ev}=${config.reportEveryMinutes}`);
+		logger.info(`Using ${ev}=${config.reportEveryMinutes}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTDATE";
 			config.startDate = moment(process.env[ev]);
 		} catch (err) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
 			config.startDate = configDefault.startDate;
 			debug(`${ev}=${process.env[ev]}`);
 
 		}
-		logger.info(`${self.me}: Using ${ev}=${config.startDate}`);
+		logger.info(`Using ${ev}=${config.startDate}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTBALANCE";
 			var startBalance = JSON.parse(process.env[ev]);
 		} catch (err) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
 		currencies.forEach(function (c, index, array) {
 			if(startBalance && startBalance.hasOwnProperty(c)) {
 				try {
 					val = parseFloat(startBalance[c]);
-					if(!_.isNumber()) {
+					if(!_.isNumber(val)) {
 						throw val;
 					} else {
 						config.startBalance[c] = val.toString();
 					}
 				} catch (err) {
 					config.startBalance[c] = "0";
-					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 					debug(`${ev}=${process.env[ev]}`);
 				}
 			}
@@ -148,27 +148,27 @@ var PoloLender = function(name) {
 			}
 		});
 		val = JSON.stringify(config.startBalance);
-		logger.info(`${self.me}: Using ${ev}=${val}`);
+		logger.info(`Using ${ev}=${val}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_LENDMAX";
 			var lendMax = JSON.parse(process.env[ev]);
 		} catch (err) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
 		currencies.forEach(function (c, index, array) {
 			if(lendMax && lendMax.hasOwnProperty(c)) {
 				try {
 					val = parseFloat(lendMax[c]);
-					if(!_.isNumber()) {
+					if(!_.isNumber(val)) {
 						throw val;
 					} else {
 						config.offerMaxAmount[c] = val.toString();
 					}
 				} catch (err) {
 					config.offerMaxAmount[c] = "999999";
-					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 					debug(`${ev}=${process.env[ev]}`);
 				}
 			}
@@ -177,18 +177,18 @@ var PoloLender = function(name) {
 			}
 		});
 		val = JSON.stringify(config.startBalance);
-		logger.info(`${self.me}: Using ${ev}=${val}`);
+		logger.info(`Using ${ev}=${val}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTTIME";
 			config.restartTime = moment(process.env[ev]);
 		} catch (err) {
-			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 			config.restartTime = moment(0);
 		}
 		val = config.restartTime.utc().format();
-		logger.info(`${self.me}: Using ${ev}=${val}`);
+		logger.info(`Using ${ev}=${val}`);
 	};
 
 	var strAR = function (str, length) {
@@ -230,7 +230,7 @@ var PoloLender = function(name) {
 			var htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
 			var msgHt = `${htHours}h ${htMin}m ${htSec}s`;
 			msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
-			logger.info(self.me, msg);
+			logger.info(msg);
 		};
 
 		var msgNewCredit = function (element){
@@ -249,7 +249,7 @@ var PoloLender = function(name) {
 			};
 			msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(120).format("YYYY-MM-DD HH:mm");
 			msg += ", expires " + expires;
-			logger.info(self.me, msg);
+			logger.info(msg);
 		};
 
 		var updateActiveLoans = function(callback) {
@@ -293,7 +293,7 @@ var PoloLender = function(name) {
 				var newActiveLoans;
 				if (err || result.error) {
 					err = err || new Error(result.error);
-					logger.notice(self.me, "returnActiveLoans: " + err.message);
+					logger.notice("returnActiveLoans: " + err.message);
 					return callback(err);
 				}
 				newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
@@ -318,7 +318,7 @@ var PoloLender = function(name) {
 			poloPrivate.returnOpenLoanOffers(function (err, result) {
 				if (err || result.error) {
 					err = err || new Error(result.error);
-					logger.notice(self.me, "returnOpenLoanOffers: " + err.message);
+					logger.notice("returnOpenLoanOffers: " + err.message);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -344,7 +344,7 @@ var PoloLender = function(name) {
 			poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
 				if (err || result.error) {
 					err = err || new Error(result.error);
-					logger.notice(self.me, "returnAvailableAccountBalances: " + err.message);
+					logger.notice("returnAvailableAccountBalances: " + err.message);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -379,13 +379,13 @@ var PoloLender = function(name) {
 								}
 							}
 							if (process.env[self.me+"_NOTRADE"] === "true") {
-								logger.notice(self.me, "cancelHighOffers: NO TRADE");
+								logger.notice("cancelHighOffers: NO TRADE");
 								return cb(null);
 							}
 							poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
 								if (err || result.error) {
 									err = err || new Error(result.error);
-									logger.notice(self.me, `cancelLoanOffer: ${err.message} (#${offer.id})`);
+									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
 									return cb(err);
 								}
 								anyCanceledOffer  = true;
@@ -393,7 +393,7 @@ var PoloLender = function(name) {
 								msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
 								msg += " at " + msgRate(offer.rate);
 								msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
-								logger.info(self.me, msg);
+								logger.info(msg);
 								return cb(null);
 							});
 						},
@@ -428,18 +428,11 @@ var PoloLender = function(name) {
 					}
 
 					if (amountToTrade.lt(config.minOrderSize)) {
-//			    logger.info(self.me, "Offer not posted: Available " + currency + " " + amountToTrade + ", minimum order size is USD " + config.minOrderSize);
 						return callback(null);
 					}
 
-					/*		if (amountMaxToTrade.isNegative()) {
-					 logger.info(self.me, "Offer not posted: Currently trading " + currency + " " + amountTrading.toString() + ", maximum allowed is " + currency + " " + config.offerMax[currency]);
-					 return callback(null);
-					 }
-					 */
-
 					if (process.env[self.me+"_NOTRADE"] === "true") {
-						logger.notice(self.me, "Post offer: NO TRADE");
+						logger.notice("Post offer: NO TRADE");
 						return callback(new Error("NO TRADE"));
 					}
 
@@ -451,7 +444,7 @@ var PoloLender = function(name) {
 					poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err || result.error) {
 							err = err || new Error(result.error);
-							logger.notice(self.me, "createLoanOffer: " + err.message);
+							logger.notice("createLoanOffer: " + err.message);
 							return callback(err);
 						}
 						status.offersCount++;
@@ -463,7 +456,7 @@ var PoloLender = function(name) {
 							period: duration
 						};
 						var msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
-						logger.info(self.me, msg);
+						logger.info(msg);
 						callback(null);
 					});
 				},
@@ -488,11 +481,10 @@ var PoloLender = function(name) {
 
 			// since = startDate.fromNow(true);
 			since = now.diff(config.startDate, "days");
-			msg = "--- xBot running for "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
-			msg += "--- Offers made/Loans taken: " + status.offersCount + "/" + status.activeLoansCount + " ";
-			msg += `, speed: ${speed}/min`;
-			msg += "---------------------------------------------------------------------------------------------------------".slice(msg.length);
-			logger.notice(`${self.me}: ${msg}`);
+			msg = "♣ xBot running for "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
+			msg += " • Offers/Loansn: " + status.offersCount + "/" + status.activeLoansCount + " ";
+			msg += ` • speed: ${speed}/min`;
+			logger.notice(`${msg}`);
 
 			currencies.forEach(function (c, index, array) {
 				var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
@@ -523,7 +515,7 @@ var PoloLender = function(name) {
 				}
 				bfxPublic.ticker("btcusd", function (err, result) {
 					if(err) {
-						logger.notice(self.me, "bfxPublic.ticker: " + err.message);
+						logger.notice("bfxPublic.ticker: " + err.message);
 						return;
 					}
 					var rateBTCUSD = new Big(result.last_price).toString();
@@ -535,7 +527,7 @@ var PoloLender = function(name) {
 					var wmrMsg = msgRate(status.wmr[c]);
 					var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
 					msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
-					logger.notice(self.me, msg);
+					logger.notice(msg);
 				});
 			});
 		};
@@ -607,22 +599,22 @@ var PoloLender = function(name) {
 
 		socket = require('socket.io-client')(`http://${config.advisor}/`);
 		socket.on('connect', function () {
-			logger.info(`${self.me}: Connected to server ${config.advisor}`);
+			logger.info(`Connected to server ${config.advisor}`);
 		});
 		socket.on('reconnect', function () {
-			logger.info(`${self.me}: Reconnected to server ${config.advisor}`);
+			logger.info(`Reconnected to server ${config.advisor}`);
 		});
 		socket.on("connect_error", function (err) {
-			logger.warning(`${self.me}: Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
+			logger.warning(`Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
 		});
 		socket.on("reconnect_error", function (err) {
-			logger.warning(`${self.me}: Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
+			logger.warning(`Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
 		});
 		socket.on("disconnect", function () {
-			logger.notice(`${self.me}: Disconnected from server ${config.advisor}`);
+			logger.notice(`Disconnected from server ${config.advisor}`);
 		});
 		socket.on("reconnecting", function (attemptNumber) {
-			logger.info(`${self.me}: Reconnecting to server ${config.advisor} (${attemptNumber})`);
+			logger.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
 		});
 		socket.on("send:loanOfferParameters", function (msg) {
 			var smsg = JSON.stringify(msg);
@@ -640,7 +632,7 @@ var PoloLender = function(name) {
 				});
 			}
 			catch (error) {
-				logger.error(`${self.me}: Cannot parse loanOfferParameters ${smsg}`);
+				logger.error(`Cannot parse loanOfferParameters ${smsg}`);
 				debug(`Cannot parse loanOfferParameters: ${error.message}`);
 			}
 		});

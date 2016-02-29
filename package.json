@@ -2,11 +2,27 @@
 	"name": "poloLender",
 	"version": "0.1.0",
 	"description": "Bot for automatically lending funds on Poloniex exchange",
-	"author": "Adrian Clinciu",
+	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
 	"main": "server.js",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/dutu/xWorker.git"
+	},
+	"keywords": [
+		"poloniex",
+		"bitcoin",
+		"btc",
+		"etherum",
+		"etx",
+		"lend",
+		"lending",
+		"bot",
+		"automatic",
+		"advisor",
+		"pololender"
+	],
+	"bugs": {
+		"url": "https://github.com/dutu/pololender/issues"
 	},
 	"engines": {
 		"node": "5.x.x",
@@ -16,14 +32,7 @@
 		"start": "node server.js"
 	},
 	"dependencies": {
-		"express": "^4.4.5",
-		"socket.io": "^1.4.5",
 		"socket.io-client": "^1.4.5",
-		"jade": "1.*.8",
-		"method-override":"*",
-		"body-parser": "*",
-		"errorhandler": "*",
-		"morgan": "1.*.*",
 		"winston": "^2.1.1",
 		"async": "^1.5.x",
 		"big.js": "*",
