@@ -98,8 +98,12 @@ var PoloLender = function(name) {
 
 		try {
 			ev = self.me.toUpperCase() + "_REPORTINTERVAL";
-			config.reportEveryMinutes = parseFloat(process.env[ev]);
-		} catch (err) {
+			val = parseFloat(process.env[ev]);
+			if(!_.isNumber()) {
+				throw val;
+			}
+		}
+		catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 			config.reportEveryMinutes = configDefault.reportEveryMinutes;
@@ -127,7 +131,12 @@ var PoloLender = function(name) {
 		currencies.forEach(function (c, index, array) {
 			if(startBalance && startBalance.hasOwnProperty(c)) {
 				try {
-					config.startBalance[c] = parseFloat(startBalance[c]).toString();
+					val = parseFloat(startBalance[c]);
+					if(!_.isNumber()) {
+						throw val;
+					} else {
+						config.startBalance[c] = val.toString();
+					}
 				} catch (err) {
 					config.startBalance[c] = "0";
 					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
@@ -151,15 +160,20 @@ var PoloLender = function(name) {
 		currencies.forEach(function (c, index, array) {
 			if(lendMax && lendMax.hasOwnProperty(c)) {
 				try {
-					config.offerMaxAmount[c] = parseFloat(lendMax[c]).toString();
+					val = parseFloat(lendMax[c]);
+					if(!_.isNumber()) {
+						throw val;
+					} else {
+						config.offerMaxAmount[c] = val.toString();
+					}
 				} catch (err) {
-					config.offerMaxAmount[c] = "";
+					config.offerMaxAmount[c] = "999999";
 					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 					debug(`${ev}=${process.env[ev]}`);
 				}
 			}
 			else {
-				config.offerMaxAmount[c] = "";
+				config.offerMaxAmount[c] = "999999";
 			}
 		});
 		val = JSON.stringify(config.startBalance);

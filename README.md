@@ -53,8 +53,8 @@ Once installed, you'll have access to the heroku command from your command shell
     
     ```
     $ heroku create
-    $ heroku ps:scale web=0
     $ git push heroku master
+    $ heroku ps:scale web=0
     ```
     
 6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
@@ -65,10 +65,11 @@ Once installed, you'll have access to the heroku command from your command shell
     Note: To help with abuse prevention, provisioning an add-on requires account verification. If your account has not been verified, you will be directed to visit the verification site.
 
 
-7. Visit the papertrail console to see the log messages
+7. Visit the papertrail console to see the log messages. 
     ```
     $ heroku addons:open papertrail
     ```
+> Note: Keep the papertrail console open to monitor progress
     
 8. Define config vars required for configuring poloLender (replace the values below with your own)
     ```
