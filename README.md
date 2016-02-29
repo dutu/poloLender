@@ -6,7 +6,9 @@ The lending rate is received from **PoloLending-Advisor** server. **PoloLending-
 > Note: **PoloLender** only works in conjunction with **PoloLending-Advisor**, as it need to receive information about the best lending rate.
 
 
-## Running Locally
+## Setting up the application
+
+### Running Locally
 
 
 1. [Download and install node.js](http://nodejs.org/)
@@ -29,7 +31,7 @@ The lending rate is received from **PoloLending-Advisor** server. **PoloLending-
 
 
 
-## Running on Heroku
+### Running on Heroku
 
 
 1. [Create a Heroku account](https://signup.heroku.com/dc "Create a Heroku account") if you don't have one already
@@ -54,7 +56,7 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
     $ heroku create
     $ git push heroku master
-    $ heroku ps:scale web=0
+    $ heroku ps:scale worker=0
     ```
     
 6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
@@ -82,11 +84,33 @@ Once installed, you'll have access to the heroku command from your command shell
     
 9. Start the application
     ```
-    heroku ps:scale web=1
+    heroku ps:scale worker=1
     ```
 
 10. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
-    
+
+
+
+## Updating the application
+
+### Running on Heroku
+
+1. Update the local clone from github
+    ```
+    $ cd poloLender
+    $ git pull origin master
+    ```
+
+2. Visit the papertrail console to see the log messages 
+    ```
+    $ heroku addons:open papertrail
+    ```
+
+3. Deploy updated code to heroku 
+    ```
+    $ git push heroku master
+    ```
+The application should restart automatically 
 
 ## Configuring the PoloLending
 
