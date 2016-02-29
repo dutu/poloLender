@@ -77,7 +77,7 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
 
 10. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
-> **Note**: By default the Heroku application runs on Free dyno. Fee dyno sleeps to 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing 
+> **Note**: By default the Heroku application runs on Free dyno. Free dyno sleeps for 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing 
 
 
 ## Running locally

@@ -102,6 +102,9 @@ var PoloLender = function(name) {
 			if(!_.isNumber(val)) {
 				throw val;
 			}
+			else {
+				config.reportEveryMinutes = val;
+			}
 		}
 		catch (err) {
 			logger.error(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
