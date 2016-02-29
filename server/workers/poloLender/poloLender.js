@@ -40,7 +40,7 @@ var PoloLender = function(name) {
 		depositFunds = {},      // available funds from balance
 		ev, val;
 
-	var advisorInfo = {	};
+	var advisorInfo = {};
 
 	var configDefault = {
 		startDate: "",		
@@ -51,9 +51,7 @@ var PoloLender = function(name) {
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone"
 	};
-	var config = {
-
-	};
+	var config = {};
 
 	_.assign(config, configDefault);
 
@@ -82,9 +80,13 @@ var PoloLender = function(name) {
 				key: "",
 				secret: ""
 			};
-			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			logger.alert(`${self.me}: Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
+			logger.alert(`${self.me}: Application will now exit. Correct the environment variable ${ev} and start the application again`);
+			process.exit(1);
 		}
 
+/*
 		ev = self.me.toUpperCase() + "_ADVISOR";
 		config.advisor = process.env[ev];
 		if (!config.advisor) {
@@ -92,12 +94,14 @@ var PoloLender = function(name) {
 			config.advisor = configDefault.advisor
 		}
 		logger.info(`${self.me}: Using ${ev}=${config.advisor}`);
+*/
 
 		try {
 			ev = self.me.toUpperCase() + "_REPORTINTERVAL";
 			config.reportEveryMinutes = parseFloat(process.env[ev]);
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
 			config.reportEveryMinutes = configDefault.reportEveryMinutes;
 		}
 		logger.info(`${self.me}: Using ${ev}=${config.reportEveryMinutes}`);
@@ -108,6 +112,8 @@ var PoloLender = function(name) {
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
 			config.startDate = configDefault.startDate;
+			debug(`${ev}=${process.env[ev]}`);
+
 		}
 		logger.info(`${self.me}: Using ${ev}=${config.startDate}`);
 
@@ -116,6 +122,7 @@ var PoloLender = function(name) {
 			var startBalance = JSON.parse(process.env[ev]);
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
 		}
 		currencies.forEach(function (c, index, array) {
 			if(startBalance && startBalance.hasOwnProperty(c)) {
@@ -124,6 +131,7 @@ var PoloLender = function(name) {
 				} catch (err) {
 					config.startBalance[c] = "0";
 					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					debug(`${ev}=${process.env[ev]}`);
 				}
 			}
 			else {
@@ -138,6 +146,7 @@ var PoloLender = function(name) {
 			var lendMax = JSON.parse(process.env[ev]);
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
 		}
 		currencies.forEach(function (c, index, array) {
 			if(lendMax && lendMax.hasOwnProperty(c)) {
@@ -146,6 +155,7 @@ var PoloLender = function(name) {
 				} catch (err) {
 					config.offerMaxAmount[c] = "";
 					logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					debug(`${ev}=${process.env[ev]}`);
 				}
 			}
 			else {
@@ -160,6 +170,7 @@ var PoloLender = function(name) {
 			config.restartTime = moment(process.env[ev]);
 		} catch (err) {
 			logger.error(`${self.me}: Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
 			config.restartTime = moment(0);
 		}
 		val = config.restartTime.utc().format();
