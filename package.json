@@ -1,6 +1,6 @@
 {
-	"name": "poloLender",
-	"version": "0.1.0",
+	"name": "PoloLender Pro",
+	"version": "0.1.1",
 	"description": "Bot for automatically lending funds on Poloniex exchange",
 	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
 	"main": "server.js",
@@ -13,7 +13,7 @@
 		"bitcoin",
 		"btc",
 		"etherum",
-		"etx",
+		"eth",
 		"lend",
 		"lending",
 		"bot",
