@@ -1,17 +1,61 @@
-Poloniex lending bot
+PoloLender Pro - Poloniex lending bot
 ====================
 
-**PoloLender** is an automated engine for lending funds on Poloniex exchange.
-The lending rate is received from **PoloLending-Advisor** server. **PoloLending-Advisor** is an on-line server which uses advanced statistical calculation to advise on the best lending rate in order to maximize profits.
+**PoloLender Pro** is an automated engine for lending funds on Poloniex exchange.
+PoloLender Pro uses advanced statistical calculation in order to maximize profits.
 
 ### Contents
+* [How it works](#how-it-works)
+	* Why using statistical calculation is more efficient
 * [Setting up the application](#setting-up-the-application)
     * Running on Heroku
     * Running locally
 * [Updating the application](#updating-the-application)
     * Running on Heroku
     * Running locally
-* [PoloLender configuration](#ploLender-configuration)
+* [PoloLender Pro configuration](#ploLender-pro-configuration)
+
+
+# How it works
+
+PoloLender Pro is:
+
+- an **open source** application written in JavaScript
+- runs on [node.js](http://nodejs.org/)
+- can either run locally on your computer or can be hosted on a cloud platform (e.g. [Heroku](http://www.heroku.com "Heroku")).
+
+PoloLender Pro is an automatic bot which lends funds on Poloniex exchange. 
+
+The lending rate is calculated using advanced statistical calculation in order to maximize profits.
+
+PoloLender Pro does not calculate the lending rate itself, instead the PoloLender Pro receives the lending rate from **PoloLending-Advisor** server.
+**PoloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone"). 
+
+In order to calculate optimal lend offer rate, the server continuously monitors the lend book (active offers) and also calculates the average loan holding time.
+Based on this data and using statistical calculation the **PoloLending-Advisor** server can inform PoloLender Pro clients of the rate with best profit returns.
+
+By using historical information and statistical calculation PoloLender Pro is able to give better return rates, as comparing with placing offers only looking at a snapshot of the lend book.
+
+## Why using statistical calculation is more efficient
+
+As it can be seen in the screenshot below, PoloLender Pro, manages to place offers with good rates
+
+![](http://i.imgur.com/DgijTpS.jpg)
+
+### Other bots
+
+Other existing bots are placing load offers by only looking at a snapshot of the lend book (active offers available at one point in time).
+The find out why snapshot of the lendbook does not give information on best return rate, I have written a bot that places small lend offers (BTC 0.001) at the top of the lendbook every minutes.
+
+As you can see in the screen shot below, often **the lend book rates vary widely**.
+For this reason figuring out the rate that gives best result is not obvious.
+
+Also placing offers randomly, expecting a spike is not most efficient.
+
+![](http://i.imgur.com/piaw2hJ.jpg)
+
+
+----------
 
 
 
@@ -23,7 +67,7 @@ Running on Heroku is highly recommended to ensure maximum uptime.
 ## Running on Heroku
 
 
-1. [Create a Heroku account](https://signup.heroku.com/dc "Create a Heroku account") if you don't have one already
+1. [Create a Heroku account]([https://signup.heroku.com/dc "Create a Heroku account") if you don't have one already](http://www.heroku.com)
 
 2. [Download and install the Heroku Toolbelt](https://toolbelt.heroku.com/ "Download and install the Heroku Toolbelt")
 Once installed, you'll have access to the heroku command from your command shell.
@@ -151,7 +195,7 @@ The application will restart automatically with the newly deployed code
     node server.js
     ```
 
-# PoloLender Configuration
+# PoloLender Pro configuration
 
 Bot configuration is done by setting environment variables or by specifying these in `.env` file.
 
