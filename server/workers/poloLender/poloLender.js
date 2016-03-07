@@ -152,14 +152,15 @@ var PoloLender = function(name) {
 		val = JSON.stringify(config.startBalance);
 		logger.info(`Using ${ev}=${val}`);
 
+		var lendMax;
 		try {
 			ev = self.me.toUpperCase() + "_LENDMAX";
-			var lendMax = JSON.parse(process.env[ev]);
+			lendMax = JSON.parse(process.env[ev]);
 		} catch (err) {
 			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
-		var lendMax = {};
+		lendMax = {};
 		currencies.forEach(function (c, index, array) {
 			if(lendMax && lendMax.hasOwnProperty(c)) {
 				try {
@@ -298,10 +299,8 @@ var PoloLender = function(name) {
 				if (err || result.error) {
 					err = err || new Error(result.error);
 					logger.notice("returnActiveLoans: " + err.message);
-					if (err.message == "undefined") {
-						var debugMsg = JSON.stringify(result);
-						debug(`result = ${debugMsg}`);
-					}
+					var debugMsg = JSON.stringify(result);
+					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
@@ -327,10 +326,8 @@ var PoloLender = function(name) {
 				if (err || result.error) {
 					err = err || new Error(result.error);
 					logger.notice("returnOpenLoanOffers: " + err.message);
-					if (err.message == "undefined") {
-						var debugMsg = JSON.stringify(result);
-						debug(`result = ${debugMsg}`);
-					}
+					var debugMsg = JSON.stringify(result);
+					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -357,10 +354,8 @@ var PoloLender = function(name) {
 				if (err || result.error) {
 					err = err || new Error(result.error);
 					logger.notice("returnAvailableAccountBalances: " + err.message);
-					if (err.message == "undefined") {
-						var debugMsg = JSON.stringify(result);
-						debug(`result = ${debugMsg}`);
-					}
+					var debugMsg = JSON.stringify(result);
+					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -401,10 +396,8 @@ var PoloLender = function(name) {
 							poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
 								if (err || result.error) {
 									err = err || new Error(result.error);
-									if (err.message == "undefined") {
-										var debugMsg = JSON.stringify(result);
-										debug(`result = ${debugMsg}`);
-									}
+									var debugMsg = JSON.stringify(result);
+									debug(`result = ${debugMsg}`);
 									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
 									return cb(err);
 								}
@@ -464,10 +457,8 @@ var PoloLender = function(name) {
 					poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err || result.error) {
 							err = err || new Error(result.error);
-							if (err.message == "undefined") {
-								var debugMsg = JSON.stringify(result);
-								debug(`result = ${debugMsg}`);
-							}
+							var debugMsg = JSON.stringify(result);
+							debug(`result = ${debugMsg}`);
 							logger.notice("createLoanOffer: " + err.message);
 							return callback(err);
 						}
