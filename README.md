@@ -26,31 +26,31 @@ PoloLender Pro is:
 
 PoloLender Pro is an automatic bot which lends funds on Poloniex exchange. 
 
-The lending rate is calculated using advanced statistical calculation in order to maximize profits.
+The lending rate is calculated using  statistical calculation in order to maximize profits.
 
 PoloLender Pro does not calculate the lending rate itself, instead the PoloLender Pro receives the lending rate from **PoloLending-Advisor** server.
 **PoloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone"). 
 
-In order to calculate optimal lend offer rate, the server continuously monitors the lend book (active offers) and also calculates the average loan holding time.
-Based on this data and using statistical calculation the **PoloLending-Advisor** server can inform PoloLender Pro clients of the rate with best profit returns.
+In order to calculate optimal lend offer rate, the server continuously monitors the lend-book (active offers) and also calculates the average loan holding time.
+Based on this data and using statistical calculation **PoloLending-Advisor** server can inform PoloLender Pro clients of the rate with best profit returns.
 
 By using historical information and statistical calculation PoloLender Pro is able to give better return rates, as comparing with placing offers only looking at a snapshot of the lend book.
 
 ## Why using statistical calculation is more efficient
 
-As it can be seen in the screenshot below, PoloLender Pro, manages to place offers with good rates
+As it can be seen in the screen-shot below, PoloLender Pro, manages to place offers with good rates
 
 ![](http://i.imgur.com/DgijTpS.jpg)
 
 ### Other bots
 
-Other existing bots are placing load offers by only looking at a snapshot of the lend book (active offers available at one point in time).
-The find out why snapshot of the lendbook does not give information on best return rate, I have written a bot that places small lend offers (BTC 0.001) at the top of the lendbook every minutes.
+Other existing bots are placing loan offers by only looking at a snapshot of the lend-book (active offers available at one point in time).
+To find out why snapshot of the lend-book does not give information on best return rate, I have written a bot that places small lend offers (BTC 0.001) at the top of the lend-book every minutes.
 
-As you can see in the screen shot below, often **the lend book rates vary widely**.
-For this reason figuring out the rate that gives best result is not obvious.
+As you can see in the screen-shot below, often **the lend book rates vary widely**.
+For this reason, figuring out the rate that gives best result is not obvious.
 
-Also placing offers randomly, expecting a spike is not most efficient.
+In addition, placing offers "randomly" through the lend-book, expecting a spike is not most efficient.
 
 ![](http://i.imgur.com/piaw2hJ.jpg)
 
@@ -61,7 +61,7 @@ Also placing offers randomly, expecting a spike is not most efficient.
 
 # Setting up the application
 
-Running on Heroku is highly recommended to ensure maximum uptime. 
+Running on Heroku is highly recommended to ensure maximum up-time. 
 
     
 ## Running on Heroku

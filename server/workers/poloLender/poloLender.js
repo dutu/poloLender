@@ -9,7 +9,6 @@ var Bitfinex = require("bitfinex");
 var Poloniex = require("./poloniex.js");
 var srv = require ("../../core/srv");
 
-
 var PoloLender = function(name) {
 	var self = this;
 	self.me = name;
@@ -160,6 +159,7 @@ var PoloLender = function(name) {
 			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
+		var lendMax = {};
 		currencies.forEach(function (c, index, array) {
 			if(lendMax && lendMax.hasOwnProperty(c)) {
 				try {
@@ -168,6 +168,7 @@ var PoloLender = function(name) {
 						throw val;
 					} else {
 						config.offerMaxAmount[c] = val.toString();
+						lendMax[c] = config.offerMaxAmount[c];
 					}
 				} catch (err) {
 					config.offerMaxAmount[c] = "999999";
@@ -179,7 +180,7 @@ var PoloLender = function(name) {
 				config.offerMaxAmount[c] = "999999";
 			}
 		});
-		val = JSON.stringify(config.startBalance);
+		val = JSON.stringify(lendMax);
 		logger.info(`Using ${ev}=${val}`);
 
 		try {
@@ -505,7 +506,7 @@ var PoloLender = function(name) {
 			// since = startDate.fromNow(true);
 			since = now.diff(config.startDate, "days");
 			msg = "♣ xBot running for "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
-			msg += " • Offers/Loansn: " + status.offersCount + "/" + status.activeLoansCount + " ";
+			msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
 			msg += ` • speed: ${speed}/min`;
 			logger.notice(`${msg}`);
 
@@ -568,6 +569,9 @@ var PoloLender = function(name) {
 				},
 				updateBalances: function(callback) {
 					updateAvailableFunds(function (err) {
+						if (err) {
+							return callback(err, err.message);
+						}
 						currencies.forEach(function (c, index, array) {
 							var amountActiveOffers = new Big(0);
 							var amountActiveLoans = new Big(0);
@@ -581,7 +585,7 @@ var PoloLender = function(name) {
 							});
 							depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c]).toFixed(8);
 						});
-						callback(err, err && err.message || "OK");
+						callback(null, "OK");
 					});
 				},
 				report: function (callback) {
@@ -618,6 +622,7 @@ var PoloLender = function(name) {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
 		setConfig();
+		debug("Starting...")
 		poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
 
 		socket = require('socket.io-client')(`http://${config.advisor}/`);
