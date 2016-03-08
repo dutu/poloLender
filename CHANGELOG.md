@@ -6,7 +6,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ## [0.1.1] - not published
 
 ### Fixed
-- fix console log of env variable POLOLENDER_LENDMAX
+- fix handling env variable numbers
 
 ### Added
 
