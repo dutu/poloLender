@@ -294,11 +294,8 @@ var PoloLender = function(name) {
 
 			poloPrivate.returnActiveLoans(function (err, result) {
 				var newActiveLoans;
-				if (err || result.error) {
-					err = err || new Error(result.error);
+				if (err) {
 					logger.notice("returnActiveLoans: " + err.message);
-					var debugMsg = JSON.stringify(result);
-					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
@@ -321,11 +318,8 @@ var PoloLender = function(name) {
 
 		var updateActiveOffers = function(callback) {
 			poloPrivate.returnOpenLoanOffers(function (err, result) {
-				if (err || result.error) {
-					err = err || new Error(result.error);
+				if (err) {
 					logger.notice("returnOpenLoanOffers: " + err.message);
-					var debugMsg = JSON.stringify(result);
-					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -349,11 +343,8 @@ var PoloLender = function(name) {
 
 		var updateAvailableFunds = function(callback) {
 			poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
-				if (err || result.error) {
-					err = err || new Error(result.error);
+				if (err) {
 					logger.notice("returnAvailableAccountBalances: " + err.message);
-					var debugMsg = JSON.stringify(result);
-					debug(`result = ${debugMsg}`);
 					return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
@@ -392,10 +383,7 @@ var PoloLender = function(name) {
 								return cb(null);
 							}
 							poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
-								if (err || result.error) {
-									err = err || new Error(result.error);
-									var debugMsg = JSON.stringify(result);
-									debug(`result = ${debugMsg}`);
+								if (err) {
 									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
 									return cb(err);
 								}
@@ -453,10 +441,7 @@ var PoloLender = function(name) {
 					autoRenew = "0";
 
 					poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
-						if (err || result.error) {
-							err = err || new Error(result.error);
-							var debugMsg = JSON.stringify(result);
-							debug(`result = ${debugMsg}`);
+						if (err) {
 							logger.notice("createLoanOffer: " + err.message);
 							return callback(err);
 						}

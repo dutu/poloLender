@@ -7,6 +7,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - fix handling env variable numbers
+- fix Polonex API error handling
 
 ### Added
 

@@ -7,7 +7,7 @@ module.exports = (function() {
         nonce   = require('nonce')();
 
     // Constants
-    var version         = '0.0.6',
+    var version         = '0.1.0',
         PUBLIC_API_URL  = 'https://poloniex.com/public',
         PRIVATE_API_URL = 'https://poloniex.com/tradingApi',
         USER_AGENT      = 'poloniex.js ' + version;
@@ -79,11 +79,16 @@ module.exports = (function() {
 
             request(options, function(err, response, body) {
                 // Empty response
-                if (!err && (typeof body === 'undefined' || body === null)){
-                    err = 'Empty response';
+                if (err)
+                    return callback(err, body);
+                if (typeof body === 'undefined' || body === null){
+                    err = new Error("Empty response");
                 }
-                if (!err && response.statusCode != 200) {
-                    err =  response.statusCode;
+                if (response.statusCode !== 200) {
+                    err =  new Error(response.statusCode + " " + response.statusMessage);
+                }
+                if (body.error) {
+                    err = new Error(body.error);
                 }
                 callback(err, body);
             });
