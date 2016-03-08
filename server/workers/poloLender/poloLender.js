@@ -6,8 +6,10 @@ var moment = require("moment");
 var async = require ("async");
 var debug = require("debug")("pololender");
 var Bitfinex = require("bitfinex");
+var semver = require("semver");
 var Poloniex = require("./poloniex.js");
 var srv = require ("../../core/srv");
+var pjson = require('../../../package.json');
 
 var PoloLender = function(name) {
 	var self = this;
@@ -40,6 +42,7 @@ var PoloLender = function(name) {
 		ev, val;
 
 	var advisorInfo = {};
+	var clientMessage ={};
 
 	var configDefault = {
 		startDate: "",		
@@ -479,10 +482,17 @@ var PoloLender = function(name) {
 
 			// since = startDate.fromNow(true);
 			since = now.diff(config.startDate, "days");
-			msg = "♣ xBot running for "+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
+			msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
 			msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
 			msg += ` • speed: ${speed}/min`;
 			logger.notice(`${msg}`);
+
+			if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+				logger.error(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+			}
+			if(clientMessage.message) {
+				logger.error(`${pjson.version}, available:${clientMessage.message}`);
+			}
 
 			currencies.forEach(function (c, index, array) {
 				var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
@@ -596,7 +606,7 @@ var PoloLender = function(name) {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
 		setConfig();
-		debug("Starting...")
+		debug("Starting...");
 		poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
 
 		socket = require('socket.io-client')(`http://${config.advisor}/`);
@@ -636,6 +646,20 @@ var PoloLender = function(name) {
 			catch (error) {
 				logger.error(`Cannot parse loanOfferParameters ${smsg}`);
 				debug(`Cannot parse loanOfferParameters: ${error.message}`);
+			}
+		});
+		socket.on("send:clientMessage", function (msg) {
+			var smsg = JSON.stringify(msg);
+			debug(`received send:clientMessage = ${smsg}`);
+			var loanOfferParameters;
+			if(_.isObject(msg)) {
+				clientMessage = {
+					time: msg.time,
+					message: msg.message,
+					lastClientSemver: msg.lastClientSemver
+				}
+			} else {
+				logger.error(`Cannot parse clientMessage ${smsg}`);
 			}
 		});
 		setTimeout(execTrade, 1);

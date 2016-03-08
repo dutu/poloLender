@@ -3,13 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.1.1] - not published
+## [0.2.0] - not published
 
 ### Fixed
 - fix handling env variable numbers
 - fix Polonex API error handling
 
 ### Added
+- add logging clientMessage
+- add logging console log when new bot version is available
 
 ### Changed
 
