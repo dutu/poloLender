@@ -1,44 +1,48 @@
-PoloLender Pro - Poloniex lending bot
+poloLender Pro - smart Poloniex lending bot
 ====================
 
-**PoloLender Pro** is an automated engine for lending funds on Poloniex exchange.
-PoloLender Pro uses advanced statistical calculation in order to maximize profits.
+**poloLender Pro** is an automated engine for lending funds on Poloniex exchange.
+poloLender Pro uses advanced statistical calculation in order to maximize profits.
+
+The application code is shared on github at https://github.com/dutu/poloLender/
 
 ### Contents
 * [How it works](#how-it-works)
 	* Why using statistical calculation is more efficient
 * [Setting up the application](#setting-up-the-application)
-    * Running on Heroku
     * Running locally
+    * Running on Heroku
 * [Updating the application](#updating-the-application)
-    * Running on Heroku
     * Running locally
-* [PoloLender Pro configuration](#ploLender-pro-configuration)
+    * Running on Heroku
+* [poloLender Pro configuration](#ploLender-pro-configuration)
+* [FAQ](#faq)
+* [License](#license) 
 
 
 # How it works
 
-PoloLender Pro is:
+poloLender Pro is:
 
 - an **open source** application written in JavaScript
 - runs on [node.js](http://nodejs.org/)
 - can either run locally on your computer or can be hosted on a cloud platform (e.g. [Heroku](http://www.heroku.com "Heroku")).
 
-PoloLender Pro is an automatic bot which lends funds on Poloniex exchange. 
+poloLender Pro is an automatic bot which lends funds on Poloniex exchange. 
 
 The lending rate is calculated using  statistical calculation in order to maximize profits.
 
-PoloLender Pro does not calculate the lending rate itself, instead the PoloLender Pro receives the lending rate from **PoloLending-Advisor** server.
-**PoloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone"). 
+poloLender Pro does not calculate the lending rate itself, instead the poloLender Pro receives the lending rate from **poloLending-Advisor** server.
+**poloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone"). 
 
 In order to calculate optimal lend offer rate, the server continuously monitors the lend-book (active offers) and also calculates the average loan holding time.
-Based on this data and using statistical calculation **PoloLending-Advisor** server can inform PoloLender Pro clients of the rate with best profit returns.
+Based on this data and using statistical calculation **poloLending-Advisor** server can inform poloLender Pro clients of the rate with best profit returns.
 
-By using historical information and statistical calculation PoloLender Pro is able to give better return rates, as comparing with placing offers only looking at a snapshot of the lend book.
+By using historical information and statistical calculation poloLender Pro is able to give better return rates, as comparing with placing offers only looking at a snapshot of the lend book.
 
 ## Why using statistical calculation is more efficient
 
-As it can be seen in the screen-shot below, PoloLender Pro, manages to place offers with good rates
+As it can be seen in the screen-shot below, poloLender Pro, manages to place offers with good rates
 
 ![](http://i.imgur.com/DgijTpS.jpg)
 
@@ -58,16 +62,42 @@ In addition, placing offers "randomly" through the lend-book, expecting a spike 
 ----------
 
 
-
 # Setting up the application
 
 Running on Heroku is highly recommended to ensure maximum up-time. 
 
     
+## Running locally
+
+1. [Download and install node.js](http://nodejs.org/)
+
+2. [Download and install the latest version of Git](http://git-scm.com/downloads "Download and install the latest version of Git")
+
+3. Clone `poloLender` application source code from github:
+
+    ```
+    $ git clone https://github.com/dutu/poloLender.git
+    $ cd poloLender
+    ```
+4. Install the dependencies, preparing your system for running the app locally:
+
+    ```
+    npm install
+    ```
+
+5. Define config vars required for configuring poloLender:
+    Rename the file `.env-template` to `.env`, then update the variables in `.env` file with your own values
+    
+5. Start the app locally:
+
+    ```
+    node server.js
+    ```
+    
 ## Running on Heroku
 
 
-1. [Create a Heroku account]([https://signup.heroku.com/dc "Create a Heroku account") if you don't have one already](http://www.heroku.com)
+1. [Create a Heroku account]([https://signup.heroku.com/dc] "Create a Heroku account") if you don't have one already](http://www.heroku.com)
 
 2. [Download and install the Heroku Toolbelt](https://toolbelt.heroku.com/ "Download and install the Heroku Toolbelt")
 Once installed, you'll have access to the heroku command from your command shell.
@@ -97,7 +127,7 @@ Once installed, you'll have access to the heroku command from your command shell
     $ heroku addons:create papertrail
     ```
     
-    Note: To help with abuse prevention, provisioning an add-on requires account verification. If your account has not been verified, you will be directed to visit the verification site.
+    Note: To help with abuse prevention, Heroku requires account verification for provisioning an add-on . If your account has not been verified, you will be directed to visit the verification site.
 
 
 7. Open the papertrail console to see the log messages. 
@@ -121,37 +151,34 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
 
 10. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
-> **Note**: By default the Heroku application runs on Free dyno. Free dyno sleeps for 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing 
+> **Note**: By default the Heroku applications run on Free dyno. Free dyno sleeps for 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing 
 
+
+# Updating the application
+
+Updating the application when poloLender code is updated on github
 
 ## Running locally
 
-1. [Download and install node.js](http://nodejs.org/)
+1. Stop the poloLender application with `CTRL+C` 
 
-2. [Download and install the latest version of Git](http://git-scm.com/downloads "Download and install the latest version of Git")
-
-3. Clone `poloLender` application source code from github:
-
+3. Update the local clone from github
     ```
-    $ git clone https://github.com/dutu/poloLender.git
     $ cd poloLender
-    ```
-4. Install the dependencies, preparing your system for running the app locally:
-
-    ```
-    npm install
+    $ git pull origin master
     ```
 
-5. Define config vars required for configuring poloLender:
-    Rename the file `.env-template` to `.env`, then update the variables in `.env` file with your own values
-    
+4. Update dependencies:
+
+    ```
+    npm update
+    ```
+
 5. Start the app locally:
 
     ```
     node server.js
     ```
-    
-# Updating the application
 
 ## Running on Heroku
 
@@ -172,30 +199,7 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
 The application will restart automatically with the newly deployed code 
 
-
-## Running locally
-
-1. Stop the PoloLender application with `CTRL+C` 
-
-3. Update the local clone from github
-    ```
-    $ cd poloLender
-    $ git pull origin master
-    ```
-
-4. Update dependencies:
-
-    ```
-    npm update
-    ```
-
-5. Start the app locally:
-
-    ```
-    node server.js
-    ```
-
-# PoloLender Pro configuration
+# poloLender Pro configuration
 
 Bot configuration is done by setting environment variables or by specifying these in `.env` file.
 
@@ -209,9 +213,20 @@ Bot configuration is done by setting environment variables or by specifying thes
     # Start balance - this is used to calculate and display total profitability
     POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100"}
     
-    # Maximum amounts in your lending account that should be lended 
+    # Maximum amounts in your lending account that should be lended by the bot
     POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100"}
 
-    #Report interval in minutes (default is 60 minutes)
-    POLOLENDER_REPORTINTERVAL=3
+    # Report interval in minutes
+    POLOLENDER_REPORTINTERVAL=30
      
+     
+# FAQ
+
+**Q1: Question 1**
+
+**A1:** Answer 1  
+
+
+# License #
+
+[MIT](LICENSE)

@@ -1,12 +1,12 @@
 {
-	"name": "PoloLenderPro",
+	"name": "poloLenderPro",
 	"version": "0.1.1",
-	"description": "Bot for automatically lending funds on Poloniex exchange",
+	"description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
 	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
 	"main": "server.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/dutu/xWorker.git"
+		"url": "https://github.com/dutu/pololender.git"
 	},
 	"keywords": [
 		"poloniex",
