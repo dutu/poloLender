@@ -78,16 +78,14 @@ module.exports = (function() {
             options.strictSSL = Poloniex.STRICT_SSL;
 
             request(options, function(err, response, body) {
-                // Empty response
-                if (err)
-                    return callback(err, body);
-                if (typeof body === 'undefined' || body === null){
-                    err = new Error("Empty response");
-                }
-                if (response.statusCode !== 200) {
+                if (!err && response.statusCode !== 200) {
                     err =  new Error(response.statusCode + " " + response.statusMessage);
                 }
-                if (body.error) {
+                if (!err && typeof body === 'undefined' || body === null){
+                    // Empty response
+                    err = new Error("Empty response");
+                }
+                if (!err && body.error) {
                     err = new Error(body.error);
                 }
                 callback(err, body);
