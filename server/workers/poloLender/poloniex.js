@@ -79,11 +79,11 @@ module.exports = (function() {
 
             request(options, function(err, response, body) {
                 if (!err && response.statusCode !== 200) {
-                    err =  new Error(response.statusCode + " " + response.statusMessage);
+                    err =  new Error("Poloniex error " + response.statusCode + ": " + response.statusMessage);
                 }
                 if (!err && typeof body === 'undefined' || body === null){
                     // Empty response
-                    err = new Error("Empty response");
+                    err = new Error("Poloniex error: Empty response");
                 }
                 if (!err && body.error) {
                     err = new Error(body.error);
