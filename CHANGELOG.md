@@ -8,11 +8,12 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - fix handling env variable numbers
 - fix Poloniex API error handling
-- fix env variable STARTTIME error
+- fix env variable STARTTIME handling
+- fix minor log typo
 
 ### Added
-- add logging clientMessage
-- add logging console log when new bot version is available
+- add console log clientMessage
+- add console log message when new bot version is available
 
 ### Changed
 
