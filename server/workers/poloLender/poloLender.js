@@ -531,7 +531,7 @@ var PoloLender = function(name) {
 					//msg += `Start: ${journalEntry.balance[c]}, `
 					msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
 					if(c === "BTC")
-						msg += ` ≈ USD: ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+						msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
 					var wmrMsg = msgRate(status.wmr[c]);
 					var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
 					msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
