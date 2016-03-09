@@ -116,7 +116,7 @@ var PoloLender = function(name) {
 		logger.info(`Using ${ev}=${config.reportEveryMinutes}`);
 
 		try {
-			ev = self.me.toUpperCase() + "_STARTDATE";
+			ev = self.me.toUpperCase() + "_STARTTIME";
 			config.startDate = moment(process.env[ev]);
 		} catch (err) {
 			logger.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
