@@ -79,16 +79,14 @@ module.exports = (function() {
             options.timeout = 5000;
 
             request(options, function(err, response, body) {
-                // Empty response
-                if (err)
-                    return callback(err, body);
-                if (typeof body === 'undefined' || body === null){
-                    err = new Error("Empty response");
+                if (!err && response.statusCode !== 200) {
+                    err =  new Error("Poloniex error " + response.statusCode + ": " + response.statusMessage);
                 }
-                if (response.statusCode !== 200) {
-                    err =  new Error(response.statusCode + " " + response.statusMessage);
+                if (!err && typeof body === 'undefined' || body === null){
+                    // Empty response
+                    err = new Error("Poloniex error: Empty response");
                 }
-                if (body.error) {
+                if (!err && body.error) {
                     err = new Error(body.error);
                 }
                 callback(err, body);
