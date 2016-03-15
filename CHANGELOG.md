@@ -3,11 +3,12 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.2.0] - not published
+## [0.2.0] - 2016-03-15
 
 ### Fixed
 - fix handling env variable numbers
 - fix Polonex API error handling
+- fix API call timeout when Poloniex doesn't send any response back
 
 ### Added
 - add logging clientMessage

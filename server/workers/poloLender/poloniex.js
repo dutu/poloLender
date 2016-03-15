@@ -7,7 +7,7 @@ module.exports = (function() {
         nonce   = require('nonce')();
 
     // Constants
-    var version         = '0.1.0',
+    var version         = '0.1.1',
         PUBLIC_API_URL  = 'https://poloniex.com/public',
         PRIVATE_API_URL = 'https://poloniex.com/tradingApi',
         USER_AGENT      = 'poloniex.js ' + version;
@@ -76,6 +76,7 @@ module.exports = (function() {
             options.json = true;
             options.headers['User-Agent'] = Poloniex.USER_AGENT;
             options.strictSSL = Poloniex.STRICT_SSL;
+            options.timeout = 5000;
 
             request(options, function(err, response, body) {
                 // Empty response
@@ -92,7 +93,6 @@ module.exports = (function() {
                 }
                 callback(err, body);
             });
-
             return this;
         },
 
