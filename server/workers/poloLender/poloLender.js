@@ -487,10 +487,10 @@ var PoloLender = function(name) {
 			logger.notice(`${msg}`);
 
 			if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-				logger.error(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+				logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
 			}
 			if(clientMessage.message) {
-				logger.error(`${pjson.version}, available:${clientMessage.message}`);
+				logger.notice(`${clientMessage.message}`);
 			}
 
 			currencies.forEach(function (c, index, array) {

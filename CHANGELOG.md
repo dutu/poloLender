@@ -11,6 +11,9 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - node.js 6.x.x is required
 
+### Fixed
+- fix clientMessage log output  
+
 ## [0.2.0] - 2016-03-15
 
 ### Fixed
