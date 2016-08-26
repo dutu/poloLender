@@ -206,11 +206,10 @@ var PoloLender = function(name) {
 	};
 
 	var msgRate = function(perDayProc) {
-		var perDay, perYear, perMonth, msg;
-		perDay = new Big(perDayProc).times(100).toFixed(6);
-		perYear = new Big(perDayProc).times(365*100).toFixed(4);
-//		perMonth = new Big(perYear).div(12).toFixed(4);
-		msg = strAR(perDay, 6) + "%";
+		let perDay = new Big(perDayProc).times(100).toFixed(6);
+		let perYear = new Big(perDayProc).times(365*100).toFixed(4);
+//		let perMonth = new Big(perYear).div(12).toFixed(4);
+		let msg = strAR(perDay, 6) + "%";
 		msg += " (" + strAR(new Big(perYear).toFixed(2), 5) + "%)";
 		return msg;
 	};

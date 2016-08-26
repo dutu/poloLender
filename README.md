@@ -214,10 +214,10 @@ Bot configuration is done by setting environment variables or by specifying thes
     POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
     
     # Start balance - this is used to calculate and display total profitability
-    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100"}
+    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000"}
     
     # Maximum amounts in your lending account that should be lended by the bot
-    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100"}
+    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000"}
 
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30
@@ -227,7 +227,7 @@ Bot configuration is done by setting environment variables or by specifying thes
 
 **Q1: Can you add support for lending additonal crypto currency**
 
-**A1:** Yes, please contact me by e-mail or raise an issue on github
+**A1:** Yes, please contact me by e-mail or [raise an issue on github](https://github.com/dutu/pololender/issues)
 
 
 # License #
