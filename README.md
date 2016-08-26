@@ -140,8 +140,8 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
     $ heroku config:set POLOLENDER_APIKEY='{"key":"V********t","secret":"T***u"}'
     $ heroku config:set POLOLENDER_STARTTIME='2016-02-28T12:27:09+00:00'
-    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100"}'
-    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100"}'
+    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000"}'
+    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000"}'
     $ heroku config:set POLOLENDER_REPORTINTERVAL=60
     ```
     
@@ -179,6 +179,9 @@ Updating the application when poloLender code is updated on github
     ```
     node server.js
     ```
+
+> **Note**: If you are requested to update node.js version, please do so by downloading and installing the applicable version. Go to [http://nodejs.org/node.js](http://nodejs.org/).
+
 
 ## Running on Heroku
 
@@ -222,9 +225,9 @@ Bot configuration is done by setting environment variables or by specifying thes
      
 # FAQ
 
-**Q1: Question 1**
+**Q1: Can you add support for lending additonal crypto currency**
 
-**A1:** Answer 1  
+**A1:** Yes, please contact me by e-mail or raise an issue on github
 
 
 # License #

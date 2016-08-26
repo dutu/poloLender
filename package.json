@@ -1,6 +1,6 @@
 {
 	"name": "poloLenderPro",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
 	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
 	"main": "server.js",
@@ -19,13 +19,15 @@
 		"bot",
 		"automatic",
 		"advisor",
-		"pololender"
+		"pololender",
+		"xmr",
+		"monero"
 	],
 	"bugs": {
 		"url": "https://github.com/dutu/pololender/issues"
 	},
 	"engines": {
-		"node": "5.x.x",
+		"node": "6.x.x",
 		"npm": "3.x.x"
 	},
 	"scripts": {

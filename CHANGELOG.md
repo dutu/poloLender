@@ -3,6 +3,14 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.3.0] - 2016-08-26
+
+### Added
+- support for lending Monero (XMR)
+
+### Changed
+- node.js 6.x.x is required
+
 ## [0.2.0] - 2016-03-15
 
 ### Fixed
