@@ -45,7 +45,8 @@
 		"debug": "^2.2.0",
 		"bitfinex": "*",
 		"nonce": "^1.0.3",
-		"semver": "5.*.*"
+		"semver": "5.*.*",
+		"request": ""
 	},
 	"devDependencies": {
 		"babel-cli": "^6.4.5"
