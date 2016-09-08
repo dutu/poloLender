@@ -1,6 +1,6 @@
 {
 	"name": "poloLenderPro",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
 	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
 	"main": "server.js",
@@ -46,7 +46,7 @@
 		"bitfinex": "*",
 		"nonce": "^1.0.3",
 		"semver": "5.*.*",
-		"request": ""
+		"request": "*"
 	},
 	"devDependencies": {
 		"babel-cli": "^6.4.5"
