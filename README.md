@@ -140,8 +140,8 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
     $ heroku config:set POLOLENDER_APIKEY='{"key":"V********t","secret":"T***u"}'
     $ heroku config:set POLOLENDER_STARTTIME='2016-02-28T12:27:09+00:00'
-    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000"}'
-    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000"}'
+    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}'
+    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}'
     $ heroku config:set POLOLENDER_REPORTINTERVAL=60
     ```
     
@@ -214,10 +214,10 @@ Bot configuration is done by setting environment variables or by specifying thes
     POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
     
     # Start balance - this is used to calculate and display total profitability
-    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000"}
+    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}
     
     # Maximum amounts in your lending account that should be lended by the bot
-    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000"}
+    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}
 
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30

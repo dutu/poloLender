@@ -3,6 +3,12 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+
+## [0.4.0] - 2016-09-16
+
+### Added
+- support for lending Ripple (XRP)
+
 ## [0.3.0] - 2016-08-26
 
 ### Added
