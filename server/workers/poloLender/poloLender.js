@@ -447,7 +447,7 @@ var PoloLender = function(name) {
 
 					// Do not offer loans the the best return rate is less than the specified min rate.
 					minRate = new Big(config.offerMinRate[currency]);
-					if (minRate.ne(0) && minRate.div(100).gt(advisorInfo[currency].bestReturnRate)) {
+					if (minRate.gt(0) && minRate.div(100).gt(advisorInfo[currency].bestReturnRate)) {
 						return callback(null);
 					}
 
