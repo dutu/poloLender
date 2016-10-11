@@ -3,6 +3,10 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.0] - 2016-10-11
+
+### Added
+- support for minimum lend rates
 
 ## [0.4.0] - 2016-09-16
 
