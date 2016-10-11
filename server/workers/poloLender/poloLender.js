@@ -45,11 +45,12 @@ var PoloLender = function(name) {
 	var clientMessage ={};
 
 	var configDefault = {
-		startDate: "",		
+		startDate: "",
 		reportEveryMinutes: 5,
 		minOrderSize: "0.001",
 		startBalance: {},
 		restartTime: moment(),
+		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone"
 	};
@@ -183,6 +184,36 @@ var PoloLender = function(name) {
 			}
 		});
 		val = JSON.stringify(config.offerMaxAmount);
+		logger.info(`Using ${ev}=${val}`);
+
+		var minRate;
+		try {
+			ev = self.me.toUpperCase() + "_MINRATE";
+			minRate = JSON.parse(process.env[ev]);
+		} catch (err) {
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
+		}
+		currencies.forEach(function (c, index, array) {
+			if(_.isObject(minRate) && minRate.hasOwnProperty(c)) {
+				try {
+					val = Number(minRate[c]);
+					if(!_.isFinite(val)) {
+						throw val;
+					} else {
+						config.offerMinRate[c] = val.toString();
+					}
+				} catch (err) {
+					config.offerMinRate[c] = "0";
+					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					debug(`${ev}=${process.env[ev]}`);
+				}
+			}
+			else {
+				config.offerMinRate[c] = "0";
+			}
+		});
+		val = JSON.stringify(config.offerMinRate);
 		logger.info(`Using ${ev}=${val}`);
 
 		try {
@@ -412,7 +443,13 @@ var PoloLender = function(name) {
 				// for each currency
 				function(currency, index, callback) {
 					var amountTrading, amountToTrade, amount, amountMaxToTrade,
-						duration, autoRenew, lendingRate;
+						duration, autoRenew, lendingRate, minRate;
+
+					// Do not offer loans the the best return rate is less than the specified min rate.
+					minRate = new Big(config.offerMinRate[currency]);
+					if (minRate.gt(0) && minRate.div(100).gt(advisorInfo[currency].bestReturnRate)) {
+						return callback(null);
+					}
 
 					if (config.offerMaxAmount[currency] == "") {
 						amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
@@ -438,7 +475,6 @@ var PoloLender = function(name) {
 					}
 
 					amount = amountToTrade.toFixed(8);
-					lendingRate = advisorInfo[currency].bestReturnRate;
 					duration = advisorInfo[currency].bestDuration;
 					autoRenew = "0";
 
