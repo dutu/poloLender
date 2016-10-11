@@ -17,7 +17,7 @@ The application code is shared on github at https://github.com/dutu/poloLender/
     * Running on Heroku
 * [poloLender Pro configuration](#ploLender-pro-configuration)
 * [FAQ](#faq)
-* [License](#license) 
+* [License](#license)
 
 
 # How it works
@@ -28,12 +28,12 @@ poloLender Pro is:
 - runs on [node.js](http://nodejs.org/)
 - can either run locally on your computer or can be hosted on a cloud platform (e.g. [Heroku](http://www.heroku.com "Heroku")).
 
-poloLender Pro is an automatic bot which lends funds on Poloniex exchange. 
+poloLender Pro is an automatic bot which lends funds on Poloniex exchange.
 
 The lending rate is calculated using  statistical calculation in order to maximize profits.
 
 poloLender Pro does not calculate the lending rate itself, instead the poloLender Pro receives the lending rate from **poloLending-Advisor** server.
-**poloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone"). 
+**poloLending-Advisor** is an on-line server hosed at [http://safe-hollows.crypto.zone](http://safe-hollows.crypto.zone "http://safe-hollows.crypto.zone").
 
 In order to calculate optimal lend offer rate, the server continuously monitors the lend-book (active offers) and also calculates the average loan holding time.
 Based on this data and using statistical calculation **poloLending-Advisor** server can inform poloLender Pro clients of the rate with best profit returns.
@@ -64,9 +64,9 @@ In addition, placing offers "randomly" through the lend-book, expecting a spike 
 
 # Setting up the application
 
-Running on Heroku is highly recommended to ensure maximum up-time. 
+Running on Heroku is highly recommended to ensure maximum up-time.
 
-    
+
 ## Running locally
 
 1. [Download and install node.js](http://nodejs.org/)
@@ -87,13 +87,13 @@ Running on Heroku is highly recommended to ensure maximum up-time.
 
 5. Define config vars required for configuring poloLender:
     Rename the file `.env-template` to `.env`, then update the variables in `.env` file with your own values
-    
+
 5. Start the app locally:
 
     ```
     node server.js
     ```
-    
+
 ## Running on Heroku
 
 
@@ -107,7 +107,7 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
     $ heroku login
     ```
- 
+
 4. Clone `poloLender` application source code from github:
 
     ```
@@ -115,43 +115,44 @@ Once installed, you'll have access to the heroku command from your command shell
     $ cd poloLender
     ```
 5. Create an app on Heroku and deploy the code
-    
+
     ```
     $ heroku create
     $ git push heroku master
     $ heroku ps:scale web=0 poloLender=0
     ```
-    
+
 6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
     ```
     $ heroku addons:create papertrail
     ```
-    
+
     Note: To help with abuse prevention, Heroku requires account verification for provisioning an add-on . If your account has not been verified, you will be directed to visit the verification site.
 
 
-7. Open the papertrail console to see the log messages. 
+7. Open the papertrail console to see the log messages.
     ```
     $ heroku addons:open papertrail
     ```
 > Note: Keep the papertrail console open to monitor progress
-    
+
 8. Define config vars required for configuring poloLender (replace the values below with your own)
     ```
     $ heroku config:set POLOLENDER_APIKEY='{"key":"V********t","secret":"T***u"}'
     $ heroku config:set POLOLENDER_STARTTIME='2016-02-28T12:27:09+00:00'
     $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}'
     $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}'
+    $ heroku config:set POLOLENDER_MINRATE='{"BTC":"0.02", "ETH":"0", "XMR":"0.015", "XRP":"0"}'
     $ heroku config:set POLOLENDER_REPORTINTERVAL=60
     ```
-    
+
 9. Start the application
     ```
     heroku ps:scale poloLender=1
     ```
 
 10. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
-> **Note**: By default the Heroku applications run on Free dyno. Free dyno sleeps for 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing 
+> **Note**: By default the Heroku applications run on Free dyno. Free dyno sleeps for 6 hours in 24 hours period. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing
 
 
 # Updating the application
@@ -160,7 +161,7 @@ Updating the application when poloLender code is updated on github
 
 ## Running locally
 
-1. Stop the poloLender application with `CTRL+C` 
+1. Stop the poloLender application with `CTRL+C`
 
 3. Update the local clone from github
     ```
@@ -191,16 +192,16 @@ Updating the application when poloLender code is updated on github
     $ git pull origin master
     ```
 
-2. Open the papertrail console to see the log messages 
+2. Open the papertrail console to see the log messages
     ```
     $ heroku addons:open papertrail
     ```
 
-3. Deploy updated code to heroku 
+3. Deploy updated code to heroku
     ```
     $ git push heroku master
     ```
-The application will restart automatically with the newly deployed code 
+The application will restart automatically with the newly deployed code
 
 # poloLender Pro configuration
 
@@ -209,20 +210,23 @@ Bot configuration is done by setting environment variables or by specifying thes
 
     # API key for your Poloniex account
     POLOLENDER_APIKEY={"key":"V**********************t","secret":"T*******************************u"}
-    
+
     # Start UTC time - this is used to calculate and display total profitability
     POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
-    
+
     # Start balance - this is used to calculate and display total profitability
     POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}
-    
+
     # Maximum amounts in your lending account that should be lended by the bot
     POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}
 
+    # Minimum lending rate in percent.
+    POLOLENDER_MINRATE={"BTC":"0", "ETH":"0", "XMR":"0", "XRP":"0"}
+
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30
-     
-     
+
+
 # FAQ
 
 **Q1: Can you add support for lending additonal crypto currency**

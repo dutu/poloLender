@@ -45,11 +45,12 @@ var PoloLender = function(name) {
 	var clientMessage ={};
 
 	var configDefault = {
-		startDate: "",		
+		startDate: "",
 		reportEveryMinutes: 5,
 		minOrderSize: "0.001",
 		startBalance: {},
 		restartTime: moment(),
+		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone"
 	};
@@ -183,6 +184,36 @@ var PoloLender = function(name) {
 			}
 		});
 		val = JSON.stringify(config.offerMaxAmount);
+		logger.info(`Using ${ev}=${val}`);
+
+		var minRate;
+		try {
+			ev = self.me.toUpperCase() + "_MINRATE";
+			minRate = JSON.parse(process.env[ev]);
+		} catch (err) {
+			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			debug(`${ev}=${process.env[ev]}`);
+		}
+		currencies.forEach(function (c, index, array) {
+			if(_.isObject(minRate) && minRate.hasOwnProperty(c)) {
+				try {
+					val = Number(minRate[c]);
+					if(!_.isFinite(val)) {
+						throw val;
+					} else {
+						config.offerMinRate[c] = val.toString();
+					}
+				} catch (err) {
+					config.offerMinRate[c] = "0";
+					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+					debug(`${ev}=${process.env[ev]}`);
+				}
+			}
+			else {
+				config.offerMinRate[c] = "0";
+			}
+		});
+		val = JSON.stringify(config.offerMinRate);
 		logger.info(`Using ${ev}=${val}`);
 
 		try {
@@ -363,12 +394,18 @@ var PoloLender = function(name) {
 					async.forEachOfSeries(activeOffersOneCurrency,
 						//for each offer in the array (for respective currency)
 						function (offer, index, cb) {
-							var msg, offerRate;
+							var msg, offerRate, brr;
 							var amountTrading;
 
 							offerRate = new Big(offer.rate);
 							if (offerRate.eq(advisorInfo[currency].bestReturnRate)){
 								// lend offers is on correct price
+								return cb(null);
+							}
+
+							brr = new Big(advisorInfo[currency].bestReturnRate)
+							if (brr.lt(config.offerMinRate[currency] / 100.0)) {
+								// lend offer would be less than minimum offer rate
 								return cb(null);
 							}
 
@@ -441,6 +478,11 @@ var PoloLender = function(name) {
 					lendingRate = advisorInfo[currency].bestReturnRate;
 					duration = advisorInfo[currency].bestDuration;
 					autoRenew = "0";
+
+					if (new Big(lendingRate).lt(config.offerMinRate[currency] / 100.0)) {
+						// lower cap the lending rate the user specified minimum rate.
+						lendingRate = config.offerMinRate[currency] / 100.0;
+					}
 
 					poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err) {
