@@ -394,17 +394,11 @@ var PoloLender = function(name) {
 					async.forEachOfSeries(activeOffersOneCurrency,
 						//for each offer in the array (for respective currency)
 						function (offer, index, cb) {
-							var msg, offerRate, brr, minRate, proposedRate;
+							var msg, offerRate;
 							var amountTrading;
 
 							offerRate = new Big(offer.rate);
-							brr = new Big(advisorInfo[currency].bestReturnRate)
-							minRate = new Big(config.offerMinRate[currency]).div(100.0);
-
-							// Lower cap new expected rate to user specified min rate.
-							proposedRate = Math.max(brr, minRate);
-
-							if (offerRate.eq(proposedRate)) {
+							if (offerRate.eq(advisorInfo[currency].bestReturnRate)){
 								// lend offers is on correct price
 								return cb(null);
 							}
@@ -431,7 +425,6 @@ var PoloLender = function(name) {
 								msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
 								msg += " at " + msgRate(offer.rate);
 								msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
-								msg += ", min " + msgRate(minRate)
 								logger.info(msg);
 								return cb(null);
 							});
@@ -450,7 +443,13 @@ var PoloLender = function(name) {
 				// for each currency
 				function(currency, index, callback) {
 					var amountTrading, amountToTrade, amount, amountMaxToTrade,
-						duration, autoRenew, lendingRate, brr, minRate;
+						duration, autoRenew, lendingRate, minRate;
+
+					// Do not offer loans the the best return rate is less than the specified min rate.
+					minRate = new Big(config.offerMinRate[currency]);
+					if (minRate.ne(0) && minRate.div(100).gt(advisorInfo[currency].bestReturnRate)) {
+						return callback(null);
+					}
 
 					if (config.offerMaxAmount[currency] == "") {
 						amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
@@ -476,13 +475,8 @@ var PoloLender = function(name) {
 					}
 
 					amount = amountToTrade.toFixed(8);
-					minRate = new Big(config.offerMinRate[currency]).div(100.0);
-					brr = new Big(advisorInfo[currency].bestReturnRate);
 					duration = advisorInfo[currency].bestDuration;
 					autoRenew = "0";
-
-					// Lower cap the lending rate the user specified minimum rate.
-					lendingRate = Math.max(brr, minRate);
 
 					poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err) {
