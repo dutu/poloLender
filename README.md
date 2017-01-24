@@ -49,7 +49,7 @@ As it can be seen in the screen-shot below, poloLender Pro, manages to place off
 ### Other bots
 
 Other existing bots are placing loan offers by only looking at a snapshot of the lend-book (active offers available at one point in time).
-To find out why snapshot of the lend-book does not give information on best return rate, I have written a bot that places small lend offers (BTC 0.001) at the top of the lend-book every minutes.
+To find out why snapshot of the lend-book does not give information on best return rate, I have written a bot that places small lend offers at the top of the lend-book every minutes.
 
 As you can see in the screen-shot below, often **the lend book rates vary widely**.
 For this reason, figuring out the rate that gives best result is not obvious.
@@ -140,9 +140,9 @@ Once installed, you'll have access to the heroku command from your command shell
     ```
     $ heroku config:set POLOLENDER_APIKEY='{"key":"V********t","secret":"T***u"}'
     $ heroku config:set POLOLENDER_STARTTIME='2016-02-28T12:27:09+00:00'
-    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}'
-    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}'
-    $ heroku config:set POLOLENDER_MINRATE='{"BTC":"0.02", "ETH":"0", "XMR":"0.015", "XRP":"0"}'
+    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000", "DASH":"10000"}'
+    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000", "DASH":"0"}'
+    $ heroku config:set POLOLENDER_MINRATE='{"BTC":"0.02", "ETH":"0", "XMR":"0.015", "XRP":"0", "DASH":"0"}'
     $ heroku config:set POLOLENDER_REPORTINTERVAL=60
     ```
 
@@ -215,13 +215,13 @@ Bot configuration is done by setting environment variables or by specifying thes
     POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
 
     # Start balance - this is used to calculate and display total profitability
-    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000"}
+    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000", "DASH":"1000"}
 
     # Maximum amounts in your lending account that should be lended by the bot
-    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000"}
+    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000", "DASH":"100000"}
 
     # Minimum lending rate in percent.
-    POLOLENDER_MINRATE={"BTC":"0", "ETH":"0", "XMR":"0", "XRP":"0"}
+    POLOLENDER_MINRATE={"BTC":"0", "ETH":"0", "XMR":"0", "XRP":"0", "DASH":"0"}
 
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30
