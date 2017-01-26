@@ -3,6 +3,11 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.6.0] - 2017-01-24
+
+### Added
+- support for lending Dash (DASH)
+- 
 ## [0.5.0] - 2016-10-11
 
 ### Added
