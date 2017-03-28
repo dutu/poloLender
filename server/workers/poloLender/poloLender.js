@@ -249,7 +249,19 @@ var PoloLender = function(name) {
 		return msg;
 	};
 
-	var execTrade = function() {
+    var apiCallLimitTimeout = function apiCallLimitTimeout() {
+        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
+        var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
+        if (timeout) {
+            debug('API call limit exceeded');
+        } else {
+            apiCallTimes.push(Date.now());
+        }
+
+        return timeout;
+    };
+
+    var execTrade = function() {
 
 		var msgLoanReturned = function (element){
 			var canceledAC, createdAt, created, msg,holdingTimeSeconds;
@@ -329,7 +341,10 @@ var PoloLender = function(name) {
 				currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
 			};
 
-			apiCallTimes.push(Date.now());
+			if (apiCallLimitTimeout()) {
+                return callback(new Error('API call limit exceeded'));
+			}
+
 			poloPrivate.returnActiveLoans(function (err, result) {
 				var newActiveLoans;
 				if (err) {
@@ -359,7 +374,10 @@ var PoloLender = function(name) {
 		};
 
 		var updateActiveOffers = function(callback) {
-            apiCallTimes.push(Date.now());
+            if (apiCallLimitTimeout()) {
+                return callback(new Error('API call limit exceeded'));
+            }
+
             poloPrivate.returnOpenLoanOffers(function (err, result) {
 				if (err) {
 					logger.notice("returnOpenLoanOffers: " + err.message);
@@ -389,7 +407,10 @@ var PoloLender = function(name) {
 		};
 
 		var updateAvailableFunds = function(callback) {
-            apiCallTimes.push(Date.now());
+            if (apiCallLimitTimeout()) {
+                return callback(new Error('API call limit exceeded'));
+            }
+
             poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
 				if (err) {
 					logger.notice("returnAvailableAccountBalances: " + err.message);
@@ -435,7 +456,10 @@ var PoloLender = function(name) {
 								return cb(null);
 							}
 
-                            apiCallTimes.push(Date.now());
+                            if (apiCallLimitTimeout()) {
+                                return cb(new Error('API call limit exceeded'));
+                            }
+
                             poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
 								if (err) {
 									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
@@ -504,7 +528,10 @@ var PoloLender = function(name) {
 						return callback(new Error("NO TRADE"));
 					}
 
-                    apiCallTimes.push(Date.now());
+                    if (apiCallLimitTimeout()) {
+                        return callback(new Error('API call limit exceeded'));
+                    }
+
                     poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err) {
 							logger.notice("createLoanOffer: " + err.message);
@@ -664,7 +691,7 @@ var PoloLender = function(name) {
 			function(err, results) {
 				status.lastRun.speedCount++;
                 apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-				var timeout = Math.max(0, 1100 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
+				var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
                 waitOneMinute = null;
 				setTimeout(execTrade, timeout);
 			});
