@@ -643,7 +643,7 @@ var PoloLender = function(name) {
 			function(err, results) {
 				status.lastRun.speedCount++;
                 apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-				var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]));
+				var timeout = Math.max(0, 1500 - (Date.now() - apiCallTimes[0]));
 				setTimeout(execTrade, timeout);
 			});
 	};
