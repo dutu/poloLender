@@ -27,7 +27,7 @@ var PoloLender = function(name) {
 		activeLoansCount: 0,
 		count: 0,
 		lastRun: {
-			report: moment(0)
+			report: moment(0),
 		},
 		wmr: {}
 	};
