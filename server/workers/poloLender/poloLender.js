@@ -58,6 +58,7 @@ var PoloLender = function(name) {
 	var config = {};
 
 	var apiCallTimes = [];
+	var waitOneMinute = null;
 
 	_.assign(config, configDefault);
 
@@ -333,6 +334,10 @@ var PoloLender = function(name) {
 				var newActiveLoans;
 				if (err) {
 					logger.notice("returnActiveLoans: " + err.message);
+					if (_.includes(err.message, 'throttled')) {
+						waitOneMinute = Date.now();
+					}
+
 					return callback(err);
 				}
 				newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
@@ -358,7 +363,11 @@ var PoloLender = function(name) {
             poloPrivate.returnOpenLoanOffers(function (err, result) {
 				if (err) {
 					logger.notice("returnOpenLoanOffers: " + err.message);
-					return callback(err);
+                    if (_.includes(err.message, 'throttled')) {
+                        waitOneMinute = Date.now();
+                    }
+
+                    return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
 					var newActiveOffers;
@@ -384,7 +393,11 @@ var PoloLender = function(name) {
             poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
 				if (err) {
 					logger.notice("returnAvailableAccountBalances: " + err.message);
-					return callback(err);
+                    if (_.includes(err.message, 'throttled')) {
+                        waitOneMinute = Date.now();
+                    }
+
+                    return callback(err);
 				}
 				currencies.forEach(function (c, i, a) {
 					availableFunds[c] = result.hasOwnProperty("lending") && result.lending.hasOwnProperty(c) ? result.lending[c] : "0";
@@ -426,7 +439,11 @@ var PoloLender = function(name) {
                             poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
 								if (err) {
 									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
-									return cb(err);
+                                    if (_.includes(err.message, 'throttled')) {
+                                        waitOneMinute = Date.now();
+                                    }
+
+                                    return cb(err);
 								}
 								anyCanceledOffer  = true;
 								msg = "OfferCanceled #" + offer.id;
@@ -491,7 +508,11 @@ var PoloLender = function(name) {
                     poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err) {
 							logger.notice("createLoanOffer: " + err.message);
-							return callback(err);
+                            if (_.includes(err.message, 'throttled')) {
+                                waitOneMinute = Date.now();
+                            }
+
+                            return callback(err);
 						}
 						status.offersCount++;
 						var newAO = {
@@ -643,7 +664,8 @@ var PoloLender = function(name) {
 			function(err, results) {
 				status.lastRun.speedCount++;
                 apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-				var timeout = Math.max(0, 2000 - (Date.now() - apiCallTimes[0]));
+				var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - waitOneMinute || 0);
+                waitOneMinute = null;
 				setTimeout(execTrade, timeout);
 			});
 	};
