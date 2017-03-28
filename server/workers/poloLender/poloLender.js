@@ -354,7 +354,7 @@ var PoloLender = function(name) {
 		};
 
 		var updateActiveOffers = function(callback) {
-            apiCallTimes.push(moment());
+            apiCallTimes.push(Date.now());
             poloPrivate.returnOpenLoanOffers(function (err, result) {
 				if (err) {
 					logger.notice("returnOpenLoanOffers: " + err.message);
@@ -380,7 +380,7 @@ var PoloLender = function(name) {
 		};
 
 		var updateAvailableFunds = function(callback) {
-            apiCallTimes.push(moment());
+            apiCallTimes.push(Date.now());
             poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
 				if (err) {
 					logger.notice("returnAvailableAccountBalances: " + err.message);
@@ -422,7 +422,7 @@ var PoloLender = function(name) {
 								return cb(null);
 							}
 
-                            apiCallTimes.push(moment());
+                            apiCallTimes.push(Date.now());
                             poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
 								if (err) {
 									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
@@ -487,7 +487,7 @@ var PoloLender = function(name) {
 						return callback(new Error("NO TRADE"));
 					}
 
-                    apiCallTimes.push(moment());
+                    apiCallTimes.push(Date.now());
                     poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
 						if (err) {
 							logger.notice("createLoanOffer: " + err.message);
@@ -643,7 +643,7 @@ var PoloLender = function(name) {
 			function(err, results) {
 				status.lastRun.speedCount++;
                 apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-				var timeout = Math.max(0, 1500 - (Date.now() - apiCallTimes[0]));
+				var timeout = Math.max(0, 2000 - (Date.now() - apiCallTimes[0]));
 				setTimeout(execTrade, timeout);
 			});
 	};
