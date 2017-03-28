@@ -7,7 +7,7 @@ var async = require ("async");
 var debug = require("debug")("pololender");
 var Bitfinex = require("bitfinex");
 var semver = require("semver");
-var Poloniex = require("./poloniex.js");
+var Poloniex = require("poloniex-api-node");
 var srv = require ("../../core/srv");
 var pjson = require('../../../package.json');
 
