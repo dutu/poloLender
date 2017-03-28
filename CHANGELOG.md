@@ -6,7 +6,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ## [0.6.1] - 2017-03-28
 
 ### Added
-- display status report after successful connection to server
+- API calls throttling to comply with Poloniex limits
 
 ### Changed
 - update dependency on Poloniex API wrapper to correctly show API error message details

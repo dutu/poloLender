@@ -251,7 +251,7 @@ var PoloLender = function(name) {
 
     var apiCallLimitTimeout = function apiCallLimitTimeout() {
         apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-        var timeout = apiCallTimes.length && Math.max(0, 1050 - (Date.now() - apiCallTimes[0])) || 0;
+        var timeout = apiCallTimes.length && Math.max(0, 1070 - (Date.now() - apiCallTimes[0])) || 0;
         if (timeout) {
             debug('API call limit exceeded');
         } else {
