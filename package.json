@@ -1,54 +1,55 @@
 {
-	"name": "poloLenderPro",
-	"version": "0.6.0",
-	"description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
-	"author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
-	"main": "server.js",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/dutu/pololender.git"
-	},
-	"keywords": [
-		"poloniex",
-		"bitcoin",
-		"btc",
-		"etherum",
-		"eth",
-		"lend",
-		"lending",
-		"bot",
-		"automatic",
-		"advisor",
-		"pololender",
-		"xmr",
-		"monero"
-	],
-	"bugs": {
-		"url": "https://github.com/dutu/pololender/issues"
-	},
-	"engines": {
-		"node": "6.x.x",
-		"npm": "3.x.x"
-	},
-	"scripts": {
-		"start": "node server.js"
-	},
-	"dependencies": {
-		"socket.io-client": "^1.4.5",
-		"winston": "^2.1.1",
-		"async": "^1.5.x",
-		"big.js": "*",
-		"moment": "*",
-		"sendgrid": "*",
-		"node-env-file": "^0.1.8",
-		"lodash":"^4.5.1",
-		"debug": "^2.2.0",
-		"bitfinex": "*",
-		"nonce": "^1.0.3",
-		"semver": "5.*.*",
-		"request": "*"
-	},
-	"devDependencies": {
-		"babel-cli": "^6.4.5"
-	  }
+  "name": "poloLenderPro",
+  "version": "0.6.1",
+  "description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
+  "author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
+  "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dutu/pololender.git"
+  },
+  "keywords": [
+    "poloniex",
+    "bitcoin",
+    "btc",
+    "etherum",
+    "eth",
+    "lend",
+    "lending",
+    "bot",
+    "automatic",
+    "advisor",
+    "pololender",
+    "xmr",
+    "monero"
+  ],
+  "bugs": {
+    "url": "https://github.com/dutu/pololender/issues"
+  },
+  "engines": {
+    "node": "^7.7.4",
+    "npm": "^4.1.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "async": "^1.5.x",
+    "big.js": "*",
+    "bitfinex": "*",
+    "debug": "^2.2.0",
+    "lodash": "^4.5.1",
+    "moment": "*",
+    "node-env-file": "^0.1.8",
+    "nonce": "^1.0.3",
+    "poloniex-api-node": "^1.0.1",
+    "request": "*",
+    "semver": "5.*.*",
+    "sendgrid": "*",
+    "socket.io-client": "^1.4.5",
+    "winston": "^2.1.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.4.5"
+  }
 }
