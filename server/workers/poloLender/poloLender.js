@@ -59,6 +59,7 @@ var PoloLender = function(name) {
 
 	var apiCallTimes = [];
 	var waitOneMinute = null;
+	var callsLast100 = [];
 
 	_.assign(config, configDefault);
 
@@ -249,12 +250,23 @@ var PoloLender = function(name) {
 		return msg;
 	};
 
-    var apiCallLimitTimeout = function apiCallLimitTimeout() {
-        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-        var timeout = apiCallTimes.length && Math.max(0, 1070 - (Date.now() - apiCallTimes[0])) || 0;
+    var apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
+        let apiCallTimestamp = function apiCallTimestamp(methodName) {
+            let timeNow = Date.now();
+            let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
+                return timeNow - callTimestamp <= 1000;
+            });
+            debug(`${methodName} timestamp: ${timestamp}. Calls last second: ${callsLastSecond.length}`);
+            callsLast100.push(timeNow);
+            callsLast100.splice(0, apiCallTimes.length - 100);
+        };
+
+        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 1);
+        var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
         if (timeout) {
-            debug('API call limit exceeded');
+            //debug('API call limit exceeded');
         } else {
+            apiCallTimestamp(methodName);
             apiCallTimes.push(Date.now());
         }
 
@@ -341,7 +353,7 @@ var PoloLender = function(name) {
 				currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
 			};
 
-			if (apiCallLimitTimeout()) {
+			if (apiCallLimitTimeout('returnActiveLoans')) {
                 return callback(new Error('API call limit exceeded'));
 			}
 
@@ -374,7 +386,7 @@ var PoloLender = function(name) {
 		};
 
 		var updateActiveOffers = function(callback) {
-            if (apiCallLimitTimeout()) {
+            if (apiCallLimitTimeout('returnOpenLoanOffers')) {
                 return callback(new Error('API call limit exceeded'));
             }
 
@@ -407,7 +419,7 @@ var PoloLender = function(name) {
 		};
 
 		var updateAvailableFunds = function(callback) {
-            if (apiCallLimitTimeout()) {
+            if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
                 return callback(new Error('API call limit exceeded'));
             }
 
@@ -456,7 +468,7 @@ var PoloLender = function(name) {
 								return cb(null);
 							}
 
-                            if (apiCallLimitTimeout()) {
+                            if (apiCallLimitTimeout('cancelLoanOffer')) {
                                 return cb(new Error('API call limit exceeded'));
                             }
 
@@ -528,7 +540,7 @@ var PoloLender = function(name) {
 						return callback(new Error("NO TRADE"));
 					}
 
-                    if (apiCallLimitTimeout()) {
+                    if (apiCallLimitTimeout('createLoanOffer')) {
                         return callback(new Error('API call limit exceeded'));
                     }
 
@@ -689,7 +701,10 @@ var PoloLender = function(name) {
 				}
 			},
 			function(err, results) {
-				status.lastRun.speedCount++;
+				if (!err) {
+                    status.lastRun.speedCount++;
+				}
+
                 apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
 				var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
                 waitOneMinute = null;
