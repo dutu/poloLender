@@ -256,12 +256,12 @@ var PoloLender = function(name) {
             let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
                 return timeNow - callTimestamp <= 1000;
             });
-            debug(`${methodName} timestamp: ${timestamp}. Calls last second: ${callsLastSecond.length}`);
+            debug(`${methodName} timestamp: ${timeNow}. Calls last second: ${callsLastSecond.length}`);
             callsLast100.push(timeNow);
             callsLast100.splice(0, apiCallTimes.length - 100);
         };
 
-        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 1);
+        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 2);
         var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
         if (timeout) {
             //debug('API call limit exceeded');
@@ -596,7 +596,7 @@ var PoloLender = function(name) {
 				logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
 			}
 			if(clientMessage.message) {
-				logger.notice(`${clientMessage.message}`);
+				logger.warning(`${clientMessage.message}`);
 			}
 
 			currencies.forEach(function (c, index, array) {
