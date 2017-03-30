@@ -99,7 +99,7 @@ Running on Heroku is highly recommended to ensure maximum up-time.
 
 1. [Create a Heroku account]([https://signup.heroku.com/dc] "Create a Heroku account") if you don't have one already](http://www.heroku.com)
 
-2. [Download and install the Heroku Toolbelt](https://toolbelt.heroku.com/ "Download and install the Heroku Toolbelt")
+2. [Download and install the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli "Download and install the Heroku CLI")
 Once installed, you'll have access to the heroku command from your command shell.
 
 3. Log into Heroku:
