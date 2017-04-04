@@ -8,10 +8,10 @@ var config = {};
 exports.config = config;
 
 var workers = [];
-exports.config = workers;
+exports.workers = workers;
 
 var io = null;
-exports.config = io;
+exports.io = io;
 
 var logger = require("./logger");
 exports.logger = logger;

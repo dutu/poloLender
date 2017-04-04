@@ -1,22 +1,24 @@
 "use strict";
 
-var _ = require('lodash');
-var Big = require ("big.js");
-var moment = require("moment");
-var async = require ("async");
-var debug = require("debug")("pololender");
-var Bitfinex = require("bitfinex");
-var semver = require("semver");
-var Poloniex = require("poloniex-api-node");
-var srv = require ("../../core/srv");
-var pjson = require('../../../package.json');
+const ioClient = require('socket.io-client');
+const _ = require('lodash');
+const Big = require ("big.js");
+const moment = require("moment");
+const async = require ("async");
+const debug = require("debug")("pololender");
+const Bitfinex = require("bitfinex");
+const semver = require("semver");
+const Poloniex = require("poloniex-api-node");
+const pjson = require('../../../package.json');
+let srv = require ("../../core/srv");
+let io = srv.io;
+
 
 var PoloLender = function(name) {
-	var self = this;
+	const self = this;
 	self.me = name;
 
 	var logger = srv.logger;
-	var io = srv.io;
 	var poloPrivate;
 	var socket;
 
@@ -250,476 +252,486 @@ var PoloLender = function(name) {
 		return msg;
 	};
 
-    var apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
-        let apiCallTimestamp = function apiCallTimestamp(methodName) {
-            let timeNow = Date.now();
-            let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
-                return timeNow - callTimestamp <= 1000;
-            });
-            debug(`${methodName} timestamp: ${timeNow}. Calls last second: ${callsLastSecond.length}`);
-            callsLast100.push(timeNow);
-            callsLast100.splice(0, apiCallTimes.length - 100);
-        };
-
-        apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 2);
-        var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
-        if (timeout) {
-            //debug('API call limit exceeded');
-        } else {
-            apiCallTimestamp(methodName);
-            apiCallTimes.push(Date.now());
-        }
-
-        return timeout;
+  var apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
+    let apiCallTimestamp = function apiCallTimestamp(methodName) {
+      let timeNow = Date.now();
+      let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
+        return timeNow - callTimestamp <= 1000;
+      });
+      debug(`${methodName} timestamp: ${timeNow}. Calls last second: ${callsLastSecond.length}`);
+      callsLast100.push(timeNow);
+      callsLast100.splice(0, apiCallTimes.length - 100);
     };
 
-    var execTrade = function() {
+    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 2);
+    var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
+    if (timeout) {
+        //debug('API call limit exceeded');
+    } else {
+      apiCallTimestamp(methodName);
+      apiCallTimes.push(Date.now());
+    }
 
-		var msgLoanReturned = function (element){
-			var canceledAC, createdAt, created, msg,holdingTimeSeconds;
-			createdAt = moment.utc(element.date);
-			created = createdAt.fromNow();
-			canceledAC = {
-				id: element.id,
-				currency: element.currency,
-				amount: strAR(new Big(element.amount).toFixed(8), 14),
-				rate: new Big(element.rate).toFixed(8),
-				period: element.period,
-				createdAt: createdAt,
-				expires: ""
-			};
-			var holdingTimeInSeconds = moment().diff(createdAt, "seconds");
-			var htHours = Math.floor(holdingTimeInSeconds / 60 /60);
-			var htMin = Math.floor((holdingTimeInSeconds - htHours * 60 *60) / 60);
-			var htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
-			var msgHt = `${htHours}h ${htMin}m ${htSec}s`;
-			msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
-			logger.info(msg);
-		};
+    return timeout;
+  };
 
-		var msgNewCredit = function (element){
-			var newAC, createdAt, expiresAt, expires, msg;
-			createdAt = moment.utc(element.date);
-			expiresAt = moment.utc(element.date).add(element.duration, "days");
-			expires = expiresAt.fromNow();
-			newAC = {
-				id: element.id,
-				currency: element.currency,
-				amount: strAR(new Big(element.amount).toFixed(8), 14),
-				rate: strAR(new Big(element.rate) .toFixed(8), 7),
-				period: element.duration,
-				createdAt: createdAt,
-				expires: expires
-			};
-			msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(120).format("YYYY-MM-DD HH:mm");
-			msg += ", expires " + expires;
-			logger.info(msg);
-		};
+  var execTrade = function() {
 
-		var updateActiveLoans = function(callback) {
-			var updateWithNewActiveLoans = function (newActiveLoans) {
-				var found;
-				var dateNow = Date.now();
-				activeLoans.forEach(function (element, index, array) {
-					found = _.find(newActiveLoans, {id: element.id});
-					if (typeof found === "undefined") {
-						var returnedLoan = {
-							"id": element.id,
-							"date": moment.utc(element.date).toDate(),
-							"currency": element.currency,
-							"rate": element.rate,
-							"duration": element.duration,
-							"returned": dateNow
-						};
-						msgLoanReturned(element);
-						anyChangedLoans[element.currency] = true;
-					}
-				});
-				newActiveLoans.forEach(function (element, index, array) {
-					found = _.find(activeLoans, {id: element.id});
-					if (typeof found === "undefined") {
-						msgNewCredit(element);
-						anyChangedLoans[element.currency] = true;
-						anyNewLoans[element.currency] = true;
-						status.activeLoansCount++;
-					}
-				});
-				activeLoans = newActiveLoans;
+  var msgLoanReturned = function (element){
+    var canceledAC, createdAt, created, msg,holdingTimeSeconds;
+    createdAt = moment.utc(element.date);
+    created = createdAt.fromNow();
+    canceledAC = {
+      id: element.id,
+      currency: element.currency,
+      amount: strAR(new Big(element.amount).toFixed(8), 14),
+      rate: new Big(element.rate).toFixed(8),
+      period: element.period,
+      createdAt: createdAt,
+      expires: ""
+    };
+    var holdingTimeInSeconds = moment().diff(createdAt, "seconds");
+    var htHours = Math.floor(holdingTimeInSeconds / 60 /60);
+    var htMin = Math.floor((holdingTimeInSeconds - htHours * 60 *60) / 60);
+    var htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
+    var msgHt = `${htHours}h ${htMin}m ${htSec}s`;
+    msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
+    logger.info(msg);
+  };
 
-				var currenciesNewActiveLoans = [];
-				newActiveLoans.forEach(function (element, index, array) {
-					currenciesNewActiveLoans.push(element.currency)
-				});
-				currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
-			};
+  var msgNewCredit = function (element){
+    var newAC, createdAt, expiresAt, expires, msg;
+    createdAt = moment.utc(element.date);
+    expiresAt = moment.utc(element.date).add(element.duration, "days");
+    expires = expiresAt.fromNow();
+    newAC = {
+      id: element.id,
+      currency: element.currency,
+      amount: strAR(new Big(element.amount).toFixed(8), 14),
+      rate: strAR(new Big(element.rate) .toFixed(8), 7),
+      period: element.duration,
+      createdAt: createdAt,
+      expires: expires
+    };
+    msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(120).format("YYYY-MM-DD HH:mm");
+    msg += ", expires " + expires;
+    logger.info(msg);
+  };
 
-			if (apiCallLimitTimeout('returnActiveLoans')) {
-                return callback(new Error('API call limit exceeded'));
-			}
+  var updateActiveLoans = function(callback) {
+    var updateWithNewActiveLoans = function (newActiveLoans) {
+      var found;
+      var dateNow = Date.now();
+      activeLoans.forEach(function (element, index, array) {
+        found = _.find(newActiveLoans, {id: element.id});
+        if (typeof found === "undefined") {
+          var returnedLoan = {
+            "id": element.id,
+            "date": moment.utc(element.date).toDate(),
+            "currency": element.currency,
+            "rate": element.rate,
+            "duration": element.duration,
+            "returned": dateNow
+          };
+          msgLoanReturned(element);
+          anyChangedLoans[element.currency] = true;
+        }
+      });
+      newActiveLoans.forEach(function (element, index, array) {
+        found = _.find(activeLoans, {id: element.id});
+        if (typeof found === "undefined") {
+          msgNewCredit(element);
+          anyChangedLoans[element.currency] = true;
+          anyNewLoans[element.currency] = true;
+          status.activeLoansCount++;
+        }
+      });
+      activeLoans = newActiveLoans;
 
-			poloPrivate.returnActiveLoans(function (err, result) {
-				var newActiveLoans;
-				if (err) {
-					logger.notice("returnActiveLoans: " + err.message);
-					if (_.includes(err.message, 'throttled')) {
-						waitOneMinute = Date.now();
-					}
+      var currenciesNewActiveLoans = [];
+      newActiveLoans.forEach(function (element, index, array) {
+        currenciesNewActiveLoans.push(element.currency)
+      });
+      currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
+    };
 
-					return callback(err);
-				}
-				newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
-				updateWithNewActiveLoans(newActiveLoans);
-				// update wmr
-				currencies.forEach(function (c, index, array) {
-					var sum = new Big(0),
-						sumOfProd = new Big(0);
-					activeLoans.forEach(function (element, index, array) {
-						if (element.currency.toUpperCase() === c.toUpperCase()) {
-							sum = sum.plus(element.amount);
-							sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
-						}
-					});
-					status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
-				});
-				callback(null);
-			});
-		};
+    if (apiCallLimitTimeout('returnActiveLoans')) {
+              return callback(new Error('API call limit exceeded'));
+    }
 
-		var updateActiveOffers = function(callback) {
-            if (apiCallLimitTimeout('returnOpenLoanOffers')) {
-                return callback(new Error('API call limit exceeded'));
+    poloPrivate.returnActiveLoans(function (err, result) {
+      var newActiveLoans;
+      if (err) {
+        logger.notice("returnActiveLoans: " + err.message);
+        if (_.includes(err.message, 'throttled')) {
+          waitOneMinute = Date.now();
+        }
+
+        return callback(err);
+      }
+      newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
+      updateWithNewActiveLoans(newActiveLoans);
+      // update wmr
+      currencies.forEach(function (c, index, array) {
+        var sum = new Big(0),
+          sumOfProd = new Big(0);
+        activeLoans.forEach(function (element, index, array) {
+          if (element.currency.toUpperCase() === c.toUpperCase()) {
+            sum = sum.plus(element.amount);
+            sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
+          }
+        });
+        status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
+      });
+      callback(null);
+    });
+  };
+
+  var updateActiveOffers = function(callback) {
+          if (apiCallLimitTimeout('returnOpenLoanOffers')) {
+              return callback(new Error('API call limit exceeded'));
+          }
+
+          poloPrivate.returnOpenLoanOffers(function (err, result) {
+      if (err) {
+        logger.notice("returnOpenLoanOffers: " + err.message);
+                  if (_.includes(err.message, 'throttled')) {
+                      waitOneMinute = Date.now();
+                  }
+
+                  return callback(err);
+      }
+      currencies.forEach(function (c, i, a) {
+        var newActiveOffers;
+        newActiveOffers = typeof result[c] !== "undefined" ? result[c] : [];
+        var found,
+          newOffers = false;
+        newActiveOffers.forEach(function (element, index, array) {
+          found = _.find(activeOffers[c], {id: element.id});
+          if (typeof found === "undefined") {
+            newOffers = true;
+          }
+        });
+        activeOffers[c] = newActiveOffers;
+        if (newOffers) {
+        }
+      });
+      callback(null);
+    });
+  };
+
+  var updateAvailableFunds = function(callback) {
+          if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
+              return callback(new Error('API call limit exceeded'));
+          }
+
+          poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
+      if (err) {
+        logger.notice("returnAvailableAccountBalances: " + err.message);
+                  if (_.includes(err.message, 'throttled')) {
+                      waitOneMinute = Date.now();
+                  }
+
+                  return callback(err);
+      }
+      currencies.forEach(function (c, i, a) {
+        availableFunds[c] = result.hasOwnProperty("lending") && result.lending.hasOwnProperty(c) ? result.lending[c] : "0";
+      });
+      callback(null);
+    });
+  };
+
+  var cancelHighOffers = function (callback) {
+    async.forEachOfSeries(activeOffers,
+      // for each currency in activeOffers
+      function(activeOffersOneCurrency, currency, callback) {
+        async.forEachOfSeries(activeOffersOneCurrency,
+          //for each offer in the array (for respective currency)
+          function (offer, index, cb) {
+            var msg, offerRate;
+            var amountTrading;
+
+            offerRate = new Big(offer.rate);
+            if (offerRate.eq(advisorInfo[currency].bestReturnRate)){
+              // lend offers is on correct price
+              return cb(null);
             }
 
-            poloPrivate.returnOpenLoanOffers(function (err, result) {
-				if (err) {
-					logger.notice("returnOpenLoanOffers: " + err.message);
-                    if (_.includes(err.message, 'throttled')) {
-                        waitOneMinute = Date.now();
-                    }
-
-                    return callback(err);
-				}
-				currencies.forEach(function (c, i, a) {
-					var newActiveOffers;
-					newActiveOffers = typeof result[c] !== "undefined" ? result[c] : [];
-					var found,
-						newOffers = false;
-					newActiveOffers.forEach(function (element, index, array) {
-						found = _.find(activeOffers[c], {id: element.id});
-						if (typeof found === "undefined") {
-							newOffers = true;
-						}
-					});
-					activeOffers[c] = newActiveOffers;
-					if (newOffers) {
-					}
-				});
-				callback(null);
-			});
-		};
-
-		var updateAvailableFunds = function(callback) {
-            if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
-                return callback(new Error('API call limit exceeded'));
+            if (!(config.offerMaxAmount[currency] == "")) {
+              // only if we are reserving any amount check if we are already trading more then offerMaxAmount
+              amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
+              if(amountTrading.gte(config.offerMaxAmount[currency])) {
+                // we are already trading higher then offerMaxAmount
+                return cb(null);
+              }
+            }
+            if (process.env[self.me+"_NOTRADE"] === "true") {
+              logger.notice("cancelHighOffers: NO TRADE");
+              return cb(null);
             }
 
-            poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
-				if (err) {
-					logger.notice("returnAvailableAccountBalances: " + err.message);
-                    if (_.includes(err.message, 'throttled')) {
-                        waitOneMinute = Date.now();
-                    }
+                          if (apiCallLimitTimeout('cancelLoanOffer')) {
+                              return cb(new Error('API call limit exceeded'));
+                          }
 
-                    return callback(err);
-				}
-				currencies.forEach(function (c, i, a) {
-					availableFunds[c] = result.hasOwnProperty("lending") && result.lending.hasOwnProperty(c) ? result.lending[c] : "0";
-				});
-				callback(null);
-			});
-		};
+                          poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
+              if (err) {
+                logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
+                                  if (_.includes(err.message, 'throttled')) {
+                                      waitOneMinute = Date.now();
+                                  }
 
-		var cancelHighOffers = function (callback) {
-			async.forEachOfSeries(activeOffers,
-				// for each currency in activeOffers
-				function(activeOffersOneCurrency, currency, callback) {
-					async.forEachOfSeries(activeOffersOneCurrency,
-						//for each offer in the array (for respective currency)
-						function (offer, index, cb) {
-							var msg, offerRate;
-							var amountTrading;
+                                  return cb(err);
+              }
+              anyCanceledOffer  = true;
+              msg = "OfferCanceled #" + offer.id;
+              msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
+              msg += " at " + msgRate(offer.rate);
+              msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
+              logger.info(msg);
+              return cb(null);
+            });
+          },
+          function (err) {
+            callback(err);
+          });
+      },
+      function (err){
+        callback(err);
+      });
+  };
 
-							offerRate = new Big(offer.rate);
-							if (offerRate.eq(advisorInfo[currency].bestReturnRate)){
-								// lend offers is on correct price
-								return cb(null);
-							}
+  var postOffers = function (callback) {
+    async.forEachOfSeries(currencies,
+      // for each currency
+      function(currency, index, callback) {
+        var amountTrading, amountToTrade, amount, amountMaxToTrade,
+          duration, autoRenew, lendingRate, minRate;
 
-							if (!(config.offerMaxAmount[currency] == "")) {
-								// only if we are reserving any amount check if we are already trading more then offerMaxAmount
-								amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-								if(amountTrading.gte(config.offerMaxAmount[currency])) {
-									// we are already trading higher then offerMaxAmount
-									return cb(null);
-								}
-							}
-							if (process.env[self.me+"_NOTRADE"] === "true") {
-								logger.notice("cancelHighOffers: NO TRADE");
-								return cb(null);
-							}
+        if (config.offerMaxAmount[currency] == "") {
+          amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
+        }
+        else {
+          amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
+          amountMaxToTrade = new Big(config.offerMaxAmount[currency]).minus(amountTrading);
 
-                            if (apiCallLimitTimeout('cancelLoanOffer')) {
-                                return cb(new Error('API call limit exceeded'));
-                            }
+          if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
+            amountToTrade = new Big(availableFunds[currency]);
+          } else {
+            amountToTrade = amountMaxToTrade;
+          }
+        }
 
-                            poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
-								if (err) {
-									logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
-                                    if (_.includes(err.message, 'throttled')) {
-                                        waitOneMinute = Date.now();
-                                    }
+        if (amountToTrade.lt(config.minOrderSize)) {
+          return callback(null);
+        }
 
-                                    return cb(err);
-								}
-								anyCanceledOffer  = true;
-								msg = "OfferCanceled #" + offer.id;
-								msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
-								msg += " at " + msgRate(offer.rate);
-								msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
-								logger.info(msg);
-								return cb(null);
-							});
-						},
-						function (err) {
-							callback(err);
-						});
-				},
-				function (err){
-					callback(err);
-				});
-		};
+        amount = amountToTrade.toFixed(8);
+        lendingRate = advisorInfo[currency].bestReturnRate;
+        duration = advisorInfo[currency].bestDuration;
+        autoRenew = "0";
 
-		var postOffers = function (callback) {
-			async.forEachOfSeries(currencies,
-				// for each currency
-				function(currency, index, callback) {
-					var amountTrading, amountToTrade, amount, amountMaxToTrade,
-						duration, autoRenew, lendingRate, minRate;
+        // Do not offer loans the the best return rate is less than the specified min rate.
+        minRate = new Big(config.offerMinRate[currency]);
+        if (minRate.div(100).gt(lendingRate)) {
+          return callback(null);
+        }
 
-					if (config.offerMaxAmount[currency] == "") {
-						amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
-					}
-					else {
-						amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-						amountMaxToTrade = new Big(config.offerMaxAmount[currency]).minus(amountTrading);
+        if (process.env[self.me+"_NOTRADE"] === "true") {
+          logger.notice("Post offer: NO TRADE");
+          return callback(new Error("NO TRADE"));
+        }
 
-						if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
-							amountToTrade = new Big(availableFunds[currency]);
-						} else {
-							amountToTrade = amountMaxToTrade;
-						}
-					}
+                  if (apiCallLimitTimeout('createLoanOffer')) {
+                      return callback(new Error('API call limit exceeded'));
+                  }
 
-					if (amountToTrade.lt(config.minOrderSize)) {
-						return callback(null);
-					}
+                  poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
+          if (err) {
+            logger.notice("createLoanOffer: " + err.message);
+                          if (_.includes(err.message, 'throttled')) {
+                              waitOneMinute = Date.now();
+                          }
 
-					amount = amountToTrade.toFixed(8);
-					lendingRate = advisorInfo[currency].bestReturnRate;
-					duration = advisorInfo[currency].bestDuration;
-					autoRenew = "0";
+                          return callback(err);
+          }
+          status.offersCount++;
+          var newAO = {
+            id: result.orderID,
+            currency: currency,
+            amount: strAR(new Big(amount).toFixed(8), 14),
+            rate: strAR(new Big(lendingRate).toFixed(8), 7),
+            period: duration
+          };
+          var msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
+          logger.info(msg);
+          callback(null);
+        });
+      },
+      function (err){
+        callback(err);
+      });
+  };
 
-					// Do not offer loans the the best return rate is less than the specified min rate.
-					minRate = new Big(config.offerMinRate[currency]);
-					if (minRate.div(100).gt(lendingRate)) {
-						return callback(null);
-					}
+  var report = function() {
+    // execute every x minutes
+    var now = moment();
+    var duration = now.diff(status.lastRun.report, "minutes");
+    if (duration < config.reportEveryMinutes) {
+      return;
+    }
+    var speed = new Big(status.lastRun.speedCount).div(duration).toFixed(2);
+    status.lastRun.report = now;
+    status.lastRun.speedCount = 0;
 
-					if (process.env[self.me+"_NOTRADE"] === "true") {
-						logger.notice("Post offer: NO TRADE");
-						return callback(new Error("NO TRADE"));
-					}
+    var msg, since;
+    status.offersCount = status.offersCount || status.activeLoansCount;
 
-                    if (apiCallLimitTimeout('createLoanOffer')) {
-                        return callback(new Error('API call limit exceeded'));
-                    }
+    // since = startDate.fromNow(true);
+    since = now.diff(config.startDate, "days");
+    msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
+    msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
+    msg += ` • speed: ${speed}/min`;
+    logger.notice(`${msg}`);
 
-                    poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
-						if (err) {
-							logger.notice("createLoanOffer: " + err.message);
-                            if (_.includes(err.message, 'throttled')) {
-                                waitOneMinute = Date.now();
-                            }
+    if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+      logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+    }
+    if(clientMessage.message) {
+      logger.warning(`${clientMessage.message}`);
+    }
 
-                            return callback(err);
-						}
-						status.offersCount++;
-						var newAO = {
-							id: result.orderID,
-							currency: currency,
-							amount: strAR(new Big(amount).toFixed(8), 14),
-							rate: strAR(new Big(lendingRate).toFixed(8), 7),
-							period: duration
-						};
-						var msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
-						logger.info(msg);
-						callback(null);
-					});
-				},
-				function (err){
-					callback(err);
-				});
-		};
+    currencies.forEach(function (c, index, array) {
+      var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
+      var minutes = now.diff(config.restartTime, "minutes", true);
+      var activeLoansCount = 0;
+      var activeLoansAmount = new Big(0);
+      activeLoans.forEach(function (l, index, array) {
+        if (l.currency === c) {
+          activeLoansCount++;
+          activeLoansAmount = activeLoansAmount.plus(l.amount);
+        }
+      });
+      var reserved, offerMax, available;
+      try {
+        offerMax = Number(config.offerMaxAmount[c]);
+        if (parseFloat(depositFunds[c]) < offerMax) {
+          reserved = "0";
+          available = availableFunds[c]
+        }
+        else {
+          reserved = new Big(depositFunds[c]).minus(offerMax).toFixed(8);
+          available = new Big(availableFunds[c]).minus(reserved).toFixed(8);
+        }
+      }
+      catch (err) {
+        reserved = "0";
+        available = availableFunds[c];
+      }
+      bfxPublic.ticker("btcusd", function (err, result) {
+        if(err) {
+          logger.notice("bfxPublic.ticker: " + err.message);
+          return;
+        }
+        var rateBTCUSD = new Big(result.last_price).toString();
+        msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
+        //msg += `Start: ${journalEntry.balance[c]}, `
+        msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        if(c === "BTC")
+          msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+        var wmrMsg = msgRate(status.wmr[c]);
+        var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+        msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
+        logger.notice(msg);
+      });
+    });
+  };
 
-		var report = function() {
-			// execute every x minutes
-			var now = moment();
-			var duration = now.diff(status.lastRun.report, "minutes");
-			if (duration < config.reportEveryMinutes) {
-				return;
-			}
-			var speed = new Big(status.lastRun.speedCount).div(duration).toFixed(2);
-			status.lastRun.report = now;
-			status.lastRun.speedCount = 0;
+  async.series({
+      updateActiveLoans: function(callback){
+        updateActiveLoans(function (err) {
+          callback(err, err && err.message || "OK");
+        });
+      },
+      updateActiveOffers: function(callback) {
+        updateActiveOffers(function (err) {
+          callback(err, err && err.message || "OK");
+        });
+      },
+      updateBalances: function(callback) {
+        updateAvailableFunds(function (err) {
+          if (err) {
+            return callback(err, err.message);
+          }
+          currencies.forEach(function (c, index, array) {
+            var amountActiveOffers = new Big(0);
+            var amountActiveLoans = new Big(0);
+            if (_.isArray(activeOffers[c]))
+              activeOffers[c].forEach(function (o, index, array) {
+                amountActiveOffers = amountActiveOffers.plus(o.amount);
+              });
+            activeLoans.forEach(function (l, index, array) {
+              if (l.currency == c)
+                amountActiveLoans = amountActiveLoans.plus(l.amount);
+            });
+            depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c]).toFixed(8);
+          });
+          callback(null, "OK");
+        });
+      },
+      report: function (callback) {
+        report();
+        callback(null, "OK");
+      },
+      cancelHighOffers: function(callback) {          // cancel offers if price is too high
+        cancelHighOffers(function (err){
+          callback(err, err && err.message || "OK");
+        });
+      },
+      updateAvailableFunds: function(callback) {
+        if (!anyCanceledOffer)
+          return callback(null, "OK");
+        updateAvailableFunds(function (err) {
+          anyCanceledOffer = false;
+          callback(err, err && err.message || "OK");
+        });
+      },
+      postOffers: function(callback) {
+        postOffers(function (err){
+          callback(err, err && err.message || "OK");
+        });
+      }
+    },
+    function(err, results) {
+      if (!err) {
+                  status.lastRun.speedCount++;
+      }
 
-			var msg, since;
-			status.offersCount = status.offersCount || status.activeLoansCount;
+              apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
+      var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
+              waitOneMinute = null;
+      setTimeout(execTrade, timeout);
+    });
+};
 
-			// since = startDate.fromNow(true);
-			since = now.diff(config.startDate, "days");
-			msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
-			msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
-			msg += ` • speed: ${speed}/min`;
-			logger.notice(`${msg}`);
+  const onBrowserConnection = function onBrowserConnection(client) {
+    let data = {
+      test: 'bau',
+    };
+    client.emit('dataUpdate', data);
+  };
 
-			if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-				logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
-			}
-			if(clientMessage.message) {
-				logger.warning(`${clientMessage.message}`);
-			}
 
-			currencies.forEach(function (c, index, array) {
-				var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
-				var minutes = now.diff(config.restartTime, "minutes", true);
-				var activeLoansCount = 0;
-				var activeLoansAmount = new Big(0);
-				activeLoans.forEach(function (l, index, array) {
-					if (l.currency === c) {
-						activeLoansCount++;
-						activeLoansAmount = activeLoansAmount.plus(l.amount);
-					}
-				});
-				var reserved, offerMax, available;
-				try {
-					offerMax = Number(config.offerMaxAmount[c]);
-					if (parseFloat(depositFunds[c]) < offerMax) {
-						reserved = "0";
-						available = availableFunds[c]
-					}
-					else {
-						reserved = new Big(depositFunds[c]).minus(offerMax).toFixed(8);
-						available = new Big(availableFunds[c]).minus(reserved).toFixed(8);
-					}
-				}
-				catch (err) {
-					reserved = "0";
-					available = availableFunds[c];
-				}
-				bfxPublic.ticker("btcusd", function (err, result) {
-					if(err) {
-						logger.notice("bfxPublic.ticker: " + err.message);
-						return;
-					}
-					var rateBTCUSD = new Big(result.last_price).toString();
-					msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
-					//msg += `Start: ${journalEntry.balance[c]}, `
-					msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-					if(c === "BTC")
-						msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
-					var wmrMsg = msgRate(status.wmr[c]);
-					var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
-					msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
-					logger.notice(msg);
-				});
-			});
-		};
-
-		async.series({
-				updateActiveLoans: function(callback){
-					updateActiveLoans(function (err) {
-						callback(err, err && err.message || "OK");
-					});
-				},
-				updateActiveOffers: function(callback) {
-					updateActiveOffers(function (err) {
-						callback(err, err && err.message || "OK");
-					});
-				},
-				updateBalances: function(callback) {
-					updateAvailableFunds(function (err) {
-						if (err) {
-							return callback(err, err.message);
-						}
-						currencies.forEach(function (c, index, array) {
-							var amountActiveOffers = new Big(0);
-							var amountActiveLoans = new Big(0);
-							if (_.isArray(activeOffers[c]))
-								activeOffers[c].forEach(function (o, index, array) {
-									amountActiveOffers = amountActiveOffers.plus(o.amount);
-								});
-							activeLoans.forEach(function (l, index, array) {
-								if (l.currency == c)
-									amountActiveLoans = amountActiveLoans.plus(l.amount);
-							});
-							depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c]).toFixed(8);
-						});
-						callback(null, "OK");
-					});
-				},
-				report: function (callback) {
-					report();
-					callback(null, "OK");
-				},
-				cancelHighOffers: function(callback) {          // cancel offers if price is too high
-					cancelHighOffers(function (err){
-						callback(err, err && err.message || "OK");
-					});
-				},
-				updateAvailableFunds: function(callback) {
-					if (!anyCanceledOffer)
-						return callback(null, "OK");
-					updateAvailableFunds(function (err) {
-						anyCanceledOffer = false;
-						callback(err, err && err.message || "OK");
-					});
-				},
-				postOffers: function(callback) {
-					postOffers(function (err){
-						callback(err, err && err.message || "OK");
-					});
-				}
-			},
-			function(err, results) {
-				if (!err) {
-                    status.lastRun.speedCount++;
-				}
-
-                apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-				var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
-                waitOneMinute = null;
-				setTimeout(execTrade, timeout);
-			});
-	};
-
-	self.start = function() {
+  self.start = function() {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
 		setConfig();
 		debug("Starting...");
 		poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
 
-		socket = require('socket.io-client')(`http://${config.advisor}/`);
+    srv.io.on('connection', onBrowserConnection);
+
+    socket = ioClient(`http://${config.advisor}/`);
 		socket.on('connect', function () {
 			logger.info(`Connected to server ${config.advisor}`);
 		});
@@ -772,6 +784,8 @@ var PoloLender = function(name) {
 				logger.error(`Cannot parse clientMessage ${smsg}`);
 			}
 		});
+
+
 		setTimeout(execTrade, 1);
 	};
 
