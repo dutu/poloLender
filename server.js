@@ -10,7 +10,6 @@ const path  = require('path');
 const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
 const os = require('os');
-const svgFallback = require('express-svg-fallback');
 
 let Workers = require('./server/workers/workers');
 let srv = require ('./server/core/srv');
