@@ -1,5 +1,6 @@
 let aboutView = {
   id: 'about',
+  autowidth: true,
   template: 'http->/about.html',
-  scroll: 'xy',
+  scroll: 'y',
 };

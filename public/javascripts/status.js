@@ -1,4 +1,5 @@
 let poloLenderApp = {
+  lastClientMessage: '',
   runningClientSemver: '',
   restartedAt: '',
 };
@@ -17,33 +18,6 @@ let margin = -6;
 let ok = 0;
 let nok = 0;
 
-let advisorConnectionConfig = {
-  id: 'advisorConnection',
-  autoheight: true, borderless: true, type: 'clean',
-  margin: margin,
-  padding: 0,
-  rows: [
-    {
-      autoheight: true, borderless: true, type: 'clean',
-      cols: [
-        { width: width_col1, autoheight: true, template: 'Running at:' },
-        { id: 'advisorConnection_server', width: width_col2,
-          template: function (obj) { return `<b>${advisor.server}</b>`; }
-        },
-      ]
-    },
-    {
-      autoheight: true, borderless: true, type: 'clean',
-      cols: [
-        { width: width_col1, autoheight: true, template: 'Connection status:' },
-        { id: 'advisorConnection_status', width: width_col2,
-          template: function (obj) { return `<b>${poloLenderAppConnection === 'connected' && advisor.connection || 'unknown'}</b>`; },
-        },
-      ]
-    },
-  ],
-};
-
 let poloLenderAppConfig = {
   id: 'poloLenderApp',
   autoheight: true, borderless: true, type: 'clean',
@@ -55,7 +29,9 @@ let poloLenderAppConfig = {
       cols: [
         { width: width_col1, autoheight: true, template: 'Version:' },
         { id: 'poloLenderApp_version', width: width_col2,
-          template: function (obj) { return `<b>${poloLenderApp.runningClientSemver}</b>`; },
+          template: function (obj) {
+            return `<b>${poloLenderApp.runningClientSemver}</b> ${poloLenderApp.lastClientMessage}`;
+          },
         },
       ]
     },
@@ -88,9 +64,10 @@ let poloLenderAppConfig = {
                 ok++;
               }
             }
-            if (ago >= 100 && ago < 3000) activityHtml = `<i class="fa fa-circle-o"></i>`;
+            const banIconTimeoutMs = 5000;
+            if (ago >= 100 && ago < banIconTimeoutMs) activityHtml = `<i class="fa fa-circle-o"></i>`;
             // activityHtml += ` (OK ${(ok/(ok+nok)*100).toFixed(0)}%)`;
-            if (ago >= 3000) {
+            if (ago >= banIconTimeoutMs) {
               activityHtml = `<span style="color:red"><i class="fa fa-ban"></i></span>`;
               if (obj.apiCallInfo.timestamp) {
                 activityHtml += ` (last seen ${moment(obj.apiCallInfo.timestamp).fromNow(false)})`;
@@ -99,6 +76,33 @@ let poloLenderAppConfig = {
             return activityHtml;
           },
           data: { apiCallInfo: { error: null, timestamp: 0} },
+        },
+      ]
+    },
+  ],
+};
+
+let advisorConnectionConfig = {
+  id: 'advisorConnection',
+  autoheight: true, borderless: true, type: 'clean',
+  margin: margin,
+  padding: 0,
+  rows: [
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
+        { width: width_col1, autoheight: true, template: 'Running at:' },
+        { id: 'advisorConnection_server', width: width_col2,
+          template: function (obj) { return `<b>${advisor.server}</b>`; }
+        },
+      ]
+    },
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
+        { width: width_col1, autoheight: true, template: 'Connection status:' },
+        { id: 'advisorConnection_status', width: width_col2,
+          template: function (obj) { return `<b>${poloLenderAppConnection === 'connected' && advisor.connection || 'unknown'}</b>`; },
         },
       ]
     },
@@ -200,6 +204,9 @@ let updateAdvisorConnection = function updateAdvisorConnection(data) {
 };
 
 let updateClientMessage = function updateClientMessage(data) {
+  poloLenderApp.lastClientSemver = _.has(data, 'clientMessage.lastClientSemver') && data.clientMessage.lastClientSemver || null;
+  poloLenderApp.lastClientMessage = _.has(data, 'clientMessage.lastClientMessage') && data.clientMessage.lastClientMessage || '';
+  $$('poloLenderApp_version').refresh();
   $$('clientMessage').parse({ message: _.has(data, 'clientMessage.message') && data.clientMessage.message || ''});
 };
 

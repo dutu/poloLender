@@ -9,7 +9,6 @@ const debug = require('debug')('pololender');
 const Bitfinex = require('bitfinex');
 const semver = require('semver');
 const Poloniex = require('poloniex-api-node');
-const os = require('os');
 const pjson = require('../../../package.json');
 let srv = require ('../../core/srv');
 let io = srv.io;
@@ -35,6 +34,7 @@ const PoloLender = function(name) {
 		},
 		wmr: {}
 	};
+	let lastClientMessage = '';
 	var anyCanceledOffer,
 		anyNewLoans = {};
 	var activeLoans = [],
@@ -609,8 +609,9 @@ const PoloLender = function(name) {
     if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
       logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
     }
+
     if(clientMessage.message) {
-      logger.warning(`${clientMessage.message}`);
+      logger.info(`${clientMessage.message}`);
     }
 
     currencies.forEach(function (c, index, array) {
@@ -730,7 +731,6 @@ const PoloLender = function(name) {
     let data = {
       poloLenderApp: {
         runningClientSemver: pjson.version,
-        runningOnServer: os.hostname(),
         restartedAt: status.restarted,
       }
     };
@@ -841,12 +841,17 @@ const PoloLender = function(name) {
 			debug(`received send:clientMessage = ${smsg}`);
 			var loanOfferParameters;
 			if(_.isObject(msg)) {
-				clientMessage = {
+        clientMessage = {
 					time: msg.time,
 					message: msg.message,
-					lastClientSemver: msg.lastClientSemver
-				};
-				browserData.clientMessage = clientMessage;
+					lastClientSemver: msg.lastClientSemver,
+        };
+        if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+          clientMessage.lastClientMessage = ` - available ${clientMessage.lastClientSemver}. Please update your app!`;
+        } else {
+          clientMessage.lastClientMessage = '';
+        }
+        browserData.clientMessage = clientMessage;
 			} else {
 				logger.error(`Cannot parse clientMessage ${smsg}`);
 				browserData.clientMessage = '';
