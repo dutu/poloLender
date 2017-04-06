@@ -7,6 +7,7 @@ poloLender Pro uses advanced statistical calculation in order to maximize profit
 The application code is shared on github at https://github.com/dutu/poloLender/
 
 ### Contents
+* [What's new](#whats-mew)
 * [How it works](#how-it-works)
 	* Why using statistical calculation is more efficient
 * [Setting up the application](#setting-up-the-application)
@@ -18,6 +19,15 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 * [poloLender Pro configuration](#ploLender-pro-configuration)
 * [FAQ](#faq)
 * [License](#license)
+
+
+# What's new
+
+A Web interface has been implemented (starting with v0.7.0).
+
+Preview:
+![](http://storage2.static.itmages.com/i/17/0406/h_1491488764_5621703_28a89befdf.png)
+
 
 
 # How it works
@@ -76,8 +86,8 @@ Running on Heroku is highly recommended to ensure maximum up-time.
 3. Clone `poloLender` application source code from github:
 
     ```
-    $ git clone https://github.com/dutu/poloLender.git
-    $ cd poloLender
+    git clone https://github.com/dutu/poloLender.git
+    cd poloLender
     ```
 4. Install the dependencies, preparing your system for running the app locally:
 
@@ -97,34 +107,34 @@ Running on Heroku is highly recommended to ensure maximum up-time.
 ## Running on Heroku
 
 
-1. [Create a Heroku account]([https://signup.heroku.com/dc] "Create a Heroku account") if you don't have one already](http://www.heroku.com)
+1. [Create a Heroku account]([https://id.heroku.com/signup/login] "Create a Heroku account") if you don't have one already
 
-2. [Download and install the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli "Download and install the Heroku CLI")
-Once installed, you'll have access to the heroku command from your command shell.
+2. [Download and install the Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli "Download and install the Heroku CLI").
+Once installed, you'll have access to the heroku command from your command line.
 
 3. Log into Heroku:
 
     ```
-    $ heroku login
+    heroku login
     ```
 
 4. Clone `poloLender` application source code from github:
 
     ```
-    $ git clone https://github.com/dutu/poloLender.git
-    $ cd poloLender
+    git clone https://github.com/dutu/poloLender.git
+    cd poloLender
     ```
 5. Create an app on Heroku and deploy the code
 
     ```
-    $ heroku create
-    $ git push heroku master
-    $ heroku ps:scale web=0 poloLender=0
+    heroku create
+    git push heroku master
+    heroku ps:scale web=0
     ```
 
 6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
     ```
-    $ heroku addons:create papertrail
+    heroku addons:create papertrail
     ```
 
     Note: To help with abuse prevention, Heroku requires account verification for provisioning an add-on . If your account has not been verified, you will be directed to visit the verification site.
@@ -132,7 +142,7 @@ Once installed, you'll have access to the heroku command from your command shell
 
 7. Open the papertrail console to see the log messages.
     ```
-    $ heroku addons:open papertrail
+    heroku addons:open papertrail
     ```
 > Note: Keep the papertrail console open to monitor progress
 
@@ -148,10 +158,15 @@ Once installed, you'll have access to the heroku command from your command shell
 
 9. Start the application
     ```
-    heroku ps:scale poloLender=1
+    heroku ps:scale web=1
     ```
 
-10. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
+10. Visit the app in our browser
+    ```
+    heroku open
+    ```
+
+11. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
 > **Note**: By default the Heroku applications run on Free dyno. Free dyno sleeps after a period of activity. Please see https://devcenter.heroku.com/articles/free-dyno-hours#usage for details. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing
 
 
@@ -163,19 +178,19 @@ Updating the application when poloLender code is updated on github
 
 1. Stop the poloLender application with `CTRL+C`
 
-3. Update the local clone from github
+2. Update the local clone from github
     ```
-    $ cd poloLender
-    $ git pull origin master
+    cd poloLender
+    git pull origin master
     ```
 
-4. Update dependencies:
+3. Update dependencies:
 
     ```
     npm update
     ```
 
-5. Start the app locally:
+4. Start the app locally:
 
     ```
     node server.js
@@ -188,18 +203,18 @@ Updating the application when poloLender code is updated on github
 
 1. Update the local clone from github
     ```
-    $ cd poloLender
-    $ git pull origin master
+    cd poloLender
+    git pull origin master
     ```
 
 2. Open the papertrail console to see the log messages
     ```
-    $ heroku addons:open papertrail
+    heroku addons:open papertrail
     ```
 
 3. Deploy updated code to heroku
     ```
-    $ git push heroku master
+    git push heroku master
     ```
 The application will restart automatically with the newly deployed code
 

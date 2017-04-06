@@ -3,7 +3,7 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.7.0] - unreleased
+## [0.7.0] - 2017-04-06
 
 ### Added
 - Web interface

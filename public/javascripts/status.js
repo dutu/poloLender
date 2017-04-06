@@ -1,6 +1,5 @@
 let poloLenderApp = {
   runningClientSemver: '',
-  runningOnServer: '',
   restartedAt: '',
 };
 
@@ -57,17 +56,6 @@ let poloLenderAppConfig = {
         { width: width_col1, autoheight: true, template: 'Version:' },
         { id: 'poloLenderApp_version', width: width_col2,
           template: function (obj) { return `<b>${poloLenderApp.runningClientSemver}</b>`; },
-        },
-      ]
-    },
-    {
-      autoheight: true, borderless: true, type: 'clean',
-      cols: [
-        { width: width_col1, autoheight: true, template: 'Running at:' },
-        { id: 'poloLenderApp_runningAt', width: width_col2,
-          template: function (obj) {
-            return `<b>${poloLenderApp.runningOnServer}</b>`;
-          }
         },
       ]
     },
@@ -198,7 +186,6 @@ let updatePoloLenderApp = function updatePoloLenderApp(data) {
     poloLenderApp = data.poloLenderApp;
   }
 
-  $$('poloLenderApp_runningAt').refresh();
   $$('poloLenderApp_version').refresh();
   poloLenderApp_restaredAtUi.refresh();
   $$('advisorConnection_status').refresh();

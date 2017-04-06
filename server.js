@@ -9,7 +9,6 @@ const http = require('http');
 const path  = require('path');
 const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
-const os = require('os');
 
 let Workers = require('./server/workers/workers');
 let srv = require ('./server/core/srv');
@@ -83,9 +82,6 @@ httpServer.on('listening', onHttpListening);
 
 srv.io = socketIo(httpServer);
 httpServer.listen(httpPort);
-
-let hostname = os.hostname();
-log.info(`App running at: http://${hostname}:${httpPort}/`);
 
 srv.workers = new Workers();
 srv.workers.start();
