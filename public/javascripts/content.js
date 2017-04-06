@@ -1,13 +1,22 @@
+let connectionMessage = null;
+let startedAt = Date.now();
 
-// let client = new Faye.Client(`http://${window.location.hostname}:8000/`);
+let showConnectionErrorMessage = function showConnectionErrorMessage(){
+  if ((!connectionMessage  || !webix.message.pull.connectionError) && Date.now() - startedAt > 3000) {
+    connectionMessage = webix.message({
+      id: 'connectionError',
+      type: "error",
+      text: '<span><i class="fa fa-refresh fa-spin fa-fw"></i></span> Trying to connect to poloLender app... <br> There seems to be a connection issue',
+      expire: -1,
+    });
+  }
+};
 
-let sendGetBalances = function sendGetBalances() {
-  let balanceTable = $$('balanceTable');
-  balanceTable.clearAll();
-  balanceTable.showProgress({ delay: 300000, hide: true });
-  client.publish('/getBalances', {
-    settings: {},
-  });
+let hideConnectionErrorMessage = function hideConnectionErrorMessage() {
+  if (connectionMessage) {
+    webix.message.hide(connectionMessage);
+    connectionMessage = null;
+  }
 };
 
 let header = {
@@ -18,83 +27,18 @@ let header = {
   css: 'header',
   borderless: true,
   template: function(obj) { return obj.value; },
-  data: { value: 'xBalance' },
+  data: { value: 'poloLender Pro' },
 };
 
-let tooltip = function tooltip(obj) {
-  if (obj.tooltip) {
-    return obj.tooltip;
-  }
-
-  return "";
-};
-
-let columns = [
-  { id: "timestamp",	header: "Date", sort: "int", autowidth: true, format: webix.Date.dateToStr("%Y-%m-%d %H:%i"), footer:{text:"Total:", colspan:3}, adjust:true, tooltip: tooltip },
-  { id: "exchange",	header: "Exchange", sort: "string", adjust:true, tooltip: tooltip  },
-  { id: "accountName", header:"Account name", autowidth: true, adjust:true, sort: "string", tooltip: tooltip  },
-  { id: "subAccount", header:"Subaccount", autowidth: true, adjust:true, sort: "string", tooltip: tooltip  },
-];
-
-let balanceTableConfig = {
-  id: 'balanceTable',
-  view: 'datatable',
-  resizeColumn: true,
-//  autoheight: true,
-  minHeight:50,
-  select: true,
-  drag: true,
-  footer: true,
-  columns: webix.copy(columns),
-  data: [],
-  tooltip: true,
-  scheme: {
-    $change: function (item) {
-      if (item.error)
-        item.$css = "row-error";
-    }
-  }
-};
-
-let balanceView = {
-  rows: [
-    {
-      cols: [
-/*
-        {
-          id: 'refreshButton',
-          autoheight: true,
-          view: 'button',
-          css: 'btn-primary',
-          value: 'Refresh',
-          width: 120,
-          click: sendGetBalances,
-        },
-*/
-        {
-          id: 'exportButton',
-          view: 'button',
-          disabled: true,
-          css: 'btn-danger',
-          value: 'Export to Excel',
-          width: 120,
-//          click: clickCancelEditStrategy,
-        },
-        {},
-      ]
-    },
-    balanceTableConfig,
-  ]
-};
 
 let tabview = {
   view: 'tabview',
   multiview: { keepViews: true },
-  id: 'profileTabview',
+  id: 'contentTabview',
   animate: { type: "flip", subtype: "vertical" },
   cells:[
-    { header: "Balance", body: balanceView },
-//    { header: "Settings", body: settingsView },
+    { header: "Status", body: statusView },
+    { header: "Live", body: liveView },
     { header: "About", body: aboutView },
   ],
 };
@@ -102,65 +46,6 @@ let tabview = {
 function alignRight(value, config){
     return { "text-align":"right" };
 }
-
-let updateBalanceTable = function updateBalanceTable(balances) {
-  let balanceTable = [];
-  let columnsTable = [
-    { id: "timestamp",	header: "Date", sort: "int", autowidth: true, format: webix.Date.dateToStr('%Y-%m-%d %H:%i'), footer: { text: 'Total:', colspan: 3 }, adjust: true, tooltip: tooltip },
-    { id: "exchange",	header: "Exchange", sort: "string", adjust: true, tooltip: tooltip },
-    { id: "accountName", header:"Account name", autowidth: true, adjust: true, sort: "string", tooltip: tooltip  },
-    { id: "subAccount", header:"Subaccount", autowidth: true, adjust: true, sort: "string", tooltip: tooltip  },
-  ];
-
-  columnsTable.push({ id: 'worthBTC',	header: { text: 'worthBTC', css:{ "text-align":"center" } }, cssFormat: alignRight, sort: "int", autowidth: true, adjust: true, tooltip: tooltip, footer: { content: "sumCol", css: { "text-align":"center" }  } });
-  balances.forEach(account => {
-    let balanceRow = {
-      accountName: account.accountName,
-      exchange: account.exchange,
-      timestamp: new Date(account.timestamp),
-      subAccount: account.subAccount,
-      worthBTC: "0",
-    };
-
-    let worthBTC = 0;
-    if (Array.isArray(account.totalBalance)) {
-      account.totalBalance.forEach(currencyBalance => {
-        balanceRow[currencyBalance.currency] = currencyBalance.amount;
-        worthBTC += parseFloat(currencyBalance.worthBTC);
-        let currencyColumn = columnsTable.find(column => {
-          return column.id === currencyBalance.currency
-        });
-        if (!currencyColumn) {
-          columnsTable.push({
-            id: currencyBalance.currency,
-            header: { text: currencyBalance.currency, css: { "text-align":"center" } },
-            cssFormat: alignRight,
-            adjust: true,
-            tooltip: tooltip,
-            footer: { content: "sumCol", css:{ "text-align":"center" } },
-          });
-        }
-      });
-    } else {
-      webix.message({
-        type: 'error',
-        text: `${account.exchange}['${account.accountName}'] error: ${account.error || 'Unknown error'}`,
-      });
-      balanceRow.subAccount = 'ERROR';
-      balanceRow.error = true;
-      balanceRow.tooltip = account.error || 'Unknown error';
-    }
-    balanceRow.worthBTC = worthBTC.toFixed(8);
-    balanceTable.push(balanceRow);
-  });
-  $$('balanceTable').hideProgress();
-  $$('balanceTable').clearAll();
-  $$('balanceTable').define({
-    'columns': columnsTable,
-    'data': balanceTable,
-  });
-  $$("balanceTable").refreshColumns();
-};
 
 webix.ready(function () {
   webix.ui({
@@ -177,33 +62,57 @@ webix.ready(function () {
   });
 
   let socket = io(`http://${window.location.hostname}:3000`);
-  socket.on('connect', function(){
-    console.log('connect');
+  socket.on('connect', function () {
+    poloLenderAppConnection = 'connected';
+    hideConnectionErrorMessage();
+    updatePoloLenderApp();
   });
-  socket.on('dataUpdate', function(data){
-    console.log(JSON.stringify(data));
+  socket.on('reconnect', function () {
+    poloLenderAppConnection = 'connected';
+    hideConnectionErrorMessage();
+    updatePoloLenderApp();
   });
-  socket.on('disconnect', function(){
-    console.log('disconnect');
+  socket.on("connect_error", function (err) {
+    poloLenderAppConnection = `connect error, ${err.type}: ${err.message}`;
+    showConnectionErrorMessage();
+    updatePoloLenderApp();
+  });
+  socket.on("reconnect_error", function (err) {
+    poloLenderAppConnection = `reconnect error, ${err.type}: ${err.message}`;
+    showConnectionErrorMessage();
+    updatePoloLenderApp();
+  });
+  socket.on('disconnect', function () {
+    poloLenderAppConnection = 'disconnected';
+    showConnectionErrorMessage();
+    updatePoloLenderApp();
+  });
+  socket.on("reconnecting", function (attemptNumber) {
+    poloLenderAppConnection = `reconnecting (${attemptNumber})`;
+    showConnectionErrorMessage();
+    updatePoloLenderApp();
   });
 
-  /*
-    let balanceTable = $$("balanceTable");
 
-    webix.extend(balanceTable, webix.ProgressBar);
-    webix.event(window, "resize", function(){ balanceTable.adjust(); });
+  let onevent = socket.onevent;
+  socket.onevent = function (packet) {
+    let args = packet.data || [];
+    onevent.call(this, packet);    // original call
+    packet.data = ['*'].concat(args);
+    onevent.call(this, packet);      // additional call to catch-all
+  };
+  socket.on('*', function (event, data) {
+  });
 
-    webix.ui.datafilter.sumCol = webix.extend({
-      refresh: function(master, node, value){
-        let result = 0;
-        master.data.each(function(obj){
-          result += obj[value.columnId] && parseFloat(obj[value.columnId]) || 0;
-        });
+  socket.on('advisorConnection', updateAdvisorConnection);
+  socket.on('clientMessage', updateClientMessage);
+  socket.on('advisorInfo', updateAdvisorInfo);
+  socket.on('poloLenderApp', updatePoloLenderApp);
+  socket.on('apiCallInfo', updateApiCallInfo);
 
-        node.firstChild.innerHTML = `<div style="text-align: right; font-weight: bold;">${result.toFixed(8)}</div>`;
-      }
-    }, webix.ui.datafilter.summColumn);
-
-  */
+  advisorInfoTableUi = $$('advisorInfoTable');
+  poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
+  poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
+  startRefreshingStatus();
 });
 

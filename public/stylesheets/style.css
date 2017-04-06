@@ -10,3 +10,16 @@
   background-color: #ce5545;
   color: white;
 }
+
+.client-message {
+  font-family:'PT Sans',Tahoma;
+  color: #3498DB;
+}
+
+.section {
+  /*text-transform: none; !important;*/
+}
+
+.noborders .webix_cell{
+  border: 0;
+}

@@ -2,22 +2,24 @@
 
 const ioClient = require('socket.io-client');
 const _ = require('lodash');
-const Big = require ("big.js");
-const moment = require("moment");
-const async = require ("async");
-const debug = require("debug")("pololender");
-const Bitfinex = require("bitfinex");
-const semver = require("semver");
-const Poloniex = require("poloniex-api-node");
+const Big = require ('big.js');
+const moment = require('moment');
+const async = require ('async');
+const debug = require('debug')('pololender');
+const Bitfinex = require('bitfinex');
+const semver = require('semver');
+const Poloniex = require('poloniex-api-node');
+const os = require('os');
 const pjson = require('../../../package.json');
-let srv = require ("../../core/srv");
+let srv = require ('../../core/srv');
 let io = srv.io;
 
 
-var PoloLender = function(name) {
+const PoloLender = function(name) {
 	const self = this;
 	self.me = name;
 
+  let browserData = {};
 	var logger = srv.logger;
 	var poloPrivate;
 	var socket;
@@ -67,7 +69,7 @@ var PoloLender = function(name) {
 
 	var bfxPublic = new Bitfinex();
 
-	var setConfig = function () {
+	var setConfig = function setConfig() {
 		advisorInfo.time = "";
 		currencies.forEach(function (c, index, array) {
 		advisorInfo[c] = {
@@ -235,7 +237,7 @@ var PoloLender = function(name) {
 		logger.info(`Using ${ev}=${val}`);
 	};
 
-	var strAR = function (str, length) {
+	var strAR = function strAR(str, length) {
 		if (str.length > length)
 			return str;
 		var result = "                             " + str;
@@ -243,7 +245,7 @@ var PoloLender = function(name) {
 		return result
 	};
 
-	var msgRate = function(perDayProc) {
+	var msgRate = function msgRate(perDayProc) {
 		let perDay = new Big(perDayProc).times(100).toFixed(6);
 		let perYear = new Big(perDayProc).times(365*100).toFixed(4);
 //		let perMonth = new Big(perYear).div(12).toFixed(4);
@@ -275,9 +277,9 @@ var PoloLender = function(name) {
     return timeout;
   };
 
-  var execTrade = function() {
+  var execTrade = function execTrade() {
 
-  var msgLoanReturned = function (element){
+  var msgLoanReturned = function msgLoanReturned(element){
     var canceledAC, createdAt, created, msg,holdingTimeSeconds;
     createdAt = moment.utc(element.date);
     created = createdAt.fromNow();
@@ -299,7 +301,7 @@ var PoloLender = function(name) {
     logger.info(msg);
   };
 
-  var msgNewCredit = function (element){
+  var msgNewCredit = function msgNewCredit(element){
     var newAC, createdAt, expiresAt, expires, msg;
     createdAt = moment.utc(element.date);
     expiresAt = moment.utc(element.date).add(element.duration, "days");
@@ -318,8 +320,8 @@ var PoloLender = function(name) {
     logger.info(msg);
   };
 
-  var updateActiveLoans = function(callback) {
-    var updateWithNewActiveLoans = function (newActiveLoans) {
+  var updateActiveLoans = function updateActiveLoans(callback) {
+    var updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
       var found;
       var dateNow = Date.now();
       activeLoans.forEach(function (element, index, array) {
@@ -360,6 +362,7 @@ var PoloLender = function(name) {
     }
 
     poloPrivate.returnActiveLoans(function (err, result) {
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnActiveLoans', params: [], error: err && err.message || null, data: null });
       var newActiveLoans;
       if (err) {
         logger.notice("returnActiveLoans: " + err.message);
@@ -369,6 +372,7 @@ var PoloLender = function(name) {
 
         return callback(err);
       }
+
       newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
       updateWithNewActiveLoans(newActiveLoans);
       // update wmr
@@ -387,20 +391,22 @@ var PoloLender = function(name) {
     });
   };
 
-  var updateActiveOffers = function(callback) {
-          if (apiCallLimitTimeout('returnOpenLoanOffers')) {
-              return callback(new Error('API call limit exceeded'));
-          }
+  var updateActiveOffers = function updateActiveOffers(callback) {
+    if (apiCallLimitTimeout('returnOpenLoanOffers')) {
+      return callback(new Error('API call limit exceeded'));
+    }
 
-          poloPrivate.returnOpenLoanOffers(function (err, result) {
+    poloPrivate.returnOpenLoanOffers(function (err, result) {
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnOpenLoanOffers', params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnOpenLoanOffers: " + err.message);
-                  if (_.includes(err.message, 'throttled')) {
-                      waitOneMinute = Date.now();
-                  }
+        if (_.includes(err.message, 'throttled')) {
+          waitOneMinute = Date.now();
+        }
 
-                  return callback(err);
+        return callback(err);
       }
+
       currencies.forEach(function (c, i, a) {
         var newActiveOffers;
         newActiveOffers = typeof result[c] !== "undefined" ? result[c] : [];
@@ -420,20 +426,22 @@ var PoloLender = function(name) {
     });
   };
 
-  var updateAvailableFunds = function(callback) {
-          if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
-              return callback(new Error('API call limit exceeded'));
-          }
+  var updateAvailableFunds = function updateAvailableFunds(callback) {
+    if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
+        return callback(new Error('API call limit exceeded'));
+    }
 
-          poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
+    poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnAvailableAccountBalances',params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnAvailableAccountBalances: " + err.message);
-                  if (_.includes(err.message, 'throttled')) {
-                      waitOneMinute = Date.now();
-                  }
+        if (_.includes(err.message, 'throttled')) {
+          waitOneMinute = Date.now();
+        }
 
-                  return callback(err);
+        return callback(err);
       }
+
       currencies.forEach(function (c, i, a) {
         availableFunds[c] = result.hasOwnProperty("lending") && result.lending.hasOwnProperty(c) ? result.lending[c] : "0";
       });
@@ -441,7 +449,7 @@ var PoloLender = function(name) {
     });
   };
 
-  var cancelHighOffers = function (callback) {
+  var cancelHighOffers = function cancelHighOffers(callback) {
     async.forEachOfSeries(activeOffers,
       // for each currency in activeOffers
       function(activeOffersOneCurrency, currency, callback) {
@@ -470,19 +478,21 @@ var PoloLender = function(name) {
               return cb(null);
             }
 
-                          if (apiCallLimitTimeout('cancelLoanOffer')) {
-                              return cb(new Error('API call limit exceeded'));
-                          }
+            if (apiCallLimitTimeout('cancelLoanOffer')) {
+                return cb(new Error('API call limit exceeded'));
+            }
 
-                          poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
+            poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
+              emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'cancelLoanOffer',params: [], error: err && err.message || null, data: null });
               if (err) {
                 logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
-                                  if (_.includes(err.message, 'throttled')) {
-                                      waitOneMinute = Date.now();
-                                  }
+                if (_.includes(err.message, 'throttled')) {
+                    waitOneMinute = Date.now();
+                }
 
-                                  return cb(err);
+                return cb(err);
               }
+
               anyCanceledOffer  = true;
               msg = "OfferCanceled #" + offer.id;
               msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
@@ -501,7 +511,7 @@ var PoloLender = function(name) {
       });
   };
 
-  var postOffers = function (callback) {
+  var postOffers = function postOffers(callback) {
     async.forEachOfSeries(currencies,
       // for each currency
       function(currency, index, callback) {
@@ -542,19 +552,21 @@ var PoloLender = function(name) {
           return callback(new Error("NO TRADE"));
         }
 
-                  if (apiCallLimitTimeout('createLoanOffer')) {
-                      return callback(new Error('API call limit exceeded'));
-                  }
+        if (apiCallLimitTimeout('createLoanOffer')) {
+            return callback(new Error('API call limit exceeded'));
+        }
 
-                  poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
+        poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
+          emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnActiveLoans',params: [], error: err && err.message || null, data: null });
           if (err) {
             logger.notice("createLoanOffer: " + err.message);
-                          if (_.includes(err.message, 'throttled')) {
-                              waitOneMinute = Date.now();
-                          }
+            if (_.includes(err.message, 'throttled')) {
+                waitOneMinute = Date.now();
+            }
 
-                          return callback(err);
+            return callback(err);
           }
+
           status.offersCount++;
           var newAO = {
             id: result.orderID,
@@ -573,7 +585,7 @@ var PoloLender = function(name) {
       });
   };
 
-  var report = function() {
+  var report = function report() {
     // execute every x minutes
     var now = moment();
     var duration = now.diff(status.lastRun.report, "minutes");
@@ -714,11 +726,46 @@ var PoloLender = function(name) {
     });
 };
 
-  const onBrowserConnection = function onBrowserConnection(client) {
+  const emitPoloLenderAppUpdate = function emitPoloLenderAppUpdate() {
     let data = {
-      test: 'bau',
+      poloLenderApp: {
+        runningClientSemver: pjson.version,
+        runningOnServer: os.hostname(),
+        restartedAt: status.restarted,
+      }
     };
-    client.emit('dataUpdate', data);
+
+    srv.io.sockets.emit('poloLenderApp', data);
+  };
+
+  const emitApiCallUpdate = function emitApiCallUpdate(apiCallInfo) {
+    let data = {
+      apiCallInfo: {
+        timestamp: apiCallInfo.timestamp,
+        error: apiCallInfo.error,
+      },
+    };
+
+    srv.io.sockets.emit('apiCallInfo', data);
+  };
+
+  const emitAdvisorConnectionUpdate = function emitAdvisorConnectionUpdate() {
+    srv.io.sockets.emit('advisorConnection', { advisor: browserData.advisor });
+  };
+
+  const emitClientMessageUpdate = function emitClientMessageUpdate() {
+    srv.io.sockets.emit('clientMessage', { clientMessage: browserData.clientMessage || ''});
+  };
+
+  const emitAdvisorInfoUpdate = function emitAdvisorInfoUpdate() {
+    srv.io.sockets.emit('advisorInfo', { advisorInfo: browserData.advisorInfo || {} });
+  };
+
+  const onBrowserConnection = function onBrowserConnection(client) {
+    emitPoloLenderAppUpdate();
+    emitAdvisorConnectionUpdate();
+    emitClientMessageUpdate();
+    emitAdvisorInfoUpdate();
   };
 
 
@@ -732,28 +779,45 @@ var PoloLender = function(name) {
     srv.io.on('connection', onBrowserConnection);
 
     socket = ioClient(`http://${config.advisor}/`);
+    browserData.advisor = {
+      server: config.advisor,
+      connection: '',
+    };
 		socket.on('connect', function () {
 			logger.info(`Connected to server ${config.advisor}`);
-		});
+      browserData.advisor.connection = 'connected';
+      emitAdvisorConnectionUpdate();
+    });
 		socket.on('reconnect', function () {
 			logger.info(`Reconnected to server ${config.advisor}`);
+      browserData.advisor.connection = 'reconnect';
+      emitAdvisorConnectionUpdate();
 		});
 		socket.on("connect_error", function (err) {
 			logger.warning(`Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
+      browserData.advisor.connection = `connect error ${err.type}: ${err.message}`;
+      emitAdvisorConnectionUpdate();
 		});
 		socket.on("reconnect_error", function (err) {
 			logger.warning(`Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
+      browserData.advisor.connection = `reconnect error ${err.type}: ${err.message}`;
+      emitAdvisorConnectionUpdate();
 		});
 		socket.on("disconnect", function () {
 			logger.notice(`Disconnected from server ${config.advisor}`);
+      browserData.advisor.connection = 'disconnected';
+      emitAdvisorConnectionUpdate();
 		});
 		socket.on("reconnecting", function (attemptNumber) {
 			logger.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
+      browserData.advisor.connection = 'reconnecting';
+      emitAdvisorConnectionUpdate();
 		});
 		socket.on("send:loanOfferParameters", function (msg) {
 			var smsg = JSON.stringify(msg);
 			debug(`received send:loanOfferParameters = ${smsg}`);
 			var loanOfferParameters;
+      browserData.advisorInfo = {};
 			try {
 				advisorInfo.time = msg.time;
 				delete msg.time;
@@ -762,13 +826,15 @@ var PoloLender = function(name) {
 						averageLoanHoldingTime: value.averageLoanHoldingTime,
 						bestReturnRate: value.bestReturnRate,
 						bestDuration: value.bestDuration
-					}
-				});
+					};
+          browserData.advisorInfo[key] = advisorInfo[key];
+        });
 			}
 			catch (error) {
 				logger.error(`Cannot parse loanOfferParameters ${smsg}`);
 				debug(`Cannot parse loanOfferParameters: ${error.message}`);
-			}
+      }
+      emitAdvisorInfoUpdate();
 		});
 		socket.on("send:clientMessage", function (msg) {
 			var smsg = JSON.stringify(msg);
@@ -779,10 +845,13 @@ var PoloLender = function(name) {
 					time: msg.time,
 					message: msg.message,
 					lastClientSemver: msg.lastClientSemver
-				}
+				};
+				browserData.clientMessage = clientMessage;
 			} else {
 				logger.error(`Cannot parse clientMessage ${smsg}`);
+				browserData.clientMessage = '';
 			}
+      emitClientMessageUpdate();
 		});
 
 

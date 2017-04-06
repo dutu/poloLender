@@ -2,11 +2,16 @@ doctype html
 html
   head
     title= title
+    link(rel='stylesheet', href='/aw-cryptocoins/cryptocoins.css')
+    link(rel='stylesheet', href='/aw-cryptocoins/cryptocoins-colors.css')
     link(rel='stylesheet', href='/webix/webix.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
+    script(src='https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js')
     script(src='/webix/webix.js')
     script(src='/socket.io/socket.io.js')
   body
-    script(src='/javascripts/settings.js')
+    script(src='/javascripts/status.js')
+    script(src='/javascripts/live.js')
     script(src='/javascripts/about.js')
     script(src='/javascripts/content.js')

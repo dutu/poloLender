@@ -10,6 +10,7 @@ const path  = require('path');
 const bodyParser = require('body-parser');
 const socketIo = require('socket.io');
 const os = require('os');
+const svgFallback = require('express-svg-fallback');
 
 let Workers = require('./server/workers/workers');
 let srv = require ('./server/core/srv');
@@ -66,7 +67,6 @@ const app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
