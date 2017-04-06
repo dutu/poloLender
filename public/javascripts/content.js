@@ -61,7 +61,7 @@ webix.ready(function () {
     }
   });
 
-  let socket = io(`http://${window.location.hostname}:3000`);
+  let socket = io();
   socket.on('connect', function () {
     poloLenderAppConnection = 'connected';
     hideConnectionErrorMessage();
