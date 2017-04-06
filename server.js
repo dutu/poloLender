@@ -16,7 +16,7 @@ let srv = require ('./server/core/srv');
 let config = require('./server/core/config');
 let index = require('./routes/index').router;
 
-let httpPort = process.env.POLOLENDER_PORT || '3000';
+let httpPort = process.env.PORT || 5000;
 
 let log = srv.logger;
 log.setLevels(winston.config.syslog.levels);
