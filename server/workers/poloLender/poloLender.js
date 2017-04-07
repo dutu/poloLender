@@ -57,7 +57,7 @@ const PoloLender = function(name) {
 		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
-        maxApiCallsPerSecond: 6,
+    maxApiCallsPerSecond: 6,
 	};
 	var config = {};
 
