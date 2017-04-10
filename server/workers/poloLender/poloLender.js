@@ -258,9 +258,9 @@ const PoloLender = function(name) {
   let apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
     let timeNow = Date.now();
     if (debug.enabled) {
+      callsLast100.push(timeNow);
       let callsLastSecond = _.filter(callsLast100, callTimestamp => timeNow - callTimestamp < config.apiCallsDurationMS );
       debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond.length}`);
-      callsLast100.push(timeNow);
       callsLast100.splice(0, callsLast100.length - 100);
     }
 
