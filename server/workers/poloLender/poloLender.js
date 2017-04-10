@@ -259,9 +259,13 @@ const PoloLender = function(name) {
     let timeNow = Date.now();
     if (debug.enabled) {
       callsLast100.push(timeNow);
-      let callsLastSecond = _.filter(callsLast100, callTimestamp => timeNow - callTimestamp < config.apiCallsDurationMS );
-      debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond.length}`);
-      callsLast100.splice(0, callsLast100.length - 100);
+      let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
+        if (timeNow - callTimestamp < config.apiCallsDurationMS) {
+          count += 1;
+        }
+      }, 0);
+      debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
+      callsLast100.splice(0, callsLast100.length - 20);
     }
 
     apiCallTimes.push(timeNow);
