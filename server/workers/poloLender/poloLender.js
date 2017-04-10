@@ -261,7 +261,7 @@ const PoloLender = function(name) {
       callsLast100.push(timeNow);
       let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
         if (timeNow - callTimestamp < config.apiCallsDurationMS) {
-          count += 1;
+          return count += 1;
         }
       }, 0);
       debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
