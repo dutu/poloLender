@@ -57,7 +57,7 @@ const PoloLender = function(name) {
 		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
-    maxApiCallsPerDuration: 8,
+    maxApiCallsPerDuration: 7,
     apiCallsDurationMS: 1000,
 	};
 	var config = {};
@@ -262,6 +262,8 @@ const PoloLender = function(name) {
       let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
         if (timeNow - callTimestamp < config.apiCallsDurationMS) {
           return count += 1;
+        } else {
+          return count;
         }
       }, 0);
       debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
