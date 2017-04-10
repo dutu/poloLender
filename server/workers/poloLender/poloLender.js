@@ -57,14 +57,14 @@ const PoloLender = function(name) {
 		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
-    maxApiCallsPerDuration: 6,
-    apiCallsDurationMS: 900,
+    maxApiCallsPerDuration: 8,
+    apiCallsDurationMS: 1000,
 	};
 	var config = {};
 
-	var apiCallTimes = [];
-	var waitOneMinute = null;
-	var callsLast100 = [];
+	let apiCallTimes = [];
+	let waitOneMinute = null;
+	let callsLast100 = [];
 
 	_.assign(config, configDefault);
 
@@ -255,28 +255,22 @@ const PoloLender = function(name) {
 		return msg;
 	};
 
-  let apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
+  let apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
     let timeNow = Date.now();
-    let apiCallTimestamp = function apiCallTimestamp(methodName) {
-      let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
-        return timeNow - callTimestamp < config.apiCallsDurationMS;
-      });
+    if (debug.enabled) {
+      let callsLastSecond = _.filter(callsLast100, callTimestamp => timeNow - callTimestamp < config.apiCallsDurationMS );
       debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond.length}`);
       callsLast100.push(timeNow);
       callsLast100.splice(0, callsLast100.length - 100);
-    };
-
-    apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
-    let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
-    if (timeout) {
-        //debug('API call limit exceeded');
-    } else {
-      apiCallTimestamp(methodName);
-      apiCallTimes.push(timeNow);
     }
 
-    return timeout;
+    apiCallTimes.push(timeNow);
+    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration);
+    let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
+    setTimeout(callback, timeout);
   };
+
+
 
   var execTrade = function execTrade() {
 
@@ -358,12 +352,9 @@ const PoloLender = function(name) {
       currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
     };
 
-    if (apiCallLimitTimeout('returnActiveLoans')) {
-              return callback(new Error('API call limit exceeded'));
-    }
-
     poloPrivate.returnActiveLoans(function (err, result) {
-      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnActiveLoans', params: [], error: err && err.message || null, data: null });
+      let apiMethod = 'returnActiveLoans';
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       var newActiveLoans;
       if (err) {
         logger.notice("returnActiveLoans: " + err.message);
@@ -371,7 +362,7 @@ const PoloLender = function(name) {
           waitOneMinute = Date.now();
         }
 
-        return callback(err);
+        return apiCallLimitDelay(apiMethod, () => callback(err));
       }
 
       newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
@@ -388,24 +379,21 @@ const PoloLender = function(name) {
         });
         status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
       });
-      callback(null);
+      return apiCallLimitDelay(apiMethod, () => callback(null));
     });
   };
 
   var updateActiveOffers = function updateActiveOffers(callback) {
-    if (apiCallLimitTimeout('returnOpenLoanOffers')) {
-      return callback(new Error('API call limit exceeded'));
-    }
-
     poloPrivate.returnOpenLoanOffers(function (err, result) {
-      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnOpenLoanOffers', params: [], error: err && err.message || null, data: null });
+      let apiMethod = 'returnOpenLoanOffers';
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnOpenLoanOffers: " + err.message);
         if (_.includes(err.message, 'throttled')) {
           waitOneMinute = Date.now();
         }
 
-        return callback(err);
+        return apiCallLimitDelay(apiMethod, () => callback(err));
       }
 
       currencies.forEach(function (c, i, a) {
@@ -423,30 +411,27 @@ const PoloLender = function(name) {
         if (newOffers) {
         }
       });
-      callback(null);
+      return apiCallLimitDelay(apiMethod, () => callback(null));
     });
   };
 
   var updateAvailableFunds = function updateAvailableFunds(callback) {
-    if (apiCallLimitTimeout('returnAvailableAccountBalances')) {
-        return callback(new Error('API call limit exceeded'));
-    }
-
     poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
-      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnAvailableAccountBalances',params: [], error: err && err.message || null, data: null });
+      let apiMethod = 'returnAvailableAccountBalances';
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnAvailableAccountBalances: " + err.message);
         if (_.includes(err.message, 'throttled')) {
           waitOneMinute = Date.now();
         }
 
-        return callback(err);
+        return apiCallLimitDelay(apiMethod, () => callback(err));
       }
 
       currencies.forEach(function (c, i, a) {
         availableFunds[c] = result.hasOwnProperty("lending") && result.lending.hasOwnProperty(c) ? result.lending[c] : "0";
       });
-      callback(null);
+      return apiCallLimitDelay(apiMethod, () => callback(null));
     });
   };
 
@@ -479,19 +464,16 @@ const PoloLender = function(name) {
               return cb(null);
             }
 
-            if (apiCallLimitTimeout('cancelLoanOffer')) {
-                return cb(new Error('API call limit exceeded'));
-            }
-
             poloPrivate.cancelLoanOffer(offer.id.toString(), function (err, result) {
-              emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'cancelLoanOffer',params: [], error: err && err.message || null, data: null });
+              let apiMethod = 'cancelLoanOffer';
+              emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
               if (err) {
                 logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
                 if (_.includes(err.message, 'throttled')) {
                     waitOneMinute = Date.now();
                 }
 
-                return cb(err);
+                return apiCallLimitDelay(apiMethod, () => cb(err));
               }
 
               anyCanceledOffer  = true;
@@ -500,7 +482,7 @@ const PoloLender = function(name) {
               msg += " at " + msgRate(offer.rate);
               msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
               logger.info(msg);
-              return cb(null);
+              return apiCallLimitDelay(apiMethod, () => cb(null));
             });
           },
           function (err) {
@@ -558,14 +540,15 @@ const PoloLender = function(name) {
         }
 
         poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
-          emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: 'returnActiveLoans',params: [], error: err && err.message || null, data: null });
+          let apiMethod = 'createLoanOffer';
+          emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
           if (err) {
             logger.notice("createLoanOffer: " + err.message);
             if (_.includes(err.message, 'throttled')) {
                 waitOneMinute = Date.now();
             }
 
-            return callback(err);
+            return apiCallLimitDelay(apiMethod, () => callback(err));
           }
 
           status.offersCount++;
@@ -578,7 +561,7 @@ const PoloLender = function(name) {
           };
           var msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
           logger.info(msg);
-          callback(null);
+          return apiCallLimitDelay(apiMethod, () => callback(null));
         });
       },
       function (err){
