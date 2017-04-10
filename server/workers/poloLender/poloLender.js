@@ -51,14 +51,14 @@ const PoloLender = function(name) {
 	var configDefault = {
 		startDate: "",
 		reportEveryMinutes: 5,
-		minOrderSize: "0.001",
+		minOrderSize: "0.01",
 		startBalance: {},
 		restartTime: moment(),
 		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
     maxApiCallsPerDuration: 8,
-    apiCallsDurationMS: 950,
+    apiCallsDurationMS: 900,
 	};
 	var config = {};
 
@@ -263,7 +263,7 @@ const PoloLender = function(name) {
       });
       debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond.length}`);
       callsLast100.push(timeNow);
-      callsLast100.splice(0, apiCallTimes.length - 100);
+      callsLast100.splice(0, callsLast100.length - 100);
     };
 
     apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
