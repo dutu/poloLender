@@ -58,7 +58,7 @@ const PoloLender = function(name) {
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
     maxApiCallsPerDuration: 8,
-    apiCallsDurationMS: 990,
+    apiCallsDurationMS: 950,
 	};
 	var config = {};
 
@@ -721,7 +721,7 @@ const PoloLender = function(name) {
                   status.lastRun.speedCount++;
       }
 
-      apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration - 2);
+      apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
       let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
       waitOneMinute = null;
       setTimeout(execTrade, timeout);
