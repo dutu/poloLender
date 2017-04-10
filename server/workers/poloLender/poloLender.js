@@ -266,7 +266,7 @@ const PoloLender = function(name) {
       callsLast100.splice(0, apiCallTimes.length - 100);
     };
 
-    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration - 2);
+    apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
     let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
     if (timeout) {
         //debug('API call limit exceeded');
