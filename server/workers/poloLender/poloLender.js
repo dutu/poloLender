@@ -57,7 +57,8 @@ const PoloLender = function(name) {
 		offerMinRate: {},
 		offerMaxAmount: {},
 		advisor: "safe-hollows.crypto.zone",
-    maxApiCallsPerSecond: 6,
+    maxApiCallsPerDuration: 6,
+    apiCallsDurationMS: 1000,
 	};
 	var config = {};
 
@@ -254,24 +255,24 @@ const PoloLender = function(name) {
 		return msg;
 	};
 
-  var apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
+  let apiCallLimitTimeout = function apiCallLimitTimeout(methodName) {
+    let timeNow = Date.now();
     let apiCallTimestamp = function apiCallTimestamp(methodName) {
-      let timeNow = Date.now();
       let callsLastSecond = _.filter(callsLast100, function (callTimestamp) {
-        return timeNow - callTimestamp <= 1000;
+        return timeNow - callTimestamp < config.apiCallsDurationMS;
       });
-      debug(`${methodName} timestamp: ${timeNow}. Calls last second: ${callsLastSecond.length}`);
+      debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond.length}`);
       callsLast100.push(timeNow);
       callsLast100.splice(0, apiCallTimes.length - 100);
     };
 
-    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond - 2);
-    var timeout = apiCallTimes.length && Math.max(0, 1000 - (Date.now() - apiCallTimes[0])) || 0;
+    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration - 2);
+    let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
     if (timeout) {
         //debug('API call limit exceeded');
     } else {
       apiCallTimestamp(methodName);
-      apiCallTimes.push(Date.now());
+      apiCallTimes.push(timeNow);
     }
 
     return timeout;
@@ -720,9 +721,9 @@ const PoloLender = function(name) {
                   status.lastRun.speedCount++;
       }
 
-              apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerSecond);
-      var timeout = Math.max(0, 1000 - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
-              waitOneMinute = null;
+      apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration - 2);
+      let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
+      waitOneMinute = null;
       setTimeout(execTrade, timeout);
     });
 };
