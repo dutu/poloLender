@@ -23,7 +23,7 @@ const PoloLender = function(name) {
 	var poloPrivate;
 	var socket;
 
-	var currencies = ["BTC", "ETH", "XMR", "XRP", "DASH"];
+	var currencies = ["BTC", "ETH", "XMR", "XRP", "DASH", "LTC"];
 
 	var status = {
 		restarted: Date.now(),
