@@ -631,9 +631,14 @@ const PoloLender = function(name) {
         reserved = "0";
         available = availableFunds[c];
       }
-
 			// handle setting x to USD for bitfinex api
-			var curToUSD = (c.toLowerCase() + "usd");
+			var curToUSD = c;
+			if (curToUSD === "BTC" || curToUSD === "LTC" || curToUSD === "ETH" || curToUSD === "XMR") {
+				curToUSD = (c.toLowerCase() + "usd");
+			} else {
+				// temp workaround
+				curToUSD = "btcusd";
+			}
 
       bfxPublic.ticker(curToUSD, function (err, result) {
         if(err) {
