@@ -633,15 +633,20 @@ const PoloLender = function(name) {
       }
 			// handle setting x to USD for bitfinex api
 			var curToUSD = c;
-			if (curToUSD === "BTC" || curToUSD === "LTC" || curToUSD === "ETH" || curToUSD === "XMR") {
-				curToUSD = (c.toLowerCase() + "usd");
+			if (curToUSD !== "XRP") {
+				if (curToUSD === "DASH") {
+					curToUSD = "dshusd";
+				} else {
+					curToUSD = (c.toLowerCase() + "usd");
+				}
 			} else {
-				// temp workaround
+				// temp workaround for XRP (not listed on bitfinex)
 				curToUSD = "btcusd";
 			}
 
       bfxPublic.ticker(curToUSD, function (err, result) {
         if(err) {
+					console.log(curToUSD);
           logger.notice("bfxPublic.ticker: " + err.message);
           return;
         }
@@ -649,7 +654,7 @@ const PoloLender = function(name) {
         msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
         //msg += `Start: ${journalEntry.balance[c]}, `
         msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-        if(c === "BTC" || c === "LTC" || c === "ETH" || c === "XMR")
+        if(c === "BTC" || c === "LTC" || c === "ETH" || c === "XMR" || c === "DASH")
           msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
         var wmrMsg = msgRate(status.wmr[c]);
         var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
