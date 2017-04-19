@@ -632,19 +632,8 @@ const PoloLender = function(name) {
         available = availableFunds[c];
       }
 
-			// TEST : debug : sloppy
-			var curToUSD;
-			switch (c) {
-				// case for btc
-				case "BTC":
-						curToUSD = "btcusd";
-					break;
-				// case for ltc
-				case "LTC":
-						curToUSD = "ltcusd";
-				default:
-						curToUSD = "btcusd";
-			}
+			// handle setting x to USD for bitfinex api
+			var curToUSD = (c.toLowerCase() + "usd");
 
       bfxPublic.ticker(curToUSD, function (err, result) {
         if(err) {
@@ -655,7 +644,7 @@ const PoloLender = function(name) {
         msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
         //msg += `Start: ${journalEntry.balance[c]}, `
         msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-        if(c === "BTC" || c === "LTC")
+        if(c === "BTC" || c === "LTC" || c === "ETH" || c === "XMR")
           msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
         var wmrMsg = msgRate(status.wmr[c]);
         var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
