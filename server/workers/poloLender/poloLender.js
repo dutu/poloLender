@@ -23,7 +23,7 @@ const PoloLender = function(name) {
 	var poloPrivate;
 	var socket;
 
-	var currencies = ["BTC", "ETH", "XMR", "XRP", "DASH"];
+	let currencies = [];
 
 	var status = {
 		restarted: Date.now(),
@@ -38,13 +38,16 @@ const PoloLender = function(name) {
 	var anyCanceledOffer,
 		anyNewLoans = {};
 	var activeLoans = [],
-		completedLoans = [],
 		activeOffers = {},
 		anyChangedLoans = {},
 		availableFunds = {}, // available funds from balance
 		depositFunds = {},      // available funds from balance
 		ev, val;
 
+  let ratesBTC = {
+    BTC: '1',
+  };
+  let rateBTCUSD;
 	var advisorInfo = {};
 	var clientMessage ={};
 
@@ -72,13 +75,6 @@ const PoloLender = function(name) {
 
 	var setConfig = function setConfig() {
 		advisorInfo.time = "";
-		currencies.forEach(function (c, index, array) {
-		advisorInfo[c] = {
-			bestReturnRate: "0.05",
-			bestDuration: "60",
-			averageLoanHoldingTime: ""
-		}
-		});
 		// API keys
 		try {
 			ev = self.me.toUpperCase() + "_APIKEY";
@@ -144,24 +140,19 @@ const PoloLender = function(name) {
 			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
-		currencies.forEach(function (c, index, array) {
-			if(startBalance && startBalance.hasOwnProperty(c)) {
-				try {
-					val = Number(startBalance[c]);
-					if(!_.isFinite(val)) {
-						throw val;
-					} else {
-						config.startBalance[c] = val.toString();
-					}
-				} catch (err) {
-					config.startBalance[c] = "0";
-					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-					debug(`${ev}=${process.env[ev]}`);
-				}
-			}
-			else {
-				config.startBalance[c] = "0";
-			}
+		_.forEach(startBalance, function (value, key) {
+      try {
+        val = Number(value);
+        if(!_.isFinite(val)) {
+          throw val;
+        } else {
+          config.startBalance[key] = val.toString();
+        }
+      } catch (err) {
+        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        debug(`${ev}=${process.env[ev]}`);
+        throw err;
+      }
 		});
 		val = JSON.stringify(config.startBalance);
 		logger.info(`Using ${ev}=${val}`);
@@ -174,24 +165,19 @@ const PoloLender = function(name) {
 			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
-		currencies.forEach(function (c, index, array) {
-			if(_.isObject(lendMax) && lendMax.hasOwnProperty(c)) {
-				try {
-					val = Number(lendMax[c]);
-					if(!_.isFinite(val)) {
-						throw val;
-					} else {
-						config.offerMaxAmount[c] = val.toString();
-					}
-				} catch (err) {
-					config.offerMaxAmount[c] = "999999";
-					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-					debug(`${ev}=${process.env[ev]}`);
-				}
-			}
-			else {
-				config.offerMaxAmount[c] = "999999";
-			}
+    _.forEach(lendMax, function (value, key) {
+      try {
+        val = Number(value);
+        if(!_.isFinite(val)) {
+          throw val;
+        } else {
+          config.offerMaxAmount[key] = val.toString();
+        }
+      } catch (err) {
+        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        debug(`${ev}=${process.env[ev]}`);
+        throw err;
+      }
 		});
 		val = JSON.stringify(config.offerMaxAmount);
 		logger.info(`Using ${ev}=${val}`);
@@ -204,24 +190,19 @@ const PoloLender = function(name) {
 			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
-		currencies.forEach(function (c, index, array) {
-			if(_.isObject(minRate) && minRate.hasOwnProperty(c)) {
-				try {
-					val = Number(minRate[c]);
-					if(!_.isFinite(val)) {
-						throw val;
-					} else {
-						config.offerMinRate[c] = val.toString();
-					}
-				} catch (err) {
-					config.offerMinRate[c] = "0";
-					logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-					debug(`${ev}=${process.env[ev]}`);
-				}
-			}
-			else {
-				config.offerMinRate[c] = "0";
-			}
+    _.forEach(minRate, function (value, key) {
+      try {
+        val = Number(value);
+        if(!_.isFinite(val)) {
+          throw val;
+        } else {
+          config.offerMinRate[key] = val.toString();
+        }
+      } catch (err) {
+        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        debug(`${ev}=${process.env[ev]}`);
+        throw err;
+      }
 		});
 		val = JSON.stringify(config.offerMinRate);
 		logger.info(`Using ${ev}=${val}`);
@@ -275,8 +256,6 @@ const PoloLender = function(name) {
     let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
     setTimeout(callback, timeout);
   };
-
-
 
   var execTrade = function execTrade() {
 
@@ -452,15 +431,15 @@ const PoloLender = function(name) {
             var amountTrading;
 
             offerRate = new Big(offer.rate);
-            if (offerRate.eq(advisorInfo[currency].bestReturnRate)){
+            if (offerRate.eq(advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05')){
               // lend offers is on correct price
               return cb(null);
             }
 
-            if (!(config.offerMaxAmount[currency] == "")) {
+            if (!(config.offerMaxAmount[currency] === "")) {
               // only if we are reserving any amount check if we are already trading more then offerMaxAmount
               amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-              if(amountTrading.gte(config.offerMaxAmount[currency])) {
+              if(amountTrading.gte(config.offerMaxAmount[currency] || '9999999')) {
                 // we are already trading higher then offerMaxAmount
                 return cb(null);
               }
@@ -486,7 +465,8 @@ const PoloLender = function(name) {
               msg = "OfferCanceled #" + offer.id;
               msg += " " + currency.toUpperCase() + " " + strAR(new Big(offer.amount).toFixed(8), 14);
               msg += " at " + msgRate(offer.rate);
-              msg += ", brr " + msgRate(advisorInfo[currency].bestReturnRate);
+              let bestReturnRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
+              msg += ", brr " + msgRate(bestReturnRate);
               logger.info(msg);
               return apiCallLimitDelay(apiMethod, () => cb(null));
             });
@@ -512,7 +492,7 @@ const PoloLender = function(name) {
         }
         else {
           amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-          amountMaxToTrade = new Big(config.offerMaxAmount[currency]).minus(amountTrading);
+          amountMaxToTrade = new Big(config.offerMaxAmount[currency] || '9999999').minus(amountTrading);
 
           if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
             amountToTrade = new Big(availableFunds[currency]);
@@ -526,12 +506,12 @@ const PoloLender = function(name) {
         }
 
         amount = amountToTrade.toFixed(8);
-        lendingRate = advisorInfo[currency].bestReturnRate;
-        duration = advisorInfo[currency].bestDuration;
+        lendingRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
+        duration = advisorInfo[currency] && advisorInfo[currency].bestDuration || '2';
         autoRenew = "0";
 
         // Do not offer loans the the best return rate is less than the specified min rate.
-        minRate = new Big(config.offerMinRate[currency]);
+        minRate = new Big(config.offerMinRate[currency] || '0');
         if (minRate.div(100).gt(lendingRate)) {
           return callback(null);
         }
@@ -539,10 +519,6 @@ const PoloLender = function(name) {
         if (process.env[self.me+"_NOTRADE"] === "true") {
           logger.notice("Post offer: NO TRADE");
           return callback(new Error("NO TRADE"));
-        }
-
-        if (apiCallLimitTimeout('createLoanOffer')) {
-            return callback(new Error('API call limit exceeded'));
         }
 
         poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
@@ -575,6 +551,48 @@ const PoloLender = function(name) {
       });
   };
 
+  let updateRates = function updateRates(callback) {
+    poloPrivate.returnTicker(function (err, result) {
+      let apiMethod = 'returnTicker';
+      emitApiCallUpdate({
+        timestamp: Date.now(),
+        apiServer: 'poloniex',
+        apiMethod: apiMethod,
+        params: [],
+        error: err && err.message || null,
+        data: null
+      });
+      if (err) {
+        logger.notice("returnTicker: " + err.message);
+        if (_.includes(err.message, 'throttled')) {
+          waitOneMinute = Date.now();
+        }
+
+        return apiCallLimitDelay(apiMethod, () => callback(err));
+      }
+
+      currencies.forEach((currency) => {
+        let pair = `BTC_${currency}`;
+        if (result[pair]) {
+          ratesBTC[currency] = result[pair].last || '0';
+        }
+      });
+      return apiCallLimitDelay(apiMethod, () => callback(null));
+    });
+  };
+
+  let updateRateBTCUSD = function updateRateBTCUSD() {
+    bfxPublic.ticker("btcusd", function (err, result) {
+      if(err) {
+        logger.notice("bfxPublic.ticker: " + err.message);
+        return;
+      }
+
+      rateBTCUSD = new Big(result.last_price).toString();
+    });
+
+  };
+
   var report = function report() {
     // execute every x minutes
     var now = moment();
@@ -605,7 +623,7 @@ const PoloLender = function(name) {
     }
 
     currencies.forEach(function (c, index, array) {
-      var profit = new Big(depositFunds[c]).minus(config.startBalance[c]);
+      var profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
       var minutes = now.diff(config.restartTime, "minutes", true);
       var activeLoansCount = 0;
       var activeLoansAmount = new Big(0);
@@ -617,7 +635,7 @@ const PoloLender = function(name) {
       });
       var reserved, offerMax, available;
       try {
-        offerMax = Number(config.offerMaxAmount[c]);
+        offerMax = Number(config.offerMaxAmount[c] || '9999999');
         if (parseFloat(depositFunds[c]) < offerMax) {
           reserved = "0";
           available = availableFunds[c]
@@ -631,22 +649,18 @@ const PoloLender = function(name) {
         reserved = "0";
         available = availableFunds[c];
       }
-      bfxPublic.ticker("btcusd", function (err, result) {
-        if(err) {
-          logger.notice("bfxPublic.ticker: " + err.message);
-          return;
-        }
-        var rateBTCUSD = new Big(result.last_price).toString();
-        msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
-        //msg += `Start: ${journalEntry.balance[c]}, `
-        msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-        if(c === "BTC")
-          msg += ` ≈ USD ${profit.times(rateBTCUSD).toFixed(2)} (${profit.times(rateBTCUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
-        var wmrMsg = msgRate(status.wmr[c]);
-        var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
-        msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c].averageLoanHoldingTime}`;
-        logger.notice(msg);
-      });
+
+      msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
+      //msg += `Start: ${journalEntry.balance[c]}, `
+      msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+      if(rateBTCUSD && ratesBTC[c]) {
+        let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
+        msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(2)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+      }
+      var wmrMsg = msgRate(status.wmr[c]);
+      var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+      msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
+      logger.notice(msg);
     });
   };
 
@@ -686,12 +700,12 @@ const PoloLender = function(name) {
         report();
         callback(null, "OK");
       },
-      cancelHighOffers: function(callback) {          // cancel offers if price is too high
+      cancelHighOffers: function (callback) {          // cancel offers if price is too high
         cancelHighOffers(function (err){
           callback(err, err && err.message || "OK");
         });
       },
-      updateAvailableFunds: function(callback) {
+      updateAvailableFunds: function (callback) {
         if (!anyCanceledOffer)
           return callback(null, "OK");
         updateAvailableFunds(function (err) {
@@ -699,11 +713,17 @@ const PoloLender = function(name) {
           callback(err, err && err.message || "OK");
         });
       },
-      postOffers: function(callback) {
+      postOffers: function (callback) {
         postOffers(function (err){
           callback(err, err && err.message || "OK");
         });
-      }
+      },
+      updateRates: function (callback) {
+        updateRateBTCUSD();
+        updateRates(function (err) {
+          callback(err, err && err.message || "OK");
+        })
+      },
     },
     function(err, results) {
       if (!err) {
@@ -764,7 +784,7 @@ const PoloLender = function(name) {
 		self.started = moment();
 		setConfig();
 		debug("Starting...");
-		poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
+    poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
 
     srv.io.on('connection', onBrowserConnection);
 
@@ -812,6 +832,10 @@ const PoloLender = function(name) {
 				advisorInfo.time = msg.time;
 				delete msg.time;
 				_.forOwn(msg, function(value, key) {
+				  if (currencies.indexOf(key) < 0) {
+				    currencies.push(key);
+          }
+
 					advisorInfo[key] = {
 						averageLoanHoldingTime: value.averageLoanHoldingTime,
 						bestReturnRate: value.bestReturnRate,

@@ -3,6 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.7.1] - 2017-04-21
+
+### Added
+- console printout USD profit for every applicable currency
+
+### Changed
+- more robust API calls throttling to comply with Poloniex limits
+- support any currency for which lendingRate is received from **poloLending-Advisor** server 
+
 ## [0.7.0] - 2017-04-06
 
 ### Added
