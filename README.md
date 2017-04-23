@@ -8,6 +8,7 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 
 ### Contents
 * [What's new](#whats-mew)
+* [Supported crypto-currencies](#supported-crypto-currencies)
 * [How it works](#how-it-works)
 	* Why using statistical calculation is more efficient
 * [Setting up the application](#setting-up-the-application)
@@ -29,6 +30,9 @@ Preview:
 ![](http://storage2.static.itmages.com/i/17/0406/h_1491488764_5621703_28a89befdf.png)
 
 
+# Supported crypto-currencies
+
+![](http://i.imgur.com/n2NfChC.jpg)
 
 # How it works
 
