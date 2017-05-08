@@ -16,7 +16,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ## [0.7.1] - 2017-04-21
 
 ### Added
-- console printout USD profit for every applicable currency
+- console shows USD profit for every applicable currency
 
 ### Changed
 - more robust API calls throttling to comply with Poloniex limits
