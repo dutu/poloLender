@@ -3,6 +3,16 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.7.2] - 2017-05-09
+
+### Fixed
+- update dependency on `poloniex-api-node` module for better handling of Poloniex API errors
+- only update currency list only when all set of API calls is complete
+ 
+### Changed
+- only show status for coins with balance > 0
+
+
 ## [0.7.1] - 2017-04-21
 
 ### Added

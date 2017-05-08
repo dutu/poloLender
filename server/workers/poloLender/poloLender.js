@@ -24,6 +24,7 @@ const PoloLender = function(name) {
 	var socket;
 
 	let currencies = [];
+	let newCurrencies = [];
 
 	var status = {
 		restarted: Date.now(),
@@ -259,7 +260,7 @@ const PoloLender = function(name) {
 
   var execTrade = function execTrade() {
 
-  var msgLoanReturned = function msgLoanReturned(element){
+    var msgLoanReturned = function msgLoanReturned(element){
     var canceledAC, createdAt, created, msg,holdingTimeSeconds;
     createdAt = moment.utc(element.date);
     created = createdAt.fromNow();
@@ -281,7 +282,7 @@ const PoloLender = function(name) {
     logger.info(msg);
   };
 
-  var msgNewCredit = function msgNewCredit(element){
+    var msgNewCredit = function msgNewCredit(element){
     var newAC, createdAt, expiresAt, expires, msg;
     createdAt = moment.utc(element.date);
     expiresAt = moment.utc(element.date).add(element.duration, "days");
@@ -300,7 +301,7 @@ const PoloLender = function(name) {
     logger.info(msg);
   };
 
-  var updateActiveLoans = function updateActiveLoans(callback) {
+    var updateActiveLoans = function updateActiveLoans(callback) {
     var updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
       var found;
       var dateNow = Date.now();
@@ -368,7 +369,7 @@ const PoloLender = function(name) {
     });
   };
 
-  var updateActiveOffers = function updateActiveOffers(callback) {
+    var updateActiveOffers = function updateActiveOffers(callback) {
     poloPrivate.returnOpenLoanOffers(function (err, result) {
       let apiMethod = 'returnOpenLoanOffers';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
@@ -400,7 +401,7 @@ const PoloLender = function(name) {
     });
   };
 
-  var updateAvailableFunds = function updateAvailableFunds(callback) {
+    var updateAvailableFunds = function updateAvailableFunds(callback) {
     poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
       let apiMethod = 'returnAvailableAccountBalances';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
@@ -420,7 +421,7 @@ const PoloLender = function(name) {
     });
   };
 
-  var cancelHighOffers = function cancelHighOffers(callback) {
+    var cancelHighOffers = function cancelHighOffers(callback) {
     async.forEachOfSeries(activeOffers,
       // for each currency in activeOffers
       function(activeOffersOneCurrency, currency, callback) {
@@ -480,7 +481,7 @@ const PoloLender = function(name) {
       });
   };
 
-  var postOffers = function postOffers(callback) {
+    var postOffers = function postOffers(callback) {
     async.forEachOfSeries(currencies,
       // for each currency
       function(currency, index, callback) {
@@ -551,7 +552,7 @@ const PoloLender = function(name) {
       });
   };
 
-  let updateRates = function updateRates(callback) {
+    let updateRates = function updateRates(callback) {
     poloPrivate.returnTicker(function (err, result) {
       let apiMethod = 'returnTicker';
       emitApiCallUpdate({
@@ -581,7 +582,7 @@ const PoloLender = function(name) {
     });
   };
 
-  let updateRateBTCUSD = function updateRateBTCUSD() {
+    let updateRateBTCUSD = function updateRateBTCUSD() {
     bfxPublic.ticker("btcusd", function (err, result) {
       if(err) {
         logger.notice("bfxPublic.ticker: " + err.message);
@@ -593,7 +594,7 @@ const PoloLender = function(name) {
 
   };
 
-  var report = function report() {
+    var report = function report() {
     // execute every x minutes
     var now = moment();
     var duration = now.diff(status.lastRun.report, "minutes");
@@ -623,6 +624,10 @@ const PoloLender = function(name) {
     }
 
     currencies.forEach(function (c, index, array) {
+      if (new Big(depositFunds[c]).lte(0)) {
+        return;
+      }
+
       var profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
       var minutes = now.diff(config.restartTime, "minutes", true);
       var activeLoansCount = 0;
@@ -664,7 +669,7 @@ const PoloLender = function(name) {
     });
   };
 
-  async.series({
+    async.series({
       updateActiveLoans: function(callback){
         updateActiveLoans(function (err) {
           callback(err, err && err.message || "OK");
@@ -725,17 +730,18 @@ const PoloLender = function(name) {
         })
       },
     },
-    function(err, results) {
+      function(err, results) {
       if (!err) {
                   status.lastRun.speedCount++;
       }
 
+      currencies = newCurrencies.slice();
       apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
       let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
       waitOneMinute = null;
       setTimeout(execTrade, timeout);
     });
-};
+  };
 
   const emitPoloLenderAppUpdate = function emitPoloLenderAppUpdate() {
     let data = {
@@ -832,8 +838,8 @@ const PoloLender = function(name) {
 				advisorInfo.time = msg.time;
 				delete msg.time;
 				_.forOwn(msg, function(value, key) {
-				  if (currencies.indexOf(key) < 0) {
-				    currencies.push(key);
+				  if (newCurrencies.indexOf(key) < 0) {
+				    newCurrencies.push(key);
           }
 
 					advisorInfo[key] = {
