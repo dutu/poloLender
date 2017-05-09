@@ -13,7 +13,6 @@ const pjson = require('../../../package.json');
 let srv = require ('../../core/srv');
 let io = srv.io;
 
-
 const PoloLender = function(name) {
 	const self = this;
 	self.me = name;
