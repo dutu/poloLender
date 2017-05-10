@@ -151,14 +151,16 @@ Once installed, you'll have access to the heroku command from your command line.
 > Note: Keep the papertrail console open to monitor progress
 
 8. Define config vars required for configuring poloLender (replace the values below with your own)
-    ```
-    $ heroku config:set POLOLENDER_APIKEY='{"key":"V********t","secret":"T***u"}'
-    $ heroku config:set POLOLENDER_STARTTIME='2016-02-28T12:27:09+00:00'
-    $ heroku config:set POLOLENDER_STARTBALANCE='{"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000", "DASH":"10000"}'
-    $ heroku config:set POLOLENDER_LENDMAX='{"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000", "DASH":"0"}'
-    $ heroku config:set POLOLENDER_MINRATE='{"BTC":"0.02", "ETH":"0", "XMR":"0.015", "XRP":"0", "DASH":"0"}'
-    $ heroku config:set POLOLENDER_REPORTINTERVAL=60
-    ```
+
+:
+
+    $ heroku config:set POLOLENDER_APIKEY={\"key\":\"V**********************t\",\"secret\":\"T*******************************u\"}
+    $ heroku config:set POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
+    $ heroku config:set POLOLENDER_STARTBALANCE={\"BTC\":\"10\", \"ETH\":\"1100\", \"XMR\":\"1000\", \"XRP\":\"80000\", \"DASH\":\"1000\"}
+    $ heroku config:set POLOLENDER_LENDMAX={\"BTC\":\"4\", \"ETH\":\"100\", \"XMR\":\"2000\", \"XRP\":\"30000\", \"DASH\":\"100000\"}
+    $ heroku config:set POLOLENDER_MINRATE={\"BTC\":\"0\", \"ETH\":\"0\", \"XMR\":\"0\", \"XRP\":\"0\", \"DASH\":\"0\"}
+    $ heroku config:set POLOLENDER_REPORTINTERVAL=30
+
 
 9. Start the application
     ```
