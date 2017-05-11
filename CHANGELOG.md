@@ -3,6 +3,11 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.0] - 2017-05-11
+
+### Changed
+- console log displays the times in the timezone specified in POLOLENDER_STARTTIME env variable
+
 ## [0.7.2] - 2017-05-09
 
 ### Fixed

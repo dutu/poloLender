@@ -125,11 +125,12 @@ const PoloLender = function(name) {
 		try {
 			ev = self.me.toUpperCase() + "_STARTTIME";
 			config.startDate = moment(process.env[ev]);
+			config.utcOffset = moment.parseZone(process.env[ev]).utcOffset();
 		} catch (err) {
 			logger.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
 			config.startDate = configDefault.startDate;
+			config.utcOffset = 0;
 			debug(`${ev}=${process.env[ev]}`);
-
 		}
 		logger.info(`Using ${ev}=${config.startDate}`);
 
@@ -295,7 +296,7 @@ const PoloLender = function(name) {
       createdAt: createdAt,
       expires: expires
     };
-    msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(120).format("YYYY-MM-DD HH:mm");
+    msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm");
     msg += ", expires " + expires;
     logger.info(msg);
   };
@@ -609,7 +610,7 @@ const PoloLender = function(name) {
 
     // since = startDate.fromNow(true);
     since = now.diff(config.startDate, "days");
-    msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(120).format("YYYY-MM-DD HH:mm") + ")";
+    msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm") + ")";
     msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
     msg += ` • speed: ${speed}/min`;
     logger.notice(`${msg}`);

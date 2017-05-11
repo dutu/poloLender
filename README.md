@@ -155,12 +155,13 @@ Once installed, you'll have access to the heroku command from your command line.
 :
 
     $ heroku config:set POLOLENDER_APIKEY={\"key\":\"V**********************t\",\"secret\":\"T*******************************u\"}
-    $ heroku config:set POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
+    $ heroku config:set POLOLENDER_STARTTIME=2016-02-28T12:27:09+01:00
     $ heroku config:set POLOLENDER_STARTBALANCE={\"BTC\":\"10\", \"ETH\":\"1100\", \"XMR\":\"1000\", \"XRP\":\"80000\", \"DASH\":\"1000\"}
     $ heroku config:set POLOLENDER_LENDMAX={\"BTC\":\"4\", \"ETH\":\"100\", \"XMR\":\"2000\", \"XRP\":\"30000\", \"DASH\":\"100000\"}
     $ heroku config:set POLOLENDER_MINRATE={\"BTC\":\"0\", \"ETH\":\"0\", \"XMR\":\"0\", \"XRP\":\"0\", \"DASH\":\"0\"}
     $ heroku config:set POLOLENDER_REPORTINTERVAL=30
 
+Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 
 9. Start the application
     ```
@@ -232,8 +233,8 @@ Bot configuration is done by setting environment variables or by specifying thes
     # API key for your Poloniex account
     POLOLENDER_APIKEY={"key":"V**********************t","secret":"T*******************************u"}
 
-    # Start UTC time - this is used to calculate and display total profitability
-    POLOLENDER_STARTTIME=2016-02-28T12:27:09+00:00
+    # Start time - this is used to calculate and display total profitability
+    POLOLENDER_STARTTIME=2016-02-28T12:27:09+01:00
 
     # Start balance - this is used to calculate and display total profitability
     POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000", "DASH":"1000"}
@@ -247,6 +248,7 @@ Bot configuration is done by setting environment variables or by specifying thes
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30
 
+Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 
 # FAQ
 

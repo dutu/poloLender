@@ -1,6 +1,6 @@
 {
   "name": "poloLenderPro",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
   "author": "Adrian Clinciu <adrian.clinciu@outlook.com>",
   "main": "server.js",
