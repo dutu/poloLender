@@ -750,7 +750,7 @@ const PoloLender = function(name) {
         }
         waitOneMinute = null;
 
-        execTrade;
+        execTrade();
       }, timeout);
     });
   };
