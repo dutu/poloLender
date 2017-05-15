@@ -3,6 +3,11 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.1] - 2017-05-15
+
+### Changed
+- Stop API activity for 1 minute when Poloniex returns "error 429: Too Many Requests"
+
 ## [0.8.0] - 2017-05-11
 
 ### Changed
