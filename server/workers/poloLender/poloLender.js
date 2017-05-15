@@ -344,7 +344,8 @@ const PoloLender = function(name) {
       var newActiveLoans;
       if (err) {
         logger.notice("returnActiveLoans: " + err.message);
-        if (_.includes(err.message, 'throttled')) {
+        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+          logger.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -375,7 +376,8 @@ const PoloLender = function(name) {
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnOpenLoanOffers: " + err.message);
-        if (_.includes(err.message, 'throttled')) {
+        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+          logger.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -407,7 +409,8 @@ const PoloLender = function(name) {
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
       if (err) {
         logger.notice("returnAvailableAccountBalances: " + err.message);
-        if (_.includes(err.message, 'throttled')) {
+        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+          logger.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -455,8 +458,9 @@ const PoloLender = function(name) {
               emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
               if (err) {
                 logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
-                if (_.includes(err.message, 'throttled')) {
-                    waitOneMinute = Date.now();
+                if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+                  logger.info('API activity stopped for 1 minute');
+                  waitOneMinute = Date.now();
                 }
 
                 return apiCallLimitDelay(apiMethod, () => cb(err));
@@ -527,8 +531,9 @@ const PoloLender = function(name) {
           emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
           if (err) {
             logger.notice("createLoanOffer: " + err.message);
-            if (_.includes(err.message, 'throttled')) {
-                waitOneMinute = Date.now();
+            if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+              logger.info('API activity stopped for 1 minute');
+              waitOneMinute = Date.now();
             }
 
             return apiCallLimitDelay(apiMethod, () => callback(err));
@@ -565,7 +570,8 @@ const PoloLender = function(name) {
       });
       if (err) {
         logger.notice("returnTicker: " + err.message);
-        if (_.includes(err.message, 'throttled')) {
+        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+          logger.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
