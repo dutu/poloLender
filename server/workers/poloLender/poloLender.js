@@ -743,7 +743,7 @@ const PoloLender = function(name) {
 
       currencies = newCurrencies.slice();
       apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
-      let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 - (Date.now() - waitOneMinute) || 0);
+      let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 || 0);
       setTimeout(function() {
         if (waitOneMinute) {
           logger.info('API activity resumed');
