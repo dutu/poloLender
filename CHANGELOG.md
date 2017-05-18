@@ -3,6 +3,11 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.2] - 2017-05-18
+
+### Changed
+- Update socket timeout to 60 seconds to minimize error 429 issued by Cloudflare 
+
 ## [0.8.1] - 2017-05-15
 
 ### Changed

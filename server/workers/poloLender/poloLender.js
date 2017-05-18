@@ -802,7 +802,7 @@ const PoloLender = function(name) {
 		self.started = moment();
 		setConfig();
 		debug("Starting...");
-    poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret);
+    poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret, { socketTimeout: 60000 });
 
     srv.io.on('connection', onBrowserConnection);
 
