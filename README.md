@@ -252,9 +252,7 @@ Note: console log times will be displayed in the same timezone as POLOLENDER_STA
 
 # FAQ
 
-**Q1: Can you add support for lending additonal crypto currency**
-
-**A1:** Yes, please contact me by e-mail or [raise an issue on github](https://github.com/dutu/pololender/issues)
+See [FAQ](https://github.com/dutu/pololender/faq.md)
 
 
 # License #
