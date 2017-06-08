@@ -252,7 +252,7 @@ Note: console log times will be displayed in the same timezone as POLOLENDER_STA
 
 # FAQ
 
-See [FAQ](https://github.com/dutu/pololender/faq.md)
+See [FAQ](https://github.com/dutu/poloLender/blob/master/faq.md)
 
 
 # License #
