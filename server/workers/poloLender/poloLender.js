@@ -343,7 +343,7 @@ const PoloLender = function(name) {
       var newActiveLoans;
       if (err) {
         logger.notice("returnActiveLoans: " + err.message);
-        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+        if (_.includes(err.message, 'IP has been banned')) {
           logger.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }

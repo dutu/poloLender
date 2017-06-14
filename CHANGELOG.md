@@ -8,7 +8,8 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Minimum amount for each currency
 - API indicator shows misleading icon
-- Error message for connection errors to poloLending-Advisor server  
+- Error message for connection errors to poloLending-Advisor server
+- Pause API activity when IP is throttled  
 
 ## [0.8.2] - 2017-05-18
 
