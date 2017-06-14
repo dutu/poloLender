@@ -3,6 +3,13 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.3] - 2017-06-15
+
+### Fixed
+- Minimum amount for each currency
+- API indicator shows misleading icon
+- Error message for connection errors to poloLending-Advisor server  
+
 ## [0.8.2] - 2017-05-18
 
 ### Changed

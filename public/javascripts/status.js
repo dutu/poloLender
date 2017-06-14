@@ -64,8 +64,8 @@ let poloLenderAppConfig = {
                 ok++;
               }
             }
-            const banIconTimeoutMs = 5000;
-            if (ago >= 100 && ago < banIconTimeoutMs) activityHtml = `<i class="fa fa-circle-o"></i>`;
+            const banIconTimeoutMs = 60000;
+            if (ago >= 150 && ago < banIconTimeoutMs) activityHtml = `<i class="fa fa-circle-o"></i>`;
             // activityHtml += ` (OK ${(ok/(ok+nok)*100).toFixed(0)}%)`;
             if (ago >= banIconTimeoutMs) {
               activityHtml = `<span style="color:red"><i class="fa fa-ban"></i></span>`;

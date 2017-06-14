@@ -54,7 +54,6 @@ const PoloLender = function(name) {
 	var configDefault = {
 		startDate: "",
 		reportEveryMinutes: 5,
-		minOrderSize: "0.01",
 		startBalance: {},
 		restartTime: moment(),
 		offerMinRate: {},
@@ -506,7 +505,7 @@ const PoloLender = function(name) {
           }
         }
 
-        if (amountToTrade.lt(config.minOrderSize)) {
+        if (amountToTrade.lt(advisorInfo[currency].minOrderAmount || '1')) {
           return callback(null);
         }
 
@@ -536,7 +535,7 @@ const PoloLender = function(name) {
               waitOneMinute = Date.now();
             }
 
-            return apiCallLimitDelay(apiMethod, () => callback(err));
+            return apiCallLimitDelay(apiMethod, () => callback(null));
           }
 
           status.offersCount++;
@@ -822,13 +821,17 @@ const PoloLender = function(name) {
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("connect_error", function (err) {
-			logger.warning(`Error connecting to server ${config.advisor} (${err.type}: ${err.message})`);
-      browserData.advisor.connection = `connect error ${err.type}: ${err.message}`;
+			let error = JSON.parse(JSON.stringify(err));
+			if (err.message) error.message = err.message;
+			logger.warning(`Error connecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+      browserData.advisor.connection = `connect error ${JSON.stringify(error)}`;
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("reconnect_error", function (err) {
-			logger.warning(`Error reconnecting to server ${config.advisor} (${err.type}: ${err.message})`);
-      browserData.advisor.connection = `reconnect error ${err.type}: ${err.message}`;
+			let error = JSON.parse(JSON.stringify(err));
+			if (err.message) error.message = err.message;
+			logger.warning(`Error reconnecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+      browserData.advisor.connection = `reconnect error ${JSON.stringify(error)}`;
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("disconnect", function () {
@@ -857,7 +860,8 @@ const PoloLender = function(name) {
 					advisorInfo[key] = {
 						averageLoanHoldingTime: value.averageLoanHoldingTime,
 						bestReturnRate: value.bestReturnRate,
-						bestDuration: value.bestDuration
+						bestDuration: value.bestDuration,
+						minOrderAmount: value.minOrderAmount || '1',
 					};
           browserData.advisorInfo[key] = advisorInfo[key];
         });
