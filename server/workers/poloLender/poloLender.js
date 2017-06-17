@@ -618,14 +618,14 @@ const PoloLender = function(name) {
     msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm") + ")";
     msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
     msg += ` • speed: ${speed}/min`;
-    logger.notice(`${msg}`);
+    logger.report(`${msg}`);
 
     if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
       logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
     }
 
     if(clientMessage.message) {
-      logger.info(`${clientMessage.message}`);
+      logger.report(`${clientMessage.message}`);
     }
 
     currencies.forEach(function (c, index, array) {
@@ -670,7 +670,7 @@ const PoloLender = function(name) {
       var wmrMsg = msgRate(status.wmr[c]);
       var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
       msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
-      logger.notice(msg);
+      logger.report(msg);
     });
   };
 

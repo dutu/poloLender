@@ -1,6 +1,6 @@
 {
   "name": "poloLenderPro",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
   "author": "dutu <dutu@protonmail.com>",
   "main": "server.js",
