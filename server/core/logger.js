@@ -9,11 +9,12 @@ customLogColors.report = 'blue';
 winston.addColors(customLogColors);
 let logger = new (winston.Logger)({
 	levels: customLogLevels,
+  exitOnError: false,
 	transports: [
 		new (winston.transports.Console)({
 			colorize: 'all'
-		})
-	]
+		}),
+  ]
 });
 
 module.exports = logger;

@@ -9,6 +9,11 @@ const debug = require('debug')('pololender');
 const Bitfinex = require('bitfinex');
 const semver = require('semver');
 const Poloniex = require('poloniex-api-node');
+const winston = require('winston');
+const TelegramBot = require('node-telegram-bot-api');
+
+require('winston-telegram').Telegram;
+
 const pjson = require('../../../package.json');
 let srv = require ('../../core/srv');
 let io = srv.io;
@@ -18,7 +23,7 @@ const PoloLender = function(name) {
 	self.me = name;
 
   let browserData = {};
-	var logger = srv.logger;
+	var log = srv.logger;
 	var poloPrivate;
 	var socket;
 
@@ -48,10 +53,10 @@ const PoloLender = function(name) {
     BTC: '1',
   };
   let rateBTCUSD;
-	var advisorInfo = {};
-	var clientMessage ={};
+	let advisorInfo = {};
+	let clientMessage ={};
 
-	var configDefault = {
+	const configDefault = {
 		startDate: "",
 		reportEveryMinutes: 5,
 		startBalance: {},
@@ -62,7 +67,7 @@ const PoloLender = function(name) {
     maxApiCallsPerDuration: 7,
     apiCallsDurationMS: 1000,
 	};
-	var config = {};
+	let config = {};
 
 	let apiCallTimes = [];
 	let waitOneMinute = null;
@@ -70,14 +75,14 @@ const PoloLender = function(name) {
 
 	_.assign(config, configDefault);
 
-	var bfxPublic = new Bitfinex();
+	let bfxPublic = new Bitfinex();
 
-	var setConfig = function setConfig() {
+	const setConfig = function setConfig() {
 		advisorInfo.time = "";
 		// API keys
 		try {
 			ev = self.me.toUpperCase() + "_APIKEY";
-			var apiKey = JSON.parse(process.env[ev]);
+			let apiKey = JSON.parse(process.env[ev]);
 			self.apiKey = {
 				key: apiKey.key || "",
 				secret: apiKey.secret || "secret"
@@ -88,21 +93,11 @@ const PoloLender = function(name) {
 				key: "",
 				secret: ""
 			};
-			logger.alert(`Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			log.alert(`Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
-			logger.alert(`Application will now exit. Correct the environment variable ${ev} and start the application again`);
+			log.alert(`Application will now exit. Correct the environment variable ${ev} and start the application again`);
 			process.exit(1);
 		}
-
-/*
-		ev = self.me.toUpperCase() + "_ADVISOR";
-		config.advisor = process.env[ev];
-		if (!config.advisor) {
-			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			config.advisor = configDefault.advisor
-		}
-		logger.info(`Using ${ev}=${config.advisor}`);
-*/
 
 		try {
 			ev = self.me.toUpperCase() + "_REPORTINTERVAL";
@@ -115,29 +110,30 @@ const PoloLender = function(name) {
 			}
 		}
 		catch (err) {
-			logger.error(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 			config.reportEveryMinutes = configDefault.reportEveryMinutes;
 		}
-		logger.info(`Using ${ev}=${config.reportEveryMinutes}`);
+		log.info(`Using ${ev}=${config.reportEveryMinutes}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTTIME";
 			config.startDate = moment(process.env[ev]);
 			config.utcOffset = moment.parseZone(process.env[ev]).utcOffset();
 		} catch (err) {
-			logger.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
 			config.startDate = configDefault.startDate;
 			config.utcOffset = 0;
 			debug(`${ev}=${process.env[ev]}`);
 		}
-		logger.info(`Using ${ev}=${config.startDate}`);
+		log.info(`Using ${ev}=${config.startDate}`);
 
+		let startBalance;
 		try {
 			ev = self.me.toUpperCase() + "_STARTBALANCE";
-			var startBalance = JSON.parse(process.env[ev]);
+			startBalance = JSON.parse(process.env[ev]);
 		} catch (err) {
-			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
 		_.forEach(startBalance, function (value, key) {
@@ -149,20 +145,20 @@ const PoloLender = function(name) {
           config.startBalance[key] = val.toString();
         }
       } catch (err) {
-        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
         debug(`${ev}=${process.env[ev]}`);
         throw err;
       }
 		});
 		val = JSON.stringify(config.startBalance);
-		logger.info(`Using ${ev}=${val}`);
+		log.info(`Using ${ev}=${val}`);
 
-		var lendMax;
+		let lendMax;
 		try {
 			ev = self.me.toUpperCase() + "_LENDMAX";
 			lendMax = JSON.parse(process.env[ev]);
 		} catch (err) {
-			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
     _.forEach(lendMax, function (value, key) {
@@ -174,20 +170,20 @@ const PoloLender = function(name) {
           config.offerMaxAmount[key] = val.toString();
         }
       } catch (err) {
-        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
         debug(`${ev}=${process.env[ev]}`);
         throw err;
       }
 		});
 		val = JSON.stringify(config.offerMaxAmount);
-		logger.info(`Using ${ev}=${val}`);
+		log.info(`Using ${ev}=${val}`);
 
-		var minRate;
+		let minRate;
 		try {
 			ev = self.me.toUpperCase() + "_MINRATE";
 			minRate = JSON.parse(process.env[ev]);
 		} catch (err) {
-			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 		}
     _.forEach(minRate, function (value, key) {
@@ -199,90 +195,94 @@ const PoloLender = function(name) {
           config.offerMinRate[key] = val.toString();
         }
       } catch (err) {
-        logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
         debug(`${ev}=${process.env[ev]}`);
         throw err;
       }
 		});
 		val = JSON.stringify(config.offerMinRate);
-		logger.info(`Using ${ev}=${val}`);
+		log.info(`Using ${ev}=${val}`);
 
 		try {
 			ev = self.me.toUpperCase() + "_STARTTIME";
 			config.restartTime = moment(process.env[ev]);
 		} catch (err) {
-			logger.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
+			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
 			debug(`${ev}=${process.env[ev]}`);
 			config.restartTime = moment(0);
 		}
 		val = config.restartTime.utc().format();
-		logger.info(`Using ${ev}=${val}`);
-	};
+		log.info(`Using ${ev}=${val}`);
 
-	var strAR = function strAR(str, length) {
-		if (str.length > length)
-			return str;
-		var result = "                             " + str;
-		result = result.substring(result.length - length);
-		return result
-	};
-
-	var msgRate = function msgRate(perDayProc) {
-		let perDay = new Big(perDayProc).times(100).toFixed(6);
-		let perYear = new Big(perDayProc).times(365*100).toFixed(4);
-//		let perMonth = new Big(perYear).div(12).toFixed(4);
-		let msg = strAR(perDay, 6) + "%";
-		msg += " (" + strAR(new Big(perYear).toFixed(2), 5) + "%)";
-		return msg;
-	};
-
-  let apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
-    let timeNow = Date.now();
-    if (debug.enabled) {
-      callsLast100.push(timeNow);
-      let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
-        if (timeNow - callTimestamp < config.apiCallsDurationMS) {
-          return count += 1;
-        } else {
-          return count;
-        }
-      }, 0);
-      debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
-      callsLast100.splice(0, callsLast100.length - 20);
-    }
-
-    apiCallTimes.push(timeNow);
-    apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration);
-    let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
-    setTimeout(callback, timeout);
+    ev = self.me.toUpperCase() + "_TELEGRAM_TOKEN";
+		config.telegramToken = process.env[ev];
+    ev = self.me.toUpperCase() + "_TELEGRAM_USERID";
+    config.telegramUserId = process.env[ev];
   };
 
-  var execTrade = function execTrade() {
-
-    var msgLoanReturned = function msgLoanReturned(element){
-    var canceledAC, createdAt, created, msg,holdingTimeSeconds;
-    createdAt = moment.utc(element.date);
-    created = createdAt.fromNow();
-    canceledAC = {
-      id: element.id,
-      currency: element.currency,
-      amount: strAR(new Big(element.amount).toFixed(8), 14),
-      rate: new Big(element.rate).toFixed(8),
-      period: element.period,
-      createdAt: createdAt,
-      expires: ""
+  const execTrade = function execTrade() {
+    const strAR = function strAR(str, length) {
+      if (str.length > length)
+        return str;
+      var result = "                             " + str;
+      result = result.substring(result.length - length);
+      return result
     };
-    var holdingTimeInSeconds = moment().diff(createdAt, "seconds");
-    var htHours = Math.floor(holdingTimeInSeconds / 60 /60);
-    var htMin = Math.floor((holdingTimeInSeconds - htHours * 60 *60) / 60);
-    var htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
-    var msgHt = `${htHours}h ${htMin}m ${htSec}s`;
-    msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
-    logger.info(msg);
-  };
 
-    var msgNewCredit = function msgNewCredit(element){
-    var newAC, createdAt, expiresAt, expires, msg;
+    const msgRate = function msgRate(perDayProc) {
+      let perDay = new Big(perDayProc).times(100).toFixed(6);
+      let perYear = new Big(perDayProc).times(365*100).toFixed(4);
+//		let perMonth = new Big(perYear).div(12).toFixed(4);
+      let msg = strAR(perDay, 6) + "%";
+      msg += " (" + strAR(new Big(perYear).toFixed(2), 5) + "%)";
+      return msg;
+    };
+
+    const apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
+      let timeNow = Date.now();
+      if (debug.enabled) {
+        callsLast100.push(timeNow);
+        let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
+          if (timeNow - callTimestamp < config.apiCallsDurationMS) {
+            return count += 1;
+          } else {
+            return count;
+          }
+        }, 0);
+        debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
+        callsLast100.splice(0, callsLast100.length - 20);
+      }
+
+      apiCallTimes.push(timeNow);
+      apiCallTimes.splice(0, apiCallTimes.length - config.maxApiCallsPerDuration);
+      let timeout = apiCallTimes.length && Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0])) || 0;
+      setTimeout(callback, timeout);
+    };
+
+    const msgLoanReturned = function msgLoanReturned(element) {
+      let canceledAC, createdAt, created, msg,holdingTimeSeconds;
+      createdAt = moment.utc(element.date);
+      created = createdAt.fromNow();
+      canceledAC = {
+        id: element.id,
+        currency: element.currency,
+        amount: strAR(new Big(element.amount).toFixed(8), 14),
+        rate: new Big(element.rate).toFixed(8),
+        period: element.period,
+        createdAt: createdAt,
+        expires: ""
+      };
+      let holdingTimeInSeconds = moment().diff(createdAt, "seconds");
+      let htHours = Math.floor(holdingTimeInSeconds / 60 /60);
+      let htMin = Math.floor((holdingTimeInSeconds - htHours * 60 *60) / 60);
+      let htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
+      let msgHt = `${htHours}h ${htMin}m ${htSec}s`;
+      msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
+      log.info(msg);
+    };
+
+    const msgNewCredit = function msgNewCredit(element) {
+    let newAC, createdAt, expiresAt, expires, msg;
     createdAt = moment.utc(element.date);
     expiresAt = moment.utc(element.date).add(element.duration, "days");
     expires = expiresAt.fromNow();
@@ -297,86 +297,86 @@ const PoloLender = function(name) {
     };
     msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm");
     msg += ", expires " + expires;
-    logger.info(msg);
+    log.info(msg);
   };
 
-    var updateActiveLoans = function updateActiveLoans(callback) {
-    var updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
-      var found;
-      var dateNow = Date.now();
-      activeLoans.forEach(function (element, index, array) {
-        found = _.find(newActiveLoans, {id: element.id});
-        if (typeof found === "undefined") {
-          var returnedLoan = {
-            "id": element.id,
-            "date": moment.utc(element.date).toDate(),
-            "currency": element.currency,
-            "rate": element.rate,
-            "duration": element.duration,
-            "returned": dateNow
-          };
-          msgLoanReturned(element);
-          anyChangedLoans[element.currency] = true;
-        }
-      });
-      newActiveLoans.forEach(function (element, index, array) {
-        found = _.find(activeLoans, {id: element.id});
-        if (typeof found === "undefined") {
-          msgNewCredit(element);
-          anyChangedLoans[element.currency] = true;
-          anyNewLoans[element.currency] = true;
-          status.activeLoansCount++;
-        }
-      });
-      activeLoans = newActiveLoans;
-
-      var currenciesNewActiveLoans = [];
-      newActiveLoans.forEach(function (element, index, array) {
-        currenciesNewActiveLoans.push(element.currency)
-      });
-      currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
-    };
-
-    poloPrivate.returnActiveLoans(function (err, result) {
-      let apiMethod = 'returnActiveLoans';
-      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
-      var newActiveLoans;
-      if (err) {
-        logger.notice("returnActiveLoans: " + err.message);
-        if (_.includes(err.message, 'IP has been banned')) {
-          logger.info('API activity stopped for 1 minute');
-          waitOneMinute = Date.now();
-        }
-
-        return apiCallLimitDelay(apiMethod, () => callback(err));
-      }
-
-      newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
-      updateWithNewActiveLoans(newActiveLoans);
-      // update wmr
-      currencies.forEach(function (c, index, array) {
-        var sum = new Big(0),
-          sumOfProd = new Big(0);
+    const updateActiveLoans = function updateActiveLoans(callback) {
+      const updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
+        var found;
+        var dateNow = Date.now();
         activeLoans.forEach(function (element, index, array) {
-          if (element.currency.toUpperCase() === c.toUpperCase()) {
-            sum = sum.plus(element.amount);
-            sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
+          found = _.find(newActiveLoans, {id: element.id});
+          if (typeof found === "undefined") {
+            var returnedLoan = {
+              "id": element.id,
+              "date": moment.utc(element.date).toDate(),
+              "currency": element.currency,
+              "rate": element.rate,
+              "duration": element.duration,
+              "returned": dateNow
+            };
+            msgLoanReturned(element);
+            anyChangedLoans[element.currency] = true;
           }
         });
-        status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
-      });
-      return apiCallLimitDelay(apiMethod, () => callback(null));
-    });
-  };
+        newActiveLoans.forEach(function (element, index, array) {
+          found = _.find(activeLoans, {id: element.id});
+          if (typeof found === "undefined") {
+            msgNewCredit(element);
+            anyChangedLoans[element.currency] = true;
+            anyNewLoans[element.currency] = true;
+            status.activeLoansCount++;
+          }
+        });
+        activeLoans = newActiveLoans;
 
-    var updateActiveOffers = function updateActiveOffers(callback) {
+        var currenciesNewActiveLoans = [];
+        newActiveLoans.forEach(function (element, index, array) {
+          currenciesNewActiveLoans.push(element.currency)
+        });
+        currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
+      };
+
+      poloPrivate.returnActiveLoans(function (err, result) {
+        let apiMethod = 'returnActiveLoans';
+        emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
+        var newActiveLoans;
+        if (err) {
+          log.notice("returnActiveLoans: " + err.message);
+          if (_.includes(err.message, 'IP has been banned')) {
+            log.info('API activity stopped for 1 minute');
+            waitOneMinute = Date.now();
+          }
+
+          return apiCallLimitDelay(apiMethod, () => callback(err));
+        }
+
+        newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
+        updateWithNewActiveLoans(newActiveLoans);
+        // update wmr
+        currencies.forEach(function (c, index, array) {
+          var sum = new Big(0),
+            sumOfProd = new Big(0);
+          activeLoans.forEach(function (element, index, array) {
+            if (element.currency.toUpperCase() === c.toUpperCase()) {
+              sum = sum.plus(element.amount);
+              sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
+            }
+          });
+          status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
+        });
+        return apiCallLimitDelay(apiMethod, () => callback(null));
+      });
+    };
+
+    const updateActiveOffers = function updateActiveOffers(callback) {
     poloPrivate.returnOpenLoanOffers(function (err, result) {
       let apiMethod = 'returnOpenLoanOffers';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       if (err) {
-        logger.notice("returnOpenLoanOffers: " + err.message);
+        log.notice("returnOpenLoanOffers: " + err.message);
         if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-          logger.info('API activity stopped for 1 minute');
+          log.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -402,14 +402,14 @@ const PoloLender = function(name) {
     });
   };
 
-    var updateAvailableFunds = function updateAvailableFunds(callback) {
+    const updateAvailableFunds = function updateAvailableFunds(callback) {
     poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
       let apiMethod = 'returnAvailableAccountBalances';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
       if (err) {
-        logger.notice("returnAvailableAccountBalances: " + err.message);
+        log.notice("returnAvailableAccountBalances: " + err.message);
         if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-          logger.info('API activity stopped for 1 minute');
+          log.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -423,7 +423,7 @@ const PoloLender = function(name) {
     });
   };
 
-    var cancelHighOffers = function cancelHighOffers(callback) {
+    const cancelHighOffers = function cancelHighOffers(callback) {
     async.forEachOfSeries(activeOffers,
       // for each currency in activeOffers
       function(activeOffersOneCurrency, currency, callback) {
@@ -448,7 +448,7 @@ const PoloLender = function(name) {
               }
             }
             if (process.env[self.me+"_NOTRADE"] === "true") {
-              logger.notice("cancelHighOffers: NO TRADE");
+              log.notice("cancelHighOffers: NO TRADE");
               return cb(null);
             }
 
@@ -456,9 +456,9 @@ const PoloLender = function(name) {
               let apiMethod = 'cancelLoanOffer';
               emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
               if (err) {
-                logger.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
+                log.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
                 if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-                  logger.info('API activity stopped for 1 minute');
+                  log.info('API activity stopped for 1 minute');
                   waitOneMinute = Date.now();
                 }
 
@@ -471,7 +471,7 @@ const PoloLender = function(name) {
               msg += " at " + msgRate(offer.rate);
               let bestReturnRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
               msg += ", brr " + msgRate(bestReturnRate);
-              logger.info(msg);
+              log.info(msg);
               return apiCallLimitDelay(apiMethod, () => cb(null));
             });
           },
@@ -484,7 +484,7 @@ const PoloLender = function(name) {
       });
   };
 
-    var postOffers = function postOffers(callback) {
+    const postOffers = function postOffers(callback) {
     async.forEachOfSeries(currencies,
       // for each currency
       function(currency, index, callback) {
@@ -521,7 +521,7 @@ const PoloLender = function(name) {
         }
 
         if (process.env[self.me+"_NOTRADE"] === "true") {
-          logger.notice("Post offer: NO TRADE");
+          log.notice("Post offer: NO TRADE");
           return callback(new Error("NO TRADE"));
         }
 
@@ -529,9 +529,9 @@ const PoloLender = function(name) {
           let apiMethod = 'createLoanOffer';
           emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
           if (err) {
-            logger.notice("createLoanOffer: " + err.message);
+            log.notice("createLoanOffer: " + err.message);
             if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-              logger.info('API activity stopped for 1 minute');
+              log.info('API activity stopped for 1 minute');
               waitOneMinute = Date.now();
             }
 
@@ -547,7 +547,7 @@ const PoloLender = function(name) {
             period: duration
           };
           var msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
-          logger.info(msg);
+          log.info(msg);
           return apiCallLimitDelay(apiMethod, () => callback(null));
         });
       },
@@ -556,7 +556,7 @@ const PoloLender = function(name) {
       });
   };
 
-    let updateRates = function updateRates(callback) {
+    const updateRates = function updateRates(callback) {
     poloPrivate.returnTicker(function (err, result) {
       let apiMethod = 'returnTicker';
       emitApiCallUpdate({
@@ -568,9 +568,9 @@ const PoloLender = function(name) {
         data: null
       });
       if (err) {
-        logger.notice("returnTicker: " + err.message);
+        log.notice("returnTicker: " + err.message);
         if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-          logger.info('API activity stopped for 1 minute');
+          log.info('API activity stopped for 1 minute');
           waitOneMinute = Date.now();
         }
 
@@ -587,10 +587,10 @@ const PoloLender = function(name) {
     });
   };
 
-    let updateRateBTCUSD = function updateRateBTCUSD() {
+    const updateRateBTCUSD = function updateRateBTCUSD() {
     bfxPublic.ticker("btcusd", function (err, result) {
       if(err) {
-        logger.notice("bfxPublic.ticker: " + err.message);
+        log.notice("bfxPublic.ticker: " + err.message);
         return;
       }
 
@@ -599,80 +599,86 @@ const PoloLender = function(name) {
 
   };
 
-    var report = function report() {
+    const report = function report() {
     // execute every x minutes
-    var now = moment();
-    var duration = now.diff(status.lastRun.report, "minutes");
-    if (duration < config.reportEveryMinutes) {
-      return;
-    }
-    var speed = new Big(status.lastRun.speedCount).div(duration).toFixed(2);
-    status.lastRun.report = now;
-    status.lastRun.speedCount = 0;
-
-    var msg, since;
-    status.offersCount = status.offersCount || status.activeLoansCount;
-
-    // since = startDate.fromNow(true);
-    since = now.diff(config.startDate, "days");
-    msg = `♣ poloLender ${pjson.version} running for `+ since + " days • restarted " + self.started.fromNow() + " (" + self.started.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm") + ")";
-    msg += " • Offers/Loans: " + status.offersCount + "/" + status.activeLoansCount + " ";
-    msg += ` • speed: ${speed}/min`;
-    logger.report(`${msg}`);
-
-    if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-      logger.warning(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
-    }
-
-    if(clientMessage.message) {
-      logger.report(`${clientMessage.message}`);
-    }
-
-    currencies.forEach(function (c, index, array) {
-      if (new Big(depositFunds[c]).lte(0)) {
+      let now = moment();
+      let duration = now.diff(status.lastRun.report, "minutes");
+      if (duration < config.reportEveryMinutes) {
         return;
       }
+      let speed = new Big(status.lastRun.speedCount).div(duration).toFixed(2);
+      status.lastRun.report = now;
+      status.lastRun.speedCount = 0;
 
-      var profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
-      var minutes = now.diff(config.restartTime, "minutes", true);
-      var activeLoansCount = 0;
-      var activeLoansAmount = new Big(0);
-      activeLoans.forEach(function (l, index, array) {
-        if (l.currency === c) {
-          activeLoansCount++;
-          activeLoansAmount = activeLoansAmount.plus(l.amount);
+      let msg, since;
+      status.offersCount = status.offersCount || status.activeLoansCount;
+
+      // since = startDate.fromNow(true);
+      since = now.diff(config.startDate, "days");
+      let m = {
+        runningForDays: since,
+        restartedAgo: self.started.fromNow(),
+        restartedAt: self.started.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm"),
+        offersCount: status.offersCount,
+        activeLoans: status.activeLoansCount,
+      };
+      msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
+      msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
+//      msg += ` • speed: ${speed}/min`;
+      log.report(`${msg}`);
+
+      if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+        log.report(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+      }
+
+      if(clientMessage.message) {
+        log.report(`${clientMessage.message}`);
+      }
+
+      currencies.forEach(function (c, index, array) {
+        if (new Big(depositFunds[c]).lte(0)) {
+          return;
         }
-      });
-      var reserved, offerMax, available;
-      try {
-        offerMax = Number(config.offerMaxAmount[c] || '9999999');
-        if (parseFloat(depositFunds[c]) < offerMax) {
+
+        let profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
+        let minutes = now.diff(config.restartTime, "minutes", true);
+        let activeLoansCount = 0;
+        let activeLoansAmount = new Big(0);
+        activeLoans.forEach(function (l, index, array) {
+          if (l.currency === c) {
+            activeLoansCount++;
+            activeLoansAmount = activeLoansAmount.plus(l.amount);
+          }
+        });
+        let reserved, offerMax, available;
+        try {
+          offerMax = Number(config.offerMaxAmount[c] || '9999999');
+          if (parseFloat(depositFunds[c]) < offerMax) {
+            reserved = "0";
+            available = availableFunds[c]
+          }
+          else {
+            reserved = new Big(depositFunds[c]).minus(offerMax).toFixed(8);
+            available = new Big(availableFunds[c]).minus(reserved).toFixed(8);
+          }
+        }
+        catch (err) {
           reserved = "0";
-          available = availableFunds[c]
+          available = availableFunds[c];
         }
-        else {
-          reserved = new Big(depositFunds[c]).minus(offerMax).toFixed(8);
-          available = new Big(availableFunds[c]).minus(reserved).toFixed(8);
-        }
-      }
-      catch (err) {
-        reserved = "0";
-        available = availableFunds[c];
-      }
 
-      msg = `* ${c}: ${activeLoansCount} loans: ${activeLoansAmount}, res: ${reserved} ● TOTAL: ${depositFunds[c]}, `;
-      //msg += `Start: ${journalEntry.balance[c]}, `
-      msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-      if(rateBTCUSD && ratesBTC[c]) {
-        let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
-        msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(2)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
-      }
-      var wmrMsg = msgRate(status.wmr[c]);
-      var ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
-      msg += ` ● wmr: ${wmrMsg} ewmr: ${ewmr} ● alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
-      logger.report(msg);
-    });
-  };
+        msg = `● ${c}: total ${depositFunds[c]} • ${activeLoansAmount} in ${activeLoansCount} active loans`;
+        msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        if(rateBTCUSD && ratesBTC[c]) {
+          let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
+          msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(2)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+        }
+        let wmrMsg = msgRate(status.wmr[c]);
+        let ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+        msg += ` • wmr: ${wmrMsg} ewmr: ${ewmr} alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
+        log.report(msg);
+      });
+    };
 
     async.series({
       updateActiveLoans: function(callback){
@@ -745,7 +751,7 @@ const PoloLender = function(name) {
       let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 || 0);
       setTimeout(function() {
         if (waitOneMinute) {
-          logger.info('API activity resumed');
+          log.info('API activity resumed');
         }
         waitOneMinute = null;
 
@@ -795,12 +801,28 @@ const PoloLender = function(name) {
     emitAdvisorInfoUpdate();
   };
 
+  const updateTelegramLogger = function updateTelegramLogger() {
+    if (!config.telegramToken || !config.telegramUserId) {
+      log.notice('Bot reports will NOT be sent via telegram (token and/or userId not configured)');
+      return;
+    }
+
+    let options = {
+      token : config.telegramToken,
+      chatId : config.telegramUserId,
+      level: 'report',
+      handleExceptions: true,
+    };
+    let newTelegramTransport = new (winston.transports.Telegram) (options);
+    log.add(winston.transports.Telegram, options);
+  };
 
   self.start = function() {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
 		setConfig();
-		debug("Starting...");
+    updateTelegramLogger();
+    debug("Starting...");
     poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret, { socketTimeout: 60000 });
 
     srv.io.on('connection', onBrowserConnection);
@@ -811,36 +833,36 @@ const PoloLender = function(name) {
       connection: '',
     };
 		socket.on('connect', function () {
-			logger.info(`Connected to server ${config.advisor}`);
+			log.info(`Connected to server ${config.advisor}`);
       browserData.advisor.connection = 'connected';
       emitAdvisorConnectionUpdate();
     });
 		socket.on('reconnect', function () {
-			logger.info(`Reconnected to server ${config.advisor}`);
+			log.info(`Reconnected to server ${config.advisor}`);
       browserData.advisor.connection = 'reconnect';
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("connect_error", function (err) {
 			let error = JSON.parse(JSON.stringify(err));
 			if (err.message) error.message = err.message;
-			logger.warning(`Error connecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+			log.warning(`Error connecting to server ${config.advisor}: ${JSON.stringify(error)}`);
       browserData.advisor.connection = `connect error ${JSON.stringify(error)}`;
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("reconnect_error", function (err) {
 			let error = JSON.parse(JSON.stringify(err));
 			if (err.message) error.message = err.message;
-			logger.warning(`Error reconnecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+			log.warning(`Error reconnecting to server ${config.advisor}: ${JSON.stringify(error)}`);
       browserData.advisor.connection = `reconnect error ${JSON.stringify(error)}`;
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("disconnect", function () {
-			logger.notice(`Disconnected from server ${config.advisor}`);
+			log.notice(`Disconnected from server ${config.advisor}`);
       browserData.advisor.connection = 'disconnected';
       emitAdvisorConnectionUpdate();
 		});
 		socket.on("reconnecting", function (attemptNumber) {
-			logger.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
+			log.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
       browserData.advisor.connection = 'reconnecting';
       emitAdvisorConnectionUpdate();
 		});
@@ -867,7 +889,7 @@ const PoloLender = function(name) {
         });
 			}
 			catch (error) {
-				logger.error(`Cannot parse loanOfferParameters ${smsg}`);
+				log.error(`Cannot parse loanOfferParameters ${smsg}`);
 				debug(`Cannot parse loanOfferParameters: ${error.message}`);
       }
       emitAdvisorInfoUpdate();
@@ -889,17 +911,16 @@ const PoloLender = function(name) {
         }
         browserData.clientMessage = clientMessage;
 			} else {
-				logger.error(`Cannot parse clientMessage ${smsg}`);
+				log.error(`Cannot parse clientMessage ${smsg}`);
 				browserData.clientMessage = '';
 			}
       emitClientMessageUpdate();
 		});
 
-
 		setTimeout(execTrade, 1);
 	};
 
-	self.stop = function() {
+	self.stop = function () {
 	};
 };
 

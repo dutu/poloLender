@@ -54,8 +54,10 @@ let poloLenderAppConfig = {
         { id: 'poloLenderApp_apiActivity', width: width_col2,
           template: function (obj) {
             let activityHtml;
+            const indicatorOnForMs = 150;
+            const banIconTimeoutMs = 60000;
             let ago = Date.now() - obj.apiCallInfo.timestamp;
-            if (ago < 100) {
+            if (ago < indicatorOnForMs) {
               if (obj.apiCallInfo.error) {
                 activityHtml = `<span style="color:red"><i class="fa fa-circle"></i></span>`;
                 nok++;
@@ -64,8 +66,9 @@ let poloLenderAppConfig = {
                 ok++;
               }
             }
-            const banIconTimeoutMs = 60000;
-            if (ago >= 150 && ago < banIconTimeoutMs) activityHtml = `<i class="fa fa-circle-o"></i>`;
+            if (ago >= indicatorOnForMs && ago < banIconTimeoutMs) {
+              activityHtml = `<i class="fa fa-circle-o"></i>`;
+            }
             // activityHtml += ` (OK ${(ok/(ok+nok)*100).toFixed(0)}%)`;
             if (ago >= banIconTimeoutMs) {
               activityHtml = `<span style="color:red"><i class="fa fa-ban"></i></span>`;

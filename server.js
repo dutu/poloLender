@@ -16,10 +16,7 @@ let config = require('./server/core/config');
 let index = require('./routes/index').router;
 
 let httpPort = process.env.PORT || 5000;
-
 let log = srv.logger;
-
-log.report("ah");
 
 try {
 	env('./.env', {verbose: false, overwrite: false});
