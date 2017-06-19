@@ -7,6 +7,7 @@ poloLender Pro uses advanced statistical calculation in order to maximize profit
 The application code is shared on github at https://github.com/dutu/poloLender/
 
 ### Contents
+* [Features](#features)
 * [What's new](#whats-mew)
 * [Supported crypto-currencies](#supported-crypto-currencies)
 * [How it works](#how-it-works)
@@ -21,6 +22,16 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 * [FAQ](#faq)
 * [License](#license)
 
+
+# Features
+
+* **Simple**. Easy use. 
+* **Best profitability** ensured by using statistical calculation.
+* Funds are always lent at best return rates, no configurtation required, just **set-and-forget**.
+* **Reports** can be sent to your phone **on Telegram** messenger.
+* **Web interface** (under developement).
+* Can **run locally** on your PC **or on the cloud** (heroku).
+* **Activelly supported**. If help needed, [raise an issue](https://github.com/dutu/poloLender/issues).   
 
 # What's new
 

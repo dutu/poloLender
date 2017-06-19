@@ -17,16 +17,21 @@ If this bot helped you in any way, you can always leave me a tip at (BTC) **1DTN
 1) Install Telegram messenger on your device, if you don't have it already. Visit https://telegram.org/
 
 2) Create a [telegram bot](https://core.telegram.org/bots). Just talk to [BotFather](https://telegram.me/botfather) and follow a few simple steps as described [here](https://core.telegram.org/bots#6-botfather). 
-Once you've created the bot, you receive the authorization token.   
+Once you've created the bot, you receive a link to your new bot and the authorization token.
 
-3) Update the environement variable `POLOLENDER_TELEGRAM_TOKEN` with the authorization token received at the previous step. 
+3) Open your new bot by clicking on the link sent by the BotFather.
 
-4) Update environement variable `POLOLENDER_TELEGRAM_USERID` with your telegram userId.
+3) Go back to the BotFather, copy the authorization token and set the environement variable `POLOLENDER_TELEGRAM_TOKEN` with the authorization token. 
 
-    >Note: if you don't know your telegram userId, talk to [@cryptozonebot](tg://resolve?domain=cryptozonebot) to find it out.
+4) Set environement variable `POLOLENDER_TELEGRAM_USERID` with your telegram userId.
+
+>Note: if you don't know your telegram userId, talk to [@cryptozonebot](tg://resolve?domain=cryptozonebot) to find it out.
 
 
 5) That's all. Enjoy receiving your reports on Telegram messenger.
+
+> Note: Only the periodic reports are sent to the Telegram, not the "info" messages for individual loans.
+ 
 
 
 ---
