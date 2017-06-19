@@ -329,6 +329,7 @@ const PoloLender = function(name) {
           }
         });
         activeLoans = newActiveLoans;
+				emitActiveLoans();
 
         var currenciesNewActiveLoans = [];
         newActiveLoans.forEach(function (element, index, array) {
@@ -794,11 +795,16 @@ const PoloLender = function(name) {
     srv.io.sockets.emit('advisorInfo', { advisorInfo: browserData.advisorInfo || {} });
   };
 
+	const emitActiveLoans= function emitAdvisorInfoUpdate() {
+    srv.io.sockets.emit('loanInfo', { activeLoans: activeLoans || [], activeOffers: activeOffers || [] });
+  };
+
   const onBrowserConnection = function onBrowserConnection(client) {
     emitPoloLenderAppUpdate();
     emitAdvisorConnectionUpdate();
     emitClientMessageUpdate();
     emitAdvisorInfoUpdate();
+		emitActiveLoans();
   };
 
   const updateTelegramLogger = function updateTelegramLogger() {
