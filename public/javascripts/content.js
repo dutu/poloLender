@@ -30,6 +30,19 @@ let header = {
   data: { value: 'poloLender Pro' },
 };
 
+let addCoinMarketCapScript = function addCoinMarketCapScript() {
+  if (document.getElementById('coin-market-cap')) return true;
+
+  ((document) => {
+    const scriptTag = document.createElement('script');
+    scriptTag.async = false;
+    scriptTag.id = 'coin-market-cap'
+    scriptTag.defer = true;
+    scriptTag.src = 'https://files.coinmarketcap.com/static/widget/currency.js';
+    scriptTag.type = 'text/javascript';
+    document.body.appendChild(scriptTag);
+  })(document);
+}
 
 let tabview = {
   view: 'tabview',
@@ -40,7 +53,13 @@ let tabview = {
     { header: "Status", body: statusView },
     { header: "Live", body: liveView },
     { header: "About", body: aboutView },
-  ],
+  ], tabbar:{
+    on:{
+      onAfterTabClick:function(){
+        if (this.getValue() === 'live') addCoinMarketCapScript();
+      }
+    }
+  },
 };
 
 function alignRight(value, config){

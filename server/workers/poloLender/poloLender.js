@@ -799,7 +799,8 @@ const PoloLender = function(name) {
     srv.io.sockets.emit('loanInfo', {
 			activeLoans: activeLoans || [],
 			activeOffers: activeOffers || [],
-			rateBTCUSD: rateBTCUSD
+			rateBTCUSD: rateBTCUSD,
+			currencies: currencies
 		});
   };
 

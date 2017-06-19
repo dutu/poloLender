@@ -31,11 +31,22 @@ let bitcoinStatus = {
   rows: [
     {
       autoheight: true, borderless: true, type: 'clean',
+      height: 200,
       cols: [
         { width: width_col1, autoheight: true, template: 'Bitcoin/USD:' },
         { id: 'rateBTCUSD', width: width_col2,
           template: function () {
-            return convertToUSD(rateBTCUSD);
+            return `<div class="coinmarketcap-currency-widget" data-currency="bitcoin" data-base="USD" ></div>`;
+          },
+        },
+        { id: 'rateETH', width: width_col2,
+          template: function () {
+            return `<div class="coinmarketcap-currency-widget" data-currency="ethereum" data-base="USD" data-secondary="BTC" data-ticker="true" data-rank="true" data-marketcap="true" data-volume="true" data-stats="USD" data-statsticker="false"></div>`;
+          },
+        },
+        { id: 'rateLTC', width: width_col2,
+          template: function () {
+            return `<div class="coinmarketcap-currency-widget" data-currency="bitcoin" data-base="USD" ></div>`;
           },
         },
       ]
@@ -182,7 +193,7 @@ let startRefreshingLoans = function startRefreshingLoans() {
   setInterval(function refreshTable() {
     loansInfoTableUi.refreshColumns();
     openLoansInfoTableUi.refreshColumns();
-    rateBTCUSDUi.refresh();
+    // rateBTCUSDUi.refresh();
   }, 1000);
 };
 
@@ -192,5 +203,4 @@ let updateLoansInfo = function updateLoansInfo(data) {
   updateOpenLoansInfo(data);
   rateBTCUSD = data.rateBTCUSD;
   rateBTCUSDUi = $$('rateBTCUSD');
-  //rateBTCUSDUi.refresh();
 }
