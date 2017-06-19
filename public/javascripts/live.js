@@ -27,12 +27,13 @@ let bitcoinStatus = {
   autoheight: true, borderless: true, type: 'clean',
   margin: margin,
   padding: 0,
+  data: [],
   rows: [
     {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
         { width: width_col1, autoheight: true, template: 'Bitcoin/USD:' },
-        { id: 'bitcoinStatusLine', width: width_col2,
+        { id: 'rateBTCUSD', width: width_col2,
           template: function () {
             return convertToUSD(rateBTCUSD);
           },
@@ -175,13 +176,13 @@ let updateActiveLoansInfo = function updateActiveLoansInfo(data) {
 
 let loansInfoTableUi;
 let openLoansInfoTableUi;
-let bitcoinStatusUi;
+let rateBTCUSDUi = $$('rateBTCUSD');
 
 let startRefreshingLoans = function startRefreshingLoans() {
   setInterval(function refreshTable() {
     loansInfoTableUi.refreshColumns();
     openLoansInfoTableUi.refreshColumns();
-    bitcoinStatusUi.refreshColumns();
+    rateBTCUSDUi.refresh();
   }, 1000);
 };
 
@@ -190,6 +191,6 @@ let updateLoansInfo = function updateLoansInfo(data) {
   updateActiveLoansInfo(data);
   updateOpenLoansInfo(data);
   rateBTCUSD = data.rateBTCUSD;
-  bitcoinStatusUi = $$('bitcoinStatus');
-
+  rateBTCUSDUi = $$('rateBTCUSD');
+  //rateBTCUSDUi.refresh();
 }
