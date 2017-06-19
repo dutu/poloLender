@@ -112,7 +112,8 @@ webix.ready(function () {
   socket.on('loanInfo', updateLoansInfo);
 
   loansInfoTableUi = $$('loansInfoTable');
-  openLoansInfoTable = $$('openLoansInfoTable');
+  openLoansInfoTableUi = $$('openLoansInfoTable');
+  bitcoinStatusUi = $$('bitcoinStatus');
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
   poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');

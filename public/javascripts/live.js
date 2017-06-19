@@ -175,11 +175,13 @@ let updateActiveLoansInfo = function updateActiveLoansInfo(data) {
 
 let loansInfoTableUi;
 let openLoansInfoTableUi;
+let bitcoinStatusUi;
 
 let startRefreshingLoans = function startRefreshingLoans() {
   setInterval(function refreshTable() {
     loansInfoTableUi.refreshColumns();
     openLoansInfoTableUi.refreshColumns();
+    bitcoinStatusUi.refreshColumns();
   }, 1000);
 };
 
