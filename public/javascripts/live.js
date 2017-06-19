@@ -190,4 +190,6 @@ let updateLoansInfo = function updateLoansInfo(data) {
   updateActiveLoansInfo(data);
   updateOpenLoansInfo(data);
   rateBTCUSD = data.rateBTCUSD;
+  bitcoinStatusUi = $$('bitcoinStatus');
+
 }
