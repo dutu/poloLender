@@ -3,10 +3,14 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.4] - unreleased
+## [0.9.0] - 2017-06-19
+
+### Added
+- Reports can be sent on Telegram   
 
 ### Changed
-- the reports are now logged as 'report' level   
+- Reports are logged as 'report' level   
+- Reports are colored differently (blue)   
 
 ## [0.8.3] - 2017-06-15
 

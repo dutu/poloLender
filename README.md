@@ -24,6 +24,8 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 
 # What's new
 
+The reports can now be sent on Telegram messenger to your phone. See the [FAQ](https://github.com/dutu/poloLender/blob/master/faq.md) for how to setup it up. 
+
 A Web interface has been implemented (starting with v0.7.0).
 
 Preview:
@@ -160,6 +162,8 @@ Once installed, you'll have access to the heroku command from your command line.
     $ heroku config:set POLOLENDER_LENDMAX={\"BTC\":\"4\", \"ETH\":\"100\", \"XMR\":\"2000\", \"XRP\":\"30000\", \"DASH\":\"100000\"}
     $ heroku config:set POLOLENDER_MINRATE={\"BTC\":\"0\", \"ETH\":\"0\", \"XMR\":\"0\", \"XRP\":\"0\", \"DASH\":\"0\"}
     $ heroku config:set POLOLENDER_REPORTINTERVAL=30
+    $ heroku config:set POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
+    $ heroku config:set POLOLENDER_TELEGRAM_USERID=111111111
 
 Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 
@@ -247,6 +251,10 @@ Bot configuration is done by setting environment variables or by specifying thes
 
     # Report interval in minutes
     POLOLENDER_REPORTINTERVAL=30
+    
+    #Telegram bot token and your user Id
+    POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
+    POLOLENDER_TELEGRAM_USERID=111111111
 
 Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 

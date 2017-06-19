@@ -1,18 +1,36 @@
 # FAQ
 
-**Q1: Can you add support for lending additional crypto currency**
+**Q: Can you add support for lending additional crypto currency**
 
 Yes, please [raise an issue on github](https://github.com/dutu/pololender/issues)
 
 ---
 
-**Q2: Where can I donate some coins to support the project?**
+**Q: Where can I donate some coins to support the project?**
 
 If this bot helped you in any way, you can always leave me a tip at (BTC) **1DTNRjLcBKug24YbXKaYm7JQMWMjZszYNa**  
 
 ---
 
-**Q3: How is the loan offer rate calculated?**
+**Q: How do I setup the bot to receive the reports on Telegram messenger on my phone**
+
+1) Install Telegram messenger on your device, if you don't have it already. Visit https://telegram.org/
+
+2) Create a [telegram bot](https://core.telegram.org/bots). Just talk to [BotFather](https://telegram.me/botfather) and follow a few simple steps as described [here](https://core.telegram.org/bots#6-botfather). 
+Once you've created the bot, you receive the authorization token.   
+
+3) Update the environement variable `POLOLENDER_TELEGRAM_TOKEN` with the authorization token received at the previous step. 
+
+4) Update environement variable `POLOLENDER_TELEGRAM_USERID` with your telegram userId.
+
+    >Note: if you don't know your telegram userId, talk to [@cryptozonebot](tg://resolve?domain=cryptozonebot) to find it out.
+
+
+5) That's all. Enjoy receiving your reports on Telegram messenger.
+
+
+---
+**Q: How is the loan offer rate calculated?**
 
 The rate is calculated based on the history of the lending rates and the average loan holding time. Based on these parameters the rate with best return is calculated. 
 
@@ -22,7 +40,7 @@ The **average loan holding time** is a key parameter for determining the time th
 
 ---
 
-**Q4: The bot is not lowering offered rates for several hours. Why is this happening?**
+**Q: The bot is not lowering offered rates for several hours. Why is this happening?**
 
 As explained at **Q4** above, the algorithm for determining the rate with the best return takes into calculation the **average loan holding time**. Based on the value of the average holding time, the bot will wait shorter or longer before offering loans at lower rates.
 
@@ -36,6 +54,6 @@ Users have reported situations when they perceive the bot is lowering the rate t
 
 ---
 
-**Q5: The bot is offering loans at a low rate and after couple of hours the lending rates are higher. Why is this happening and why is the bot not waiting longer for higher rates?**
+**Q: The bot is offering loans at a low rate and after couple of hours the lending rates are higher. Why is this happening and why is the bot not waiting longer for higher rates?**
 
-See Q3 and Q4 above.
+See the two previous questions above.
