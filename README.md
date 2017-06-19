@@ -30,7 +30,7 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 * Funds are always lent at best return rates, no configurtation required, just **set-and-forget**.
 * **Reports** can be sent to your phone **on Telegram** messenger.
 * **Web interface** (under developement).
-* Can **run locally** on your PC **or on the cloud** (heroku).
+* Can **run locally** on your PC **or in the cloud** (heroku).
 * **Activelly supported**. If help needed, [raise an issue](https://github.com/dutu/poloLender/issues).   
 
 # What's new
