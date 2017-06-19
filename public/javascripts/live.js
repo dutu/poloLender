@@ -50,4 +50,3 @@ let liveView = {
     { gravity: 0.2 },
   ],
 };
-};
