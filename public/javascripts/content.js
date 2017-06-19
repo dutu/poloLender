@@ -109,10 +109,14 @@ webix.ready(function () {
   socket.on('advisorInfo', updateAdvisorInfo);
   socket.on('poloLenderApp', updatePoloLenderApp);
   socket.on('apiCallInfo', updateApiCallInfo);
+  socket.on('loanInfo', updateLoansInfo);
 
+  loansInfoTableUi = $$('loansInfoTable');
+  openLoansInfoTable = $$('openLoansInfoTable');
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
   poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
-  startRefreshingStatus();
-});
 
+  startRefreshingStatus();
+  startRefreshingLoans();
+});

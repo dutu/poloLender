@@ -796,7 +796,11 @@ const PoloLender = function(name) {
   };
 
 	const emitActiveLoans= function emitAdvisorInfoUpdate() {
-    srv.io.sockets.emit('loanInfo', { activeLoans: activeLoans || [], activeOffers: activeOffers || [] });
+    srv.io.sockets.emit('loanInfo', {
+			activeLoans: activeLoans || [],
+			activeOffers: activeOffers || [],
+			rateBTCUSD: rateBTCUSD
+		});
   };
 
   const onBrowserConnection = function onBrowserConnection(client) {
