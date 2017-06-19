@@ -192,7 +192,8 @@ Updating the application when poloLender code is updated on github
 2. Update the local clone from github
     ```
     cd poloLender
-    git pull origin master
+    git fetch --all
+	git reset --hard origin/master
     ```
 
 3. Update dependencies:
@@ -215,7 +216,8 @@ Updating the application when poloLender code is updated on github
 1. Update the local clone from github
     ```
     cd poloLender
-    git pull origin master
+    git fetch --all
+	git reset --hard origin/master
     ```
 
 2. Open the papertrail console to see the log messages
