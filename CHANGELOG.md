@@ -3,6 +3,16 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.10.0] - unreleased
+
+### Added
+- reports should the annual rate with compound interest (paCI) for each currency
+- Reporting interval (minutes) for Telegram reports ce be configured with env variable POLOLENDER_TELEGRAM_REPORTINTERVAL
+- Support for Heroku worker dyno
+
+### Changed
+- report color (cyan)   
+
 ## [0.9.0] - 2017-06-19
 
 ### Added

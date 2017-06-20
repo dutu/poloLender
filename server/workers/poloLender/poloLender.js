@@ -10,20 +10,22 @@ const Bitfinex = require('bitfinex');
 const semver = require('semver');
 const Poloniex = require('poloniex-api-node');
 const winston = require('winston');
-const TelegramBot = require('node-telegram-bot-api');
+const Finance = require('financejs');
 
 require('winston-telegram').Telegram;
 
 const pjson = require('../../../package.json');
 let srv = require ('../../core/srv');
 let io = srv.io;
+let finance = new Finance();
 
 const PoloLender = function(name) {
 	const self = this;
 	self.me = name;
 
   let browserData = {};
-	var log = srv.logger;
+	let log = srv.logger;
+	let logTg = null;
 	var poloPrivate;
 	var socket;
 
@@ -36,7 +38,8 @@ const PoloLender = function(name) {
 		count: 0,
 		lastRun: {
 			report: moment(0),
-		},
+      reportTg: moment(0),
+    },
 		wmr: {}
 	};
 	let lastClientMessage = '';
@@ -218,6 +221,18 @@ const PoloLender = function(name) {
 		config.telegramToken = process.env[ev];
     ev = self.me.toUpperCase() + "_TELEGRAM_USERID";
     config.telegramUserId = process.env[ev];
+
+    ev = self.me.toUpperCase() + "_TELEGRAM_REPORTINTERVAL";
+    val = Number(process.env[ev]);
+    if (config.telegramToken && !_.isFinite(val)) {
+      log.warning(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
+      debug(`${ev}=${process.env[ev]}`);
+    }
+
+    config.telegramReportIntervalMin = val || config.reportEveryMinutes;
+    if (config.telegramToken) {
+      log.info(`Using ${ev}=${config.reportEveryMinutes}`);
+    }
   };
 
   const execTrade = function execTrade() {
@@ -229,12 +244,11 @@ const PoloLender = function(name) {
       return result
     };
 
-    const msgRate = function msgRate(perDayProc) {
+    const msgRate = function msgRate(perDayProc, withCi) {
       let perDay = new Big(perDayProc).times(100).toFixed(6);
-      let perYear = new Big(perDayProc).times(365*100).toFixed(4);
-//		let perMonth = new Big(perYear).div(12).toFixed(4);
-      let msg = strAR(perDay, 6) + "%";
-      msg += " (" + strAR(new Big(perYear).toFixed(2), 5) + "%)";
+      let pa = new Big(perDayProc).times(365*100).toFixed(1);
+      let paCi = (finance.CI(parseFloat(pa) / 182, 1, 100, 182) - 100).toFixed(1);
+      let msg = withCi && `${perDay}% (${pa}% pa, ${paCi}% paCI)` || `${perDay}% (${pa}% pa)`;
       return msg;
     };
 
@@ -600,15 +614,27 @@ const PoloLender = function(name) {
   };
 
     const report = function report() {
-    // execute every x minutes
+      let shouldRepCon = false;
+      let shouldRepTg = false;
+      const logRep = function logRep(msg) {
+        if (shouldRepCon) log.report(msg);
+        if (shouldRepTg) logTg.report(msg);
+      };
+
       let now = moment();
-      let duration = now.diff(status.lastRun.report, "minutes");
-      if (duration < config.reportEveryMinutes) {
+      if (now.diff(status.lastRun.report, "minutes") >= config.reportEveryMinutes) {
+        shouldRepCon = true;
+        status.lastRun.report = now;
+      }
+
+      if (now.diff(status.lastRun.reportTg, "minutes") >= config.telegramReportIntervalMin) {
+        shouldRepTg = !!logTg;
+        status.lastRun.reportTg = now;
+      }
+
+      if (!shouldRepTg && !shouldRepCon) {
         return;
       }
-      let speed = new Big(status.lastRun.speedCount).div(duration).toFixed(2);
-      status.lastRun.report = now;
-      status.lastRun.speedCount = 0;
 
       let msg, since;
       status.offersCount = status.offersCount || status.activeLoansCount;
@@ -625,14 +651,14 @@ const PoloLender = function(name) {
       msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
       msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
 //      msg += ` • speed: ${speed}/min`;
-      log.report(`${msg}`);
+      logRep(`${msg}`);
 
-      if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-        log.report(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+      if (clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+        logRep(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
       }
 
-      if(clientMessage.message) {
-        log.report(`${clientMessage.message}`);
+      if (clientMessage.message) {
+        logRep(`${clientMessage.message}`);
       }
 
       currencies.forEach(function (c, index, array) {
@@ -667,16 +693,18 @@ const PoloLender = function(name) {
           available = availableFunds[c];
         }
 
-        msg = `● ${c}: total ${depositFunds[c]} • ${activeLoansAmount} in ${activeLoansCount} active loans`;
-        msg += ` ● PROFIT: ${c} ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        let totalUSD = new Big(rateBTCUSD).times(depositFunds[c]).toFixed(0);
+        msg = `${c}:
+● TOTAL: ${depositFunds[c]} (USD ${totalUSD}) • ${activeLoansAmount} in ${activeLoansCount} active loans
+● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
         if(rateBTCUSD && ratesBTC[c]) {
           let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
-          msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(2)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+          msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
         }
-        let wmrMsg = msgRate(status.wmr[c]);
-        let ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+        let wmrMsg = msgRate(status.wmr[c], true);
+        let ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8), true);
         msg += ` • wmr: ${wmrMsg} ewmr: ${ewmr} alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
-        log.report(msg);
+        logRep(msg);
       });
     };
 
@@ -801,27 +829,35 @@ const PoloLender = function(name) {
     emitAdvisorInfoUpdate();
   };
 
-  const updateTelegramLogger = function updateTelegramLogger() {
+  const addTelegramLogger = function addTelegramLogger() {
     if (!config.telegramToken || !config.telegramUserId) {
       log.notice('Bot reports will NOT be sent via telegram (token and/or userId not configured)');
       return;
     }
 
-    let options = {
-      token : config.telegramToken,
-      chatId : config.telegramUserId,
-      level: 'report',
-      handleExceptions: true,
-    };
-    let newTelegramTransport = new (winston.transports.Telegram) (options);
-    log.add(winston.transports.Telegram, options);
+
+    let customLogLevels = _.clone(winston.config.syslog.levels);
+    delete customLogLevels.emerg;
+    customLogLevels.report = 0;
+    logTg = new (winston.Logger)({
+      levels: customLogLevels,
+      exitOnError: false,
+      transports: [
+        new (winston.transports.Telegram)({
+          token : config.telegramToken,
+          chatId : config.telegramUserId,
+          level: 'report',
+          handleExceptions: true,
+        }),
+      ]
+    });
   };
 
   self.start = function() {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
 		setConfig();
-    updateTelegramLogger();
+    addTelegramLogger();
     debug("Starting...");
     poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret, { socketTimeout: 60000 });
 

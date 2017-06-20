@@ -147,6 +147,7 @@ Once installed, you'll have access to the heroku command from your command line.
     heroku create
     git push heroku master
     heroku ps:scale web=0
+    heroku ps:scale worker=0
     ```
 
 6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
@@ -175,6 +176,7 @@ Once installed, you'll have access to the heroku command from your command line.
     $ heroku config:set POLOLENDER_REPORTINTERVAL=30
     $ heroku config:set POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
     $ heroku config:set POLOLENDER_TELEGRAM_USERID=111111111
+    $ heroku config:set POLOLENDER_TELEGRAM_REPORTINTERVAL=60
 
 Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 
@@ -268,6 +270,9 @@ Bot configuration is done by setting environment variables or by specifying thes
     #Telegram bot token and your user Id
     POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
     POLOLENDER_TELEGRAM_USERID=111111111
+    
+    #Report interval in minutes for Telegram reports(default is 60 minutes)
+    POLOLENDER_TELEGRAM_REPORTINTERVAL=60
 
 Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
 
