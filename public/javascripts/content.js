@@ -51,7 +51,7 @@ let tabview = {
   animate: { type: "flip", subtype: "vertical" },
   cells:[
     { header: "Status", body: statusView },
-    { header: "Live", body: liveView },
+    { header: "Live", body: liveView, scroll: true },
     { header: "About", body: aboutView },
   ], tabbar:{
     on:{

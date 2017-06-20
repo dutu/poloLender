@@ -56,7 +56,7 @@ let openLoansConfig = {
   autoheight: true,
   select: true,
   drag: true,
-  scroll: false,
+  scroll: 'xy',
   columns: [
     { id: 'currency',	header: 'Currency', sort: 'string', adjust: true, tooltip: tooltip, template: returnCurrencyTemplate },
     { id: 'rate', header:'Loan Rate', sort: 'string', autowidth: true, adjust: true, tooltip: tooltip, template: returnRateTemplate  },
@@ -76,7 +76,7 @@ let currentLoansConfig = {
   autoheight: true,
   select: true,
   drag: true,
-  scroll: false,
+  scroll: 'xy',
   columns: [
     { id: 'currency',	header: 'Currency', sort: 'string', adjust: true, tooltip: tooltip, template: returnCurrencyTemplate },
     { id: 'rate', header:'Loan Rate', sort: 'string', autowidth: true, adjust: true, tooltip: tooltip, template: returnRateTemplate  },
@@ -149,13 +149,15 @@ let updateOpenLoansInfo = function updateOpenLoansInfo(data) {
 
 let loansInfoTable = [];
 let existingLoanRow;
+let activeLoadIds = [];
 const activeLoansFieldsToCompare = ['currency', 'rate', 'amount', 'duration', 'autoRenew', 'date', 'fees'];
 let updateActiveLoansInfo = function updateActiveLoansInfo(data) {
+  activeLoadIds = _.map(data.activeLoans, 'id');
+
   _.forEach(data.activeLoans, function (loan) {
     existingLoansRow = _.find(loansInfoTable, function(row) {
       return loan.id === row.id;
     });
-
     let newRow = {
       id: loan.id,
       currency: loan.currency,
@@ -174,7 +176,9 @@ let updateActiveLoansInfo = function updateActiveLoansInfo(data) {
   });
   let loansInfoTableUi = $$('loansInfoTable');
   loansInfoTableUi.define({
-    'data': _.uniq(loansInfoTable),
+    'data': _.filter(loansInfoTable, function(loan) {
+      return activeLoadIds.indexOf(loan.id) > -1; // filters out loans that expired
+    }),
   });
   loansInfoTableUi.refreshColumns();
 };

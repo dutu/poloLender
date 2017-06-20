@@ -63,6 +63,9 @@ body {
 .webix_disabled_view {
   overflow: hidden !important;
 }
+.webix_view.webix_scrollview {
+  overflow-y: auto;
+}
 body.webix_full_screen {
   margin: 0;
   padding: 0;
