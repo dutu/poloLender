@@ -10,6 +10,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 - Reports show TOTAL USD worth for each currency
 - Reporting interval (minutes) for Telegram reports ce be configured with env variable POLOLENDER_TELEGRAM_REPORTINTERVAL
 - Support for Heroku worker dyno
+- Env variable POLOLENDER_ADVISOR_TOKEN is added, but not used at the moment. Future use could be to authenticate towards the poloLender advisor server
 
 ### Changed
 - report color (cyan)   
