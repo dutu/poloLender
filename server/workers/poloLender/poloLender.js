@@ -1,5 +1,3 @@
-"use strict";
-
 const ioClient = require('socket.io-client');
 const _ = require('lodash');
 const Big = require ('big.js');
@@ -42,7 +40,6 @@ const PoloLender = function(name) {
     },
 		wmr: {}
 	};
-	let lastClientMessage = '';
 	var anyCanceledOffer,
 		anyNewLoans = {};
 	var activeLoans = [],
@@ -60,14 +57,16 @@ const PoloLender = function(name) {
 	let clientMessage ={};
 
 	const configDefault = {
-		startDate: "",
+		startDate: '',
+    startMessage: 'Join poloLender discussion/support group on telegram: https://t.me/cryptozone',
 		reportEveryMinutes: 5,
 		startBalance: {},
 		restartTime: moment(),
 		offerMinRate: {},
 		offerMaxAmount: {},
-		advisor: "safe-hollows.crypto.zone",
-    maxApiCallsPerDuration: 7,
+		advisor: 'safe-hollows.crypto.zone',
+    advisorToken: '',
+    maxApiCallsPerDuration: 8,
     apiCallsDurationMS: 1000,
 	};
 	let config = {};
@@ -217,12 +216,12 @@ const PoloLender = function(name) {
 		val = config.restartTime.utc().format();
 		log.info(`Using ${ev}=${val}`);
 
-    ev = self.me.toUpperCase() + "_TELEGRAM_TOKEN";
+    ev = self.me.toUpperCase() + '_TELEGRAM_TOKEN';
 		config.telegramToken = process.env[ev];
-    ev = self.me.toUpperCase() + "_TELEGRAM_USERID";
+    ev = self.me.toUpperCase() + '_TELEGRAM_USERID';
     config.telegramUserId = process.env[ev];
 
-    ev = self.me.toUpperCase() + "_TELEGRAM_REPORTINTERVAL";
+    ev = self.me.toUpperCase() + '_TELEGRAM_REPORTINTERVAL';
     val = Number(process.env[ev]);
     if (config.telegramToken && !_.isFinite(val)) {
       log.warning(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
@@ -233,6 +232,9 @@ const PoloLender = function(name) {
     if (config.telegramToken) {
       log.info(`Using ${ev}=${config.reportEveryMinutes}`);
     }
+
+    ev = self.me.toUpperCase() + '_ADVISOR_TOKEN';
+    config.advisorToken = process.env[ev] || "";
   };
 
   const execTrade = function execTrade() {
@@ -650,7 +652,6 @@ const PoloLender = function(name) {
       };
       msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
       msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
-//      msg += ` • speed: ${speed}/min`;
       logRep(`${msg}`);
 
       if (clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
@@ -694,9 +695,7 @@ const PoloLender = function(name) {
         }
 
         let totalUSD = new Big(rateBTCUSD).times(depositFunds[c]).toFixed(0);
-        msg = `${c}:
-● TOTAL: ${depositFunds[c]} (USD ${totalUSD}) • ${activeLoansAmount} in ${activeLoansCount} active loans
-● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        msg = `${c}: ● TOTAL: ${depositFunds[c]} (USD ${totalUSD}) • ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
         if(rateBTCUSD && ratesBTC[c]) {
           let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
           msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
@@ -856,8 +855,13 @@ const PoloLender = function(name) {
   self.start = function() {
 		status.lastRun.speedCount= 0;
 		self.started = moment();
+		log.report(configDefault.startMessage);
 		setConfig();
     addTelegramLogger();
+    if (logTg) {
+      logTg.report(configDefault.startMessage);
+    }
+
     debug("Starting...");
     poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret, { socketTimeout: 60000 });
 
@@ -867,9 +871,11 @@ const PoloLender = function(name) {
     browserData.advisor = {
       server: config.advisor,
       connection: '',
+      authenticate: {},
     };
 		socket.on('connect', function () {
-			log.info(`Connected to server ${config.advisor}`);
+      socket.emit('authenticate', { token: config.advisorToken }); //send the jwt
+      log.info(`Connected to server ${config.advisor}`);
       browserData.advisor.connection = 'connected';
       emitAdvisorConnectionUpdate();
     });
@@ -902,6 +908,20 @@ const PoloLender = function(name) {
       browserData.advisor.connection = 'reconnecting';
       emitAdvisorConnectionUpdate();
 		});
+    socket.on("authenticate", function (response) {
+      if (response.authorized) {
+        let msg = `Authentication with server $${config.advisor} successful`;
+        msg += response.message && `: ${response.message}` || '';
+        log.info(msg);
+      } else {
+        let msg = `Advisor authentication error`;
+        msg += response.errorCode && ` ${response.errorCode}` || '';
+        msg += response.message && `: ${response.message}` || '';
+        log.error(msg);
+      }
+      browserData.advisor.authenticate = response;
+      emitAdvisorConnectionUpdate();
+    });
 		socket.on("send:loanOfferParameters", function (msg) {
 			var smsg = JSON.stringify(msg);
 			debug(`received send:loanOfferParameters = ${smsg}`);

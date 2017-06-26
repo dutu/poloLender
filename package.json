@@ -1,6 +1,6 @@
 {
   "name": "poloLenderPro",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
   "author": "dutu <dutu@protonmail.com>",
   "license": "MIT",
@@ -47,7 +47,6 @@
     "moment": "^2.18.1",
     "morgan": "^1.8.2",
     "node-env-file": "^0.1.8",
-    "node-telegram-bot-api": "^0.27.1",
     "nonce": "^1.0.3",
     "poloniex-api-node": "^1.2.0",
     "pug": "^2.0.0-rc.2",
@@ -59,5 +58,6 @@
     "winston": "^2.3.1",
     "winston-telegram": "^1.2.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+  }
 }
