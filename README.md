@@ -32,7 +32,7 @@ The application code is open source and shared on github at https://github.com/d
 * Funds are always lent at best return rates, no configurtation required, just **set-and-forget**.
 * **Reports** can be sent to your phone **on Telegram** messenger.
 * **Web interface** (under developement).
-* Can **run locally** on your PC **or on the cloud** (heroku).
+* Can **run locally** on your PC **or in the cloud** (heroku).
 * **Activelly supported**. **Join** poloLender discussion/support group **on telegram: https://t.me/cryptozone** or [raise an issue](https://github.com/dutu/poloLender/issues).   
 
 # What's new
