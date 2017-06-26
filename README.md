@@ -2,9 +2,11 @@ poloLender Pro - smart Poloniex lending bot
 ====================
 
 **poloLender Pro** is an automated engine for lending funds on Poloniex exchange.
-poloLender Pro uses advanced statistical calculation in order to maximize profits.
+poloLender Pro uses advanced statistical calculation to maximize profits.
 
-The application code is shared on github at https://github.com/dutu/poloLender/
+The application code is open source and shared on github at https://github.com/dutu/poloLender/
+
+**Join poloLender discussion/support group on telegram: https://t.me/cryptozone**
 
 ### Contents
 * [Features](#features)
@@ -30,8 +32,8 @@ The application code is shared on github at https://github.com/dutu/poloLender/
 * Funds are always lent at best return rates, no configurtation required, just **set-and-forget**.
 * **Reports** can be sent to your phone **on Telegram** messenger.
 * **Web interface** (under developement).
-* Can **run locally** on your PC **or in the cloud** (heroku).
-* **Activelly supported**. If help needed, [raise an issue](https://github.com/dutu/poloLender/issues).   
+* Can **run locally** on your PC **or on the cloud** (heroku).
+* **Activelly supported**. **Join** poloLender discussion/support group **on telegram: https://t.me/cryptozone** or [raise an issue](https://github.com/dutu/poloLender/issues).   
 
 # What's new
 
