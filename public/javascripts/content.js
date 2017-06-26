@@ -30,6 +30,19 @@ let header = {
   data: { value: 'poloLender Pro' },
 };
 
+let addCoinMarketCapScript = function addCoinMarketCapScript() {
+  if (document.getElementById('coin-market-cap')) return true;
+
+  ((document) => {
+    const scriptTag = document.createElement('script');
+    scriptTag.async = false;
+    scriptTag.id = 'coin-market-cap'
+    scriptTag.defer = true;
+    scriptTag.src = 'https://files.coinmarketcap.com/static/widget/currency.js';
+    scriptTag.type = 'text/javascript';
+    document.body.appendChild(scriptTag);
+  })(document);
+}
 
 let tabview = {
   view: 'tabview',
@@ -38,9 +51,15 @@ let tabview = {
   animate: { type: "flip", subtype: "vertical" },
   cells:[
     { header: "Status", body: statusView },
-    { header: "Live", body: liveView },
+    { header: "Live", body: liveView, scroll: true },
     { header: "About", body: aboutView },
-  ],
+  ], tabbar:{
+    on:{
+      onAfterTabClick:function(){
+        if (this.getValue() === 'live') addCoinMarketCapScript();
+      }
+    }
+  },
 };
 
 function alignRight(value, config){
@@ -109,10 +128,15 @@ webix.ready(function () {
   socket.on('advisorInfo', updateAdvisorInfo);
   socket.on('poloLenderApp', updatePoloLenderApp);
   socket.on('apiCallInfo', updateApiCallInfo);
+  socket.on('loanInfo', updateLoansInfo);
 
+  loansInfoTableUi = $$('loansInfoTable');
+  openLoansInfoTableUi = $$('openLoansInfoTable');
+  bitcoinStatusUi = $$('bitcoinStatus');
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
   poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
-  startRefreshingStatus();
-});
 
+  startRefreshingStatus();
+  startRefreshingLoans();
+});
