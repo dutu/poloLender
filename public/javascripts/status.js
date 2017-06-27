@@ -2,6 +2,7 @@ let poloLenderApp = {
   lastClientMessage: '',
   runningClientSemver: '',
   restartedAt: '',
+  runningSince: '',
 };
 
 let advisor = {
@@ -110,18 +111,6 @@ let advisorConnectionConfig = {
       ]
     },
   ],
-};
-
-let tooltip = function tooltip(obj) {
-  if (obj.tooltip) {
-    return obj.tooltip;
-  }
-
-  return '';
-};
-
-let returnCurrencyTemplate = function returnCurrencyTemplate (obj) {
-  return `<i class="cc ${obj.currency}"></i> ${obj.currency}`;
 };
 
 let returnUpdatedAtTemplate = function returnUpdatedAtTemplate (obj) {

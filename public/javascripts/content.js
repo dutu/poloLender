@@ -34,12 +34,14 @@ let header = {
 let tabview = {
   view: 'tabview',
   multiview: { keepViews: true },
+  sizeToContent: true,
   id: 'contentTabview',
   animate: { type: "flip", subtype: "vertical" },
   cells:[
-    { header: "Status", body: statusView },
-    { header: "Live", body: liveView },
-    { header: "About", body: aboutView },
+    { header: "Status", body:{ view:"scrollview", scroll: "xy", body: statusView } },
+    { header: "Performance", body:{ view:"scrollview", scroll: "xy", body: performanceReportView } },
+    { header: "Live", body:{ view:"scrollview", scroll: "xy", body: liveView } },
+    { header: "About", body:{ view:"scrollview", scroll: "xy", body: aboutView } },
   ],
 };
 
@@ -49,16 +51,10 @@ function alignRight(value, config){
 
 webix.ready(function () {
   webix.ui({
-    view: 'scrollview',
-    scroll: '',
-    body: {
-      type: 'clean',
-      id: 'app',
       rows: [
         header,
         tabview,
       ]
-    }
   });
 
   let socket = io();
@@ -109,6 +105,7 @@ webix.ready(function () {
   socket.on('advisorInfo', updateAdvisorInfo);
   socket.on('poloLenderApp', updatePoloLenderApp);
   socket.on('apiCallInfo', updateApiCallInfo);
+  socket.on('performanceReport', updatePerformanceReport);
 
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');

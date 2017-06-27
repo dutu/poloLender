@@ -23,3 +23,8 @@
 .noborders .webix_cell{
   border: 0;
 }
+
+
+.table-header-center {
+  text-align: center;
+}
