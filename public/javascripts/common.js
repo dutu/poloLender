@@ -23,3 +23,4 @@ const formatDate = function formatDate(date) {
 };
 
 const finance = new Finance();
+let socket = io();

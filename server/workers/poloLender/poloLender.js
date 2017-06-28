@@ -812,6 +812,16 @@ const PoloLender = function(name) {
     srv.io.sockets.emit('liveUpdates', liveData);
   };
 
+  const onReturnLendingHistory = function onReturnLendingHistory(data) {
+    poloPrivate.returnLendingHistory(data.start, data.end, data.limit, (err, result) => {
+      if (err) {
+        log.notice(`returnLendingHistory: ${err.message}`);
+      }
+
+      srv.io.sockets.emit('lendingHistory', err && err.message || null, result);
+    })
+  };
+
   const emitPoloLenderAppUpdate = function emitPoloLenderAppUpdate() {
     let data = {
       poloLenderApp: {
@@ -847,7 +857,8 @@ const PoloLender = function(name) {
     srv.io.sockets.emit('advisorInfo', { advisorInfo: browserData.advisorInfo || {} });
   };
 
-  const onBrowserConnection = function onBrowserConnection(client) {
+  const onBrowserConnection = function onBrowserConnection(socket) {
+    socket.on('returnLendingHistory', onReturnLendingHistory);
     emitPoloLenderAppUpdate();
     emitAdvisorConnectionUpdate();
     emitClientMessageUpdate();
@@ -997,7 +1008,7 @@ const PoloLender = function(name) {
       emitClientMessageUpdate();
 		});
 
-		let err;
+    let err;
 		async.doWhilst(
 		  function getCurrencies(callback) {
         poloPrivate.returnCurrencies((error, result) => {

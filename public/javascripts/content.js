@@ -41,6 +41,7 @@ let tabview = {
     { header: "Status", body:{ view:"scrollview", scroll: "xy", body: statusView } },
     { header: "Performance", body:{ view:"scrollview", scroll: "xy", body: performanceReportView } },
     { header: "Live", body:{ view:"scrollview", scroll: "xy", body: liveView } },
+    { header: "History", body:{ view:"scrollview", scroll: "xy", body: historyView } },
     { header: "About", body:{ view:"scrollview", scroll: "xy", body: aboutView } },
   ],
 };
@@ -53,7 +54,9 @@ webix.ready(function () {
       ]
   });
 
-  let socket = io();
+  $$("lendingHistoryInputForm").elements["period"].attachEvent("onChange", onPeriodChange);
+  webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
+
   socket.on('connect', function () {
     poloLenderAppConnection = 'connected';
     hideConnectionErrorMessage();
@@ -103,10 +106,10 @@ webix.ready(function () {
   socket.on('apiCallInfo', updateApiCallInfo);
   socket.on('performanceReport', updatePerformanceReport);
   socket.on('liveUpdates', updateLive);
+  socket.on('lendingHistory', updateLendingHistory);
 
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
   poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
   startRefreshingStatus();
 });
-
