@@ -720,7 +720,7 @@ const PoloLender = function(name) {
       },
       emitLiveUpdate: function (callback) {
         emitLiveUpdate();
-        callback(null, OK);
+        callback(null, 'OK');
       },
       updateBalances: function(callback) {
         updateAvailableFunds(function (err) {
@@ -746,7 +746,7 @@ const PoloLender = function(name) {
       },
       report: function (callback) {
         report();
-        callback(null, "OK");
+        callback(null, 'OK');
       },
       cancelHighOffers: function (callback) {          // cancel offers if price is too high
         cancelHighOffers(function (err){
