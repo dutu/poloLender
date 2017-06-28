@@ -56,7 +56,11 @@ const PoloLender = function(name) {
   };
   let rateBTCUSD;
 	let advisorInfo = {};
-	let clientMessage ={};
+	let clientMessage = {};
+	let liveData = {
+	  activeLoans: [],
+    openOffers: [],
+  };
 
 	const configDefault = {
 		startDate: '',
@@ -369,7 +373,9 @@ const PoloLender = function(name) {
           return apiCallLimitDelay(apiMethod, () => callback(err));
         }
 
+
         newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
+        liveData.activeLoans = newActiveLoans;
         updateWithNewActiveLoans(newActiveLoans);
         // update wmr
         currencies.forEach(function (c, index, array) {
@@ -401,6 +407,7 @@ const PoloLender = function(name) {
           return apiCallLimitDelay(apiMethod, () => callback(err));
         }
 
+        liveData.openOffers = result;
         currencies.forEach(function (c, i, a) {
           let newActiveOffers;
           newActiveOffers = result[c] || [];
@@ -615,7 +622,6 @@ const PoloLender = function(name) {
 
     const report = function report() {
       emitPerformanceUpdate();
-      emitLiveUpdate();
 
       let shouldRepCon = false;
       let shouldRepTg = false;
@@ -712,6 +718,10 @@ const PoloLender = function(name) {
           callback(err, err && err.message || "OK");
         });
       },
+      emitLiveUpdate: function (callback) {
+        emitLiveUpdate();
+        callback(null, OK);
+      },
       updateBalances: function(callback) {
         updateAvailableFunds(function (err) {
           if (err) {
@@ -799,9 +809,8 @@ const PoloLender = function(name) {
   };
 
   emitLiveUpdate = function emitLiveUpdate() {
-
+    srv.io.sockets.emit('liveUpdates', liveData);
   };
-
 
   const emitPoloLenderAppUpdate = function emitPoloLenderAppUpdate() {
     let data = {

@@ -45,10 +45,6 @@ let tabview = {
   ],
 };
 
-function alignRight(value, config){
-    return { "text-align":"right" };
-}
-
 webix.ready(function () {
   webix.ui({
       rows: [
@@ -106,6 +102,7 @@ webix.ready(function () {
   socket.on('poloLenderApp', updatePoloLenderApp);
   socket.on('apiCallInfo', updateApiCallInfo);
   socket.on('performanceReport', updatePerformanceReport);
+  socket.on('liveUpdates', updateLive);
 
   advisorInfoTableUi = $$('advisorInfoTable');
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');

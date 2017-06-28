@@ -10,8 +10,16 @@ const tooltip = function tooltip(obj) {
   return '';
 };
 
-function alignRight(value, config){
+const alignRight = function alignRight() {
   return { "text-align":"right" };
-}
+};
 
-let finance = new Finance();
+const alignCenter = function alignCenter() {
+  return { "text-align":"center" };
+};
+
+const formatDate = function formatDate(date) {
+  return webix.i18n.fullDateFormatStr(date);
+};
+
+const finance = new Finance();

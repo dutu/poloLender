@@ -1,5 +1,4 @@
 
-
 const returnRateBTCTemplate = function returnCurrencyTemplate(obj) {
   let rate;
   let change;
@@ -22,7 +21,7 @@ const returnRateBTCTemplate = function returnCurrencyTemplate(obj) {
 };
 
 const returnTotalFundsTemplate = function returnTotalFundsTemplate(obj) {
-  return obj.startBalance && `${parseFloat(obj.startBalance).toFixed(8)})` || '';
+  return obj.totalFunds && `${parseFloat(obj.totalFunds).toFixed(8)}` || '';
 };
 
 const returnProfitTemplate = function returnProfitTemplate(obj) {
