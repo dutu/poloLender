@@ -31,7 +31,7 @@ The application code is open source and shared on github at https://github.com/d
 * **Best profitability** ensured by using statistical calculation.
 * Funds are always lent at best return rates, no configurtation required, just **set-and-forget**.
 * **Reports** can be sent to your phone **on Telegram** messenger.
-* **Web interface** (under developement).
+* **Web interface** (under developement, new features being added).
 * Can **run locally** on your PC **or in the cloud** (heroku).
 * **Activelly supported**. **Join** poloLender discussion/support group **on telegram: https://t.me/cryptozone** or [raise an issue](https://github.com/dutu/poloLender/issues).   
 
@@ -116,6 +116,8 @@ Running on Heroku is highly recommended to ensure maximum up-time.
 
 5. Define config vars required for configuring poloLender:
     Rename the file `.env-template` to `.env`, then update the variables in `.env` file with your own values
+    
+    > Note: for Windows users to rename file `.env-template` to `.env`, you can use the following command: `ren .env-template .env`. Renaming by command is needed since Windows Explorer refuses filenames starting with a . (dot). 
 
 5. Start the app locally:
 
@@ -205,6 +207,7 @@ Updating the application when poloLender code is updated on github
 1. Stop the poloLender application with `CTRL+C`
 
 2. Update the local clone from github
+
     ```
     cd poloLender
     git fetch --all
@@ -229,6 +232,7 @@ Updating the application when poloLender code is updated on github
 ## Running on Heroku
 
 1. Update the local clone from github
+    
     ```
     cd poloLender
     git fetch --all
@@ -236,11 +240,13 @@ Updating the application when poloLender code is updated on github
     ```
 
 2. Open the papertrail console to see the log messages
+    
     ```
     heroku addons:open papertrail
     ```
 
 3. Deploy updated code to heroku
+    
     ```
     git push heroku master
     ```

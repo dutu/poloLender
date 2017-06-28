@@ -147,7 +147,6 @@ const PoloLender = function(name) {
           throw val;
         } else {
           config.startBalance[key] = val.toString();
-          performanceReports[key] = { startBalance: config.startBalance[key] };
         }
       } catch (err) {
         log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
@@ -404,18 +403,12 @@ const PoloLender = function(name) {
 
         currencies.forEach(function (c, i, a) {
           let newActiveOffers;
-          newActiveOffers = typeof result[c] !== "undefined" ? result[c] : [];
-          let found;
+          newActiveOffers = result[c] || [];
           let newOffers = false;
           newActiveOffers.forEach(function (element, index, array) {
-            found = _.find(activeOffers[c], {id: element.id});
-            if (typeof found === "undefined") {
-              newOffers = true;
-            }
+            newOffers = newOffers || !_.find(activeOffers[c], { id: element.id });
           });
-          if (newActiveOffers.length > 0) {
-            activeOffers[c] = newActiveOffers;
-          }
+          activeOffers[c] = newActiveOffers;
         });
         return apiCallLimitDelay(apiMethod, () => callback(null));
       });
@@ -704,6 +697,11 @@ const PoloLender = function(name) {
     };
 
     async.series({
+      updateRates: function (callback) {
+        updateRateBTCUSD();
+        updateRates();
+        callback(null);
+      },
       updateActiveLoans: function(callback){
         updateActiveLoans(function (err) {
           callback(err, err && err.message || "OK");
@@ -742,12 +740,14 @@ const PoloLender = function(name) {
       },
       cancelHighOffers: function (callback) {          // cancel offers if price is too high
         cancelHighOffers(function (err){
-          callback(err, err && err.message || "OK");
+          callback(null, err && err.message || "OK");
         });
       },
       updateAvailableFunds: function (callback) {
-        if (!anyCanceledOffer)
+        if (!anyCanceledOffer) {
           return callback(null, "OK");
+        }
+
         updateAvailableFunds(function (err) {
           anyCanceledOffer = false;
           callback(err, err && err.message || "OK");
@@ -757,11 +757,6 @@ const PoloLender = function(name) {
         postOffers(function (err){
           callback(err, err && err.message || "OK");
         });
-      },
-      updateRates: function (callback) {
-        updateRateBTCUSD();
-        updateRates();
-        callback(null);
       },
     },
     function(err, results) {
@@ -784,24 +779,20 @@ const PoloLender = function(name) {
 
   emitPerformanceUpdate = function emitPerformanceUpdate() {
     currencies.forEach(currency => {
-      if (new Big(depositFunds[currency]).lte(0)) {
+      if ((!depositFunds[currency] || parseFloat(depositFunds[currency]) === 0) && (!config.startBalance[currency] || parseFloat(config.startBalance[currency]) === 0)) {
         return;
       }
 
       let wmr = new Big(status.wmr[currency]).times(100);
-      let performanceReport = {
-        startBalance: config.startBalance[currency],
-        totalFunds: depositFunds[currency],
+      performanceReports[currency] = {
+        startBalance: config.startBalance[currency] || 0,
+        totalFunds: depositFunds[currency] || 0,
         activeLoansCount: _.filter(activeLoans, { currency: currency }).length,
         activeLoansAmount: _.filter(activeLoans, { currency: currency }).reduce((sum, activeLoan) => { return sum = sum.plus(activeLoan.amount) }, new Big(0)).toFixed(8),
         rateBTC: ratesBTC[currency],
         rateBTCUSD: rateBTCUSD,
         wmr: wmr.toFixed(6),
       };
-
-      if (performanceReport.startBalance || parseFloat(performanceReport.totalFunds) > 0 || performanceReport.activeLoansCount > 0) {
-        performanceReports[currency] = performanceReport;
-      }
     });
 
     srv.io.sockets.emit('performanceReport', performanceReports);

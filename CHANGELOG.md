@@ -3,6 +3,16 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.0] - unreleased
+
+### Added
+- UI for Performance Reports
+- Note on how to rename `.env-template` file to `.env` in windows
+
+### Fixed
+- Wrong display of `POLOLENDER_TELEGRAM_REPORTINTERVAL` at startup
+- Report show wrong of start balance for currencies except BTC
+
 ## [0.10.0] - 2017-06-26
 
 ### Added

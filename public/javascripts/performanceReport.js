@@ -8,7 +8,7 @@ const returnRateBTCTemplate = function returnCurrencyTemplate(obj) {
     change = obj.rateBTCUSDChange;
   } else {
     rate = obj.rateBTC && `BTC ${new Big(obj.rateBTC).toPrecision(5)}`;
-    change = obj.rateUSDChange;
+    change = obj.rateBTCUSDChange;
   }
 
   if (!rate) {
@@ -21,10 +21,13 @@ const returnRateBTCTemplate = function returnCurrencyTemplate(obj) {
 
 };
 
+const returnTotalFundsTemplate = function returnTotalFundsTemplate(obj) {
+  return obj.startBalance && `${parseFloat(obj.startBalance).toFixed(8)})` || '';
+};
+
 const returnProfitTemplate = function returnProfitTemplate(obj) {
   return obj.profit && `${obj.profit.toFixed(8)} (${(obj.profitPerDay.toFixed(3))}/day)` || '';
 };
-
 
 const returnProfitUSDTemplate = function returnProfitUSDTemplate(obj) {
   if (!obj.rateBTC || !obj.rateBTCUSD) {
@@ -101,7 +104,7 @@ let performanceReportTableConfig = {
     { id: 'currency',	header: '', sort: 'string', adjust: true, tooltip: tooltip, template: returnCurrencyTemplate },
     { id: 'rateBTC', header:[{ text: 'Rate', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnRateBTCTemplate },
     { id: 'startBalance', header:[{ text: 'Start balance', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight },
-    { id: 'totalFunds', header: [{text: 'Current balance', colspan: 2, css: 'table-header-center' }, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight},
+    { id: 'totalFunds', header: [{text: 'Current balance', colspan: 2, css: 'table-header-center' }, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight, template: returnTotalFundsTemplate },
     { id: 'totalFundsUSD', header:[null, { text: 'Worth USD', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
     { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 2, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, tooltip: tooltip },
     { id: 'activeLoansAmount', header:[null, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
@@ -171,7 +174,7 @@ let updatePerformanceReport = function updatePerformanceReport(data) {
       rateBTC: performanceData.rateBTC || '',
       rateBTCUSD: performanceData.rateBTCUSD || '',
       startBalance: performanceData.startBalance,
-      totalFunds: performanceData.totalFunds || '',
+      totalFunds: performanceData.totalFunds || 0,
       totalFundsUSD: toUSD(performanceData.totalFunds).toFixed(0),
       activeLoansCount: performanceData.activeLoansCount || 0,
       activeLoansAmount: performanceData.activeLoansAmount || '',
