@@ -2,24 +2,17 @@ const returnDurationTemplate = function returnDurationTemplate(obj) {
   return obj.duration && formatDate(obj.duration) || '';
 };
 
-const returnInterestTemplate = function returnInterestTemplate(obj) {
-  return obj.interest && `${obj.interest.toFixed(8)}` || '';
-};
-
-const returnFeeTemplate = function returnFeeTemplate(obj) {
-  return obj.fee && `${obj.fee.toFixed(8)}` || '';
-};
-
-const returnEarnedTemplate = function returnEarnedTemplate(obj) {
-  return obj.earned && `${obj.earned.toFixed(8)}` || '';
-};
-
-const returnOpenAtTemplate = function returnOpenAtTemplate(obj) {
-  return obj.openAt && `${formatDate(obj.openAt)}` || '';
-};
-
-const returnClosedAtTemplate = function returnClosedAtTemplate(obj) {
-  return obj.closedAt && `${formatDate(obj.closedAt)}` || '';
+const formatDurationFromDays = function formatDurationFromDays(days) {
+  let timeInSeconds = Math.round(days * 24 * 60 * 60);
+  let hours = Math.floor(timeInSeconds / 60 /60);
+  let hoursStr = hours && `${Math.floor(timeInSeconds / 60 /60)}h` || '';
+  let minutes = Math.floor((timeInSeconds - hours * 60 *60) / 60);
+  let minutesStr = hoursStr !== '' && `0${minutes}`.substr(-2, 2) || `${minutes || ''}`;
+  minutesStr += minutesStr !== '' && 'm' || '';
+  let seconds = timeInSeconds - hours * 60 *60 - minutes * 60;
+  let secondsStr = minutesStr !== '' && `0${seconds}`.substr(-2, 2) || seconds.toString();
+  secondsStr += 's';
+  return `${hoursStr}${minutesStr}${secondsStr}`;
 };
 
 const clickRefreshButton = function clickRefreshButton() {
@@ -118,19 +111,20 @@ let lendingHistoryTableConfig = {
   autowidth: true,
   autoheight: true,
   minHeight: 200,
+  minWidth: 898,
   select: true,
   drag: true,
   scroll: false,
   columns: [
     { id: 'currency',	header: 'Currency', sort: 'string', adjust: true, tooltip: tooltip, template: returnCurrencyTemplate },
     { id: 'rate', header:[{ text: 'Rate', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, template: returnLoanRateTemplate },
-    { id: 'amount', header:[{ text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, template: returnAmountTemplate },
-    { id: 'duration', header: [{text: 'Duration', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignCenter, template: returnDurationTemplate },
-    { id: 'interest', header: [{text: 'Interest', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, template: returnInterestTemplate },
-    { id: 'fee', header: [{text: 'Fee', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, template: returnFeeTemplate },
-    { id: 'earned', header: [{text: 'Earned', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, template: returnEarnedTemplate },
-    { id: 'openAt', header:[{ text: 'Open', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, cssFormat: alignRight, template: returnOpenAtTemplate },
-    { id: 'closedAt', header:[{ text: 'Closed', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, cssFormat: alignRight, template: returnClosedAtTemplate },
+    { id: 'amount', header:[{ text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, format: formatAmount },
+    { id: 'duration', header: [{text: 'Duration', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight, format: formatDurationFromDays },
+    { id: 'interest', header: [{text: 'Interest', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, format: formatAmount },
+    { id: 'fee', header: [{text: 'Fee', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, format: formatAmount },
+    { id: 'earned', header: [{text: 'Earned', css: 'table-header-center' }], adjust: true, autowidth: true, tooltip: tooltip, sort: "int", cssFormat: alignRight, format: formatAmount },
+    { id: 'openAt', header:[{ text: 'Open', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, cssFormat: alignRight, format: formatDate },
+    { id: 'closedAt', header:[{ text: 'Closed', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, cssFormat: alignRight, format: formatDate },
   ],
   fixedRowHeight:false,  rowLineHeight:25, rowHeight:25,
   data: [],

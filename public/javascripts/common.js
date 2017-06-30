@@ -22,5 +22,9 @@ const formatDate = function formatDate(date) {
   return webix.i18n.fullDateFormatStr(date);
 };
 
+const formatAmount = function amountFormat(amount) {
+    return amount && `${amount.toFixed(8)}` || '';
+};
+
 const finance = new Finance();
 let socket = io();
