@@ -12,7 +12,7 @@ const formatDurationFromDays = function formatDurationFromDays(days) {
   let seconds = timeInSeconds - hours * 60 *60 - minutes * 60;
   let secondsStr = minutesStr !== '' && `0${seconds}`.substr(-2, 2) || seconds.toString();
   secondsStr += 's';
-  return `${hoursStr}${minutesStr}${secondsStr}`;
+  return `${hoursStr} ${minutesStr} ${secondsStr}`;
 };
 
 const clickRefreshButton = function clickRefreshButton() {
@@ -117,6 +117,7 @@ let lendingHistoryTableConfig = {
   scroll: false,
   columns: [
     { id: 'currency',	header: 'Currency', sort: 'string', adjust: true, tooltip: tooltip, template: returnCurrencyTemplate },
+//    { id: 'id', header:[{ text: 'Id', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "string", tooltip: tooltip, cssFormat: alignRight },
     { id: 'rate', header:[{ text: 'Rate', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, template: returnLoanRateTemplate },
     { id: 'amount', header:[{ text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, format: formatAmount },
     { id: 'duration', header: [{text: 'Duration', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight, format: formatDurationFromDays },

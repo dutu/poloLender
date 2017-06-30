@@ -1,3 +1,13 @@
+let liveUpdatedAt = null;
+let liveStatusUi = null;
+
+const startRefreshingLiveUpdateStatus = function startRefreshingLiveUpdateStatus() {
+  liveStatusUi = $$('liveStatus');
+  setInterval(function refreshLiveUpdateStatus() {
+    liveStatusUi.render();
+  }, 50);
+};
+
 const returnLoanRateTemplate = function returnLoanRateTemplate(obj) {
   return obj.rate && `${(obj.rate * 100).toFixed(6)}%` || '';
 };
@@ -22,6 +32,36 @@ const returnIssuedAgoTemplate = function returnDateIssuedTemplate(obj) {
   return obj.issuedAt && `${formatDate(obj.issuedAt)} (${moment().to(obj.issuedAt)})` || '';
 };
 
+let liveStatusConfig = {
+  autoheight: true, borderless: true, type: 'clean',
+  cols: [
+    { width: width_col1, autoheight: true, template: 'Updated:' },
+    { id: 'liveStatus', width: width_col2,
+      template: function (obj) {
+        if (!liveUpdatedAt) {
+          return '';
+        }
+
+        let activityHtml;
+        const indicatorOnForMs = 150;
+        const banIconTimeoutMs = 60000;
+        let ago = Date.now() - liveUpdatedAt;
+        if (ago < indicatorOnForMs) {
+          activityHtml = `<span style="color:green"><i class="fa fa-circle"></i></span>`;
+        }
+        if (ago >= indicatorOnForMs && ago < banIconTimeoutMs) {
+          activityHtml = `<i class="fa fa-circle-o"></i>`;
+        }
+        // activityHtml += ` (OK ${(ok/(ok+nok)*100).toFixed(0)}%)`;
+        if (ago >= banIconTimeoutMs) {
+          activityHtml = `<span style="color:red"><i class="fa fa-ban"></i></span>`;
+        }
+        activityHtml += ` ${moment(liveUpdatedAt).fromNow(false)}`;
+        return activityHtml;
+      },
+    },
+  ]
+};
 
 let activeLoansTableConfig = {
   id: 'activeLoansTable',
@@ -77,6 +117,9 @@ let liveView = {
     {
       type: 'clean',
       rows: [
+        { view:"template", template:"Status", type:"section" },
+        liveStatusConfig,
+        { gravity: 0.2 },
         { view:"template", template:"Open Offers", type:"section" },
         openOffersTableConfig,
         { gravity: 0.2 },
@@ -90,6 +133,11 @@ let liveView = {
 };
 
 let updateLive = function updateLive(data) {
+  liveUpdatedAt = Date.now();
+  if (liveStatusUi) {
+    liveStatusUi.render();
+  }
+
   let activeLoansTable = [];
   data.activeLoans.forEach((activeLoan) => {
     let newActiveLoan = {
@@ -137,6 +185,5 @@ let updateLive = function updateLive(data) {
     'data': openOffersTable,
   });
   openOffersTableUi.refreshColumns();
-
-
 };
+

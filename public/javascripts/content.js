@@ -112,4 +112,5 @@ webix.ready(function () {
   poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
   poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
   startRefreshingStatus();
+  startRefreshingLiveUpdateStatus();
 });

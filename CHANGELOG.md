@@ -3,11 +3,16 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.11.0] - unreleased
+## [0.11.0] - 2017-06-26
 
 ### Added
 - UI for Performance Reports
-- Note on how to rename `.env-template` file to `.env` in windows
+- UI for Live Reports
+- UI for History Reports
+- Note on how to rename `.env-template` file to `.env` in Windows
+
+### Changed
+- Report now show: profit %, daily war (weighted average rate), ewar (effective war) and APY (annual percentage yield)
 
 ### Fixed
 - Wrong display of `POLOLENDER_TELEGRAM_REPORTINTERVAL` at startup

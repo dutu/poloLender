@@ -25,7 +25,11 @@ const returnTotalFundsTemplate = function returnTotalFundsTemplate(obj) {
 };
 
 const returnProfitTemplate = function returnProfitTemplate(obj) {
-  return obj.profit && `${obj.profit.toFixed(8)} (${(obj.profitPerDay.toFixed(3))}/day)` || '';
+  return `${obj.profit.toFixed(8)} (${obj.profitPerDay.toFixed(3)}/day)`;
+};
+
+const returnProfitPercTemplate = function returnProfitUSDTemplate(obj) {
+  return `${obj.profitPerc.toFixed(2)}% (${obj.profitPercPerDay.toFixed(3)}%/day)`;
 };
 
 const returnProfitUSDTemplate = function returnProfitUSDTemplate(obj) {
@@ -48,23 +52,6 @@ const returnWmrTemplate = function returnWmrTemplate(obj) {
   return `${parseFloat(obj.wmr).toFixed(6)}%<span style='color:${changeColor}' class='webix_icon fa-caret-${changeIcon}'></span>`;
 };
 
-const returnWmrPerYearTemplate = function returnWmrPerYearTemplate(obj) {
-  if (!obj.wmr) {
-    return '';
-  }
-
-  return `${(obj.wmr * 365).toFixed(1)}%`;
-};
-
-const returnWmrPerYearCiTemplate = function returnWmrPerYearCiTemplate(obj) {
-  if (!obj.wmr) {
-    return '';
-  }
-
-  let paCi = finance.CI(parseFloat(obj.wmr) * 365 / 182, 1, 100, 182) - 100;
-  return `${paCi.toFixed(1)}%`;
-};
-
 const returnEwmrTemplate = function returnEwmrTemplate(obj) {
   if (!obj.wmr) {
     return '';
@@ -73,21 +60,13 @@ const returnEwmrTemplate = function returnEwmrTemplate(obj) {
   return `${(parseFloat(obj.wmr) * 0.85).toFixed(6)}%`;
 };
 
-const returnEwmrPerYearTemplate = function returnEwmrPerYearTemplate(obj) {
+const returnAPYTemplate = function returnAPYTemplate(obj) {
   if (!obj.wmr) {
     return '';
   }
 
-  return `${(obj.wmr * 365 * 0.85).toFixed(1)}%`;
-};
-
-const returnEwmrPerYearCiTemplate = function returnEwmrPerYearCiTemplate(obj) {
-  if (!obj.wmr) {
-    return '';
-  }
-
-  let paCi = finance.CI(parseFloat(obj.wmr) * 365 * 0.85 / 182, 1, 100, 182) - 100;
-  return `${paCi.toFixed(1)}%`;
+  let apy = finance.CI(parseFloat(obj.wmr) * 365 * 0.85 / 182, 1, 100, 182) - 100;
+  return `${apy.toFixed(1)}%`;
 };
 
 let performanceReportTableConfig = {
@@ -107,14 +86,12 @@ let performanceReportTableConfig = {
     { id: 'totalFundsUSD', header:[null, { text: 'Worth USD', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
     { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 2, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, tooltip: tooltip },
     { id: 'activeLoansAmount', header:[null, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
-    { id: 'profit', header: [{text: 'Profit', colspan: 2, css: 'table-header-center' }, {text: 'Currency', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, template: returnProfitTemplate, cssFormat: alignRight },
+    { id: 'profit', header:[{text: 'Profit', colspan: 3, css: 'table-header-center' }, {text: 'Currency', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitTemplate, cssFormat: alignRight },
+    { id: 'profitPerc', header: [null, {text: '%', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, template: returnProfitPercTemplate, cssFormat: alignRight },
     { id: 'profitUSD', header:[null, {text: 'Worth USD', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitUSDTemplate, cssFormat: alignRight },
-    { id: 'wmr', header: [{text: 'Weighted mean rate', colspan: 3, css: 'table-header-center' },{ text: '/day', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnWmrTemplate, cssFormat: alignRight },
-    { id: 'wmrPerYear', header:[null, { text: '/year', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnWmrPerYearTemplate, cssFormat: alignRight },
-    { id: 'wmrPerCiYear', header:[null, { text: '/year Ci', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnWmrPerYearCiTemplate, cssFormat: alignRight },
-    { id: 'ewmr', header: [{text: 'Effective weighted mean rate', colspan: 3, css: 'table-header-center' },{ text: '/day', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnEwmrTemplate, cssFormat: alignRight },
-    { id: 'ewmrPerYear', header:[null, { text: '/year', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnEwmrPerYearTemplate, cssFormat: alignRight },
-    { id: 'ewmrPerCiYear', header:[null, { text: '/year Ci', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnEwmrPerYearCiTemplate, cssFormat: alignRight },
+    { id: 'wmr', header: [{text: '<span title="Weighted average rate of active loans">Weighted average rate</span>', colspan: 2, css: 'table-header-center' },{ text: 'Daily', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnWmrTemplate, cssFormat: alignRight, tooltip: 'Weighted average rate of active loans' },
+    { id: 'ewmr', header: [null, {text: '<span title="Daily rate minus Poloniex commision">effective</span>', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnEwmrTemplate, cssFormat: alignRight, tooltip: 'daily rate minus Poloniex commision' },
+    { id: 'apy', header:[{ text: '<span title="Annual Percentage Yield">APY</span>', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnAPYTemplate, cssFormat: alignRight, tooltip: 'Annual Percentage Yield' },
   ],
   fixedRowHeight:false,  rowLineHeight:25, rowHeight:25,
 /*
@@ -182,9 +159,11 @@ let updatePerformanceReport = function updatePerformanceReport(data) {
       wmr: performanceData.wmr,
     };
     newRow.profitPerDay = runningDays && parseFloat(newRow.profit) / runningDays;
+    newRow.profitPerc = newRow.profit / parseFloat(performanceData.startBalance) * 100;
+    newRow.profitPercPerDay = runningDays && newRow.profitPerc / runningDays;
     newRow.rateBTCChange = existingCurrencyData && (Math.sign(newRow.rateBTC - existingCurrencyData.rateBTC) || existingCurrencyData.rateBTCChange) || 0;
     newRow.rateBTCUSDChange = existingCurrencyData && (Math.sign(newRow.rateBTCUSD - existingCurrencyData.rateBTCUSD) || existingCurrencyData.rateBTCUSDChange) || 0;
-    newRow.wmrChange = existingCurrencyData && (Math.sign(newRow.rateBTC - existingCurrencyData.rateBTC) || existingCurrencyData.wmrChange) || 0;
+    newRow.wmrChange = existingCurrencyData && (Math.sign(newRow.wmr - existingCurrencyData.wmr) || existingCurrencyData.wmrChange) || 0;
     if (existingCurrencyDataIndex === -1) {
       performanceReportTable.push(newRow);
     } else {

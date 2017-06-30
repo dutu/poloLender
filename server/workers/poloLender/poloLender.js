@@ -273,12 +273,17 @@ const PoloLender = function(name) {
       return result
     };
 
-    const msgRate = function msgRate(perDayProc, withCi) {
+    const msgRate = function msgRate(perDayProc) {
       let perDay = new Big(perDayProc).times(100).toFixed(6);
       let pa = new Big(perDayProc).times(365*100).toFixed(1);
-      let paCi = (finance.CI(parseFloat(pa) / 182, 1, 100, 182) - 100).toFixed(1);
-      let msg = withCi && `${perDay}% (${pa}% pa, ${paCi}% paCI)` || `${perDay}% (${pa}% pa)`;
-      return msg;
+      let apy = (finance.CI(parseFloat(pa) * 0.85 / 182, 1, 100, 182) - 100).toFixed(1);
+      return `${perDay}%`;
+    };
+
+    const msgApy = function msgRate(perDayProc) {
+      let pa = new Big(perDayProc).times(365*100).toFixed(1);
+      let apy = (finance.CI(parseFloat(pa) * 0.85 / 182, 1, 100, 182) - 100).toFixed(1);
+      return `${apy}%`;
     };
 
     const msgLoanReturned = function msgLoanReturned(element) {
@@ -691,13 +696,15 @@ const PoloLender = function(name) {
           msg += `(USD ${totalUSD}) `;
         }
         msg += `• ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(2)}%/day)`;
         if(rateBTCUSD && ratesBTC[c]) {
           let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
           msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
         }
-        let wmrMsg = msgRate(status.wmr[c], true);
-        let ewmr =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8), true);
-        msg += ` • wmr: ${wmrMsg} ewmr: ${ewmr} alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
+        let wmrMsg = msgRate(status.wmr[c]);
+        let ewmrMsg =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+        let apyMsg = msgApy(status.wmr[c]);
+        msg += ` • Daily war: ${wmrMsg} ewar: ${ewmrMsg} • APY: ${apyMsg} • alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
         logRep(msg);
       });
     };
