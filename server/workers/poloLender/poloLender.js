@@ -712,7 +712,7 @@ const PoloLender = function(name) {
     async.series({
       updates: function updates(callback) {
         let delay = 0;
-        let delayStepMs = 10;
+        let delayStepMs = 100;
         async.parallel({
             updateRates: function (callback) {
               updateRateBTCUSD();
