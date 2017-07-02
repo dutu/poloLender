@@ -2,19 +2,6 @@ const returnDurationTemplate = function returnDurationTemplate(obj) {
   return obj.duration && formatDate(obj.duration) || '';
 };
 
-const formatDurationFromDays = function formatDurationFromDays(days) {
-  let timeInSeconds = Math.round(days * 24 * 60 * 60);
-  let hours = Math.floor(timeInSeconds / 60 /60);
-  let hoursStr = hours && `${Math.floor(timeInSeconds / 60 /60)}h` || '';
-  let minutes = Math.floor((timeInSeconds - hours * 60 *60) / 60);
-  let minutesStr = hoursStr !== '' && `0${minutes}`.substr(-2, 2) || `${minutes || ''}`;
-  minutesStr += minutesStr !== '' && 'm' || '';
-  let seconds = timeInSeconds - hours * 60 *60 - minutes * 60;
-  let secondsStr = minutesStr !== '' && `0${seconds}`.substr(-2, 2) || seconds.toString();
-  secondsStr += 's';
-  return `${hoursStr} ${minutesStr} ${secondsStr}`;
-};
-
 const clickRefreshButton = function clickRefreshButton() {
   $$('returnLendingHistoryError').setValue('');
   let lendingHistoryTableUi = $$('lendingHistoryTable');
@@ -65,8 +52,8 @@ let lendingHistoryInputFormConfig = {
       rows: [
         {
           cols: [
-            { view: 'datepicker', id: 'startDate', timepicker:true, label: 'Start date', value: new Date(parseInt(moment().subtract(7, 'days').format('x'))), labelPosition: 'top', name: 'startDate', width: 180 },
-            { view: 'datepicker', id: 'endDate', timepicker:true, label: 'End date', labelPosition: 'top', value: new Date(), name: 'endDate', width: 180 },
+            { view: 'datepicker', id: 'startDate', timepicker:true, label: 'Start date', value: new Date(parseInt(moment().subtract(7, 'days').format('x'))), format:'%Y-%m-%d %H:%i', labelPosition: 'top', name: 'startDate', width: 180 },
+            { view: 'datepicker', id: 'endDate', timepicker:true, label: 'End date', labelPosition: 'top', value: new Date(), format:'%Y-%m-%d %H:%i', name: 'endDate', width: 180 },
             { view: 'counter', label: 'Limit', labelPosition: 'top', name: 'limit', step: 100, value: 50, min: 0, max: 10000 },
           ]
         },
