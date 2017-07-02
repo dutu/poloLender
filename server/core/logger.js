@@ -9,10 +9,10 @@ customLogColors.report = 'cyan';
 winston.addColors(customLogColors);
 let logger = new (winston.Logger)({
 	levels: customLogLevels,
-  exitOnError: false,
 	transports: [
 		new (winston.transports.Console)({
-			colorize: 'all'
+			colorize: 'all',
+      timestamp: true,
 		}),
   ]
 });

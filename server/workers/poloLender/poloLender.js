@@ -710,46 +710,67 @@ const PoloLender = function(name) {
     };
 
     async.series({
-      updateRates: function (callback) {
-        updateRateBTCUSD();
-        updateRates();
-        callback(null);
-      },
-      updateActiveLoans: function(callback){
-        updateActiveLoans(function (err) {
-          callback(err, err && err.message || "OK");
-        });
-      },
-      updateActiveOffers: function(callback) {
-        updateActiveOffers(function (err) {
+      updates: function updates(callback) {
+        let delay = 0;
+        let delayStepMs = 2;
+        async.parallel({
+            updateRates: function (callback) {
+              updateRateBTCUSD();
+              updateRates();
+              callback(null);
+            },
+            updateActiveLoans: function (callback){
+              delay += delayStepMs;
+              let updateActiveLoansDelayed = function updateActiveLoansDelayed(callback) {
+                updateActiveLoans(function (err) {
+                  callback(err, err && err.message || "OK");
+                });
+              };
+              _.delay(updateActiveLoansDelayed, delay, callback);
+            },
+            updateActiveOffers: function (callback) {
+              delay += delayStepMs;
+              let updateActiveOffersDelayed = function updateActiveOffersDelayed(callback) {
+                updateActiveOffers(function (err) {
+                  callback(err, err && err.message || "OK");
+                });
+              };
+              _.delay(updateActiveOffersDelayed, delay, callback);
+            },
+            updateBalances: function (callback) {
+              delay += delayStepMs;
+              let updateupdateBalancesDelayed = function updateupdateBalancesDelayed(callback) {
+                updateAvailableFunds(function (err) {
+                  if (err) {
+                    return callback(err, err.message);
+                  }
+
+                  currencies.forEach(function (c, index, array) {
+                    let amountActiveOffers = new Big(0);
+                    let amountActiveLoans = new Big(0);
+                    if (_.isArray(activeOffers[c]))
+                      activeOffers[c].forEach(function (o, index, array) {
+                        amountActiveOffers = amountActiveOffers.plus(o.amount);
+                      });
+                    activeLoans.forEach(function (l, index, array) {
+                      if (l.currency == c)
+                        amountActiveLoans = amountActiveLoans.plus(l.amount);
+                    });
+                    depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c] || 0).toFixed(8);
+                  });
+                  callback(null, "OK");
+                });
+              };
+              _.delay(updateupdateBalancesDelayed, delay, callback);
+            },
+        },
+        function (err, results) {
           callback(err, err && err.message || "OK");
         });
       },
       emitLiveUpdate: function (callback) {
         emitLiveUpdate();
         callback(null, 'OK');
-      },
-      updateBalances: function(callback) {
-        updateAvailableFunds(function (err) {
-          if (err) {
-            return callback(err, err.message);
-          }
-
-          currencies.forEach(function (c, index, array) {
-            let amountActiveOffers = new Big(0);
-            let amountActiveLoans = new Big(0);
-            if (_.isArray(activeOffers[c]))
-              activeOffers[c].forEach(function (o, index, array) {
-                amountActiveOffers = amountActiveOffers.plus(o.amount);
-              });
-            activeLoans.forEach(function (l, index, array) {
-              if (l.currency == c)
-                amountActiveLoans = amountActiveLoans.plus(l.amount);
-            });
-            depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c] || 0).toFixed(8);
-          });
-          callback(null, "OK");
-        });
       },
       report: function (callback) {
         report();
