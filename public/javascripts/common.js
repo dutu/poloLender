@@ -27,8 +27,7 @@ const formatAmount = function amountFormat(amount) {
     return amount && `${amount.toFixed(8)}` || '';
 };
 
-const formatDurationFromSeconds = function formatDurationFromDays(days) {
-  let timeInSeconds = Math.round(days * 24 * 60 * 60);
+const formatDurationFromSeconds = function formatDurationFromDays(timeInSeconds) {
   let hours = Math.floor(timeInSeconds / 60 /60);
   let hoursStr = hours && `${Math.floor(timeInSeconds / 60 /60)}h` || '';
   let minutes = Math.floor((timeInSeconds - hours * 60 *60) / 60);

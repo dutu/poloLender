@@ -136,7 +136,7 @@ let advisorInfoTableConfig = {
     { id: 'bestReturnRate', header:'Best loan rate', autowidth: true, adjust: true, sort: 'string', tooltip: tooltip, template: returnBestReturnRateTemplate, cssFormat: alignCenter },
     { id: 'bestDuration', header:'Best loan duration', autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignCenter },
     { id: 'minOrderAmount', header:'Min offer amount', autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight  },
-    { id: 'updatedAt',	header: 'Changed', autowidth: true, adjust: true, tooltip: tooltip, template: returnUpdatedAtTemplate },
+    { id: 'updatedAt',	header: 'Updated', autowidth: true, adjust: true, tooltip: tooltip, template: returnUpdatedAtTemplate },
   ],
   data: [],
   tooltip: true,
