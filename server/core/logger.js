@@ -14,7 +14,7 @@ let logger = new (winston.Logger)({
 		new (winston.transports.Console)({
 			colorize: 'all',
       timestamp: function () {
-			  moment().format('YYYY-MM-DD HH:mm:ss');
+			  return moment().format('YYYY-MM-DD HH:mm:ss');
       },
 		}),
   ]
