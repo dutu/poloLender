@@ -1,5 +1,6 @@
 const winston = require('winston');
 const _ = require('lodash');
+const moment = require('moment');
 
 let customLogLevels = _.clone(winston.config.syslog.levels);
 delete customLogLevels.emerg;
@@ -12,7 +13,9 @@ let logger = new (winston.Logger)({
 	transports: [
 		new (winston.transports.Console)({
 			colorize: 'all',
-      timestamp: true,
+      timestamp: function () {
+			  moment().format('YYYY-MM-DD HH:mm:ss');
+      },
 		}),
   ]
 });
