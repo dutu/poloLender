@@ -135,6 +135,7 @@ let advisorInfoTableConfig = {
     { id: 'averageLoanHoldingTime', header:'Average loan holding time', autowidth: true, adjust: true, tooltip: tooltip  },
     { id: 'bestReturnRate', header:'Best loan rate', autowidth: true, adjust: true, sort: 'string', tooltip: tooltip, template: returnBestReturnRateTemplate },
     { id: 'bestDuration', header:'Best loan duration', autowidth: true, adjust: true, tooltip: tooltip  },
+    { id: 'minOrderAmount', header:'Min offer amount', autowidth: true, adjust: true, tooltip: tooltip  },
     { id: 'updatedAt',	header: 'Changed', autowidth: true, adjust: true, tooltip: tooltip, template: returnUpdatedAtTemplate },
   ],
   data: [],
@@ -218,6 +219,7 @@ let updateAdvisorInfo = function updateAdvisorInfo(data) {
         averageLoanHoldingTime: newCurrencyData.averageLoanHoldingTime,
         bestReturnRate: newCurrencyData.bestReturnRate,
         bestDuration: '2 days',
+        minOrderAmount: newCurrencyData.minOrderAmount,
         updatedAt: Date.now(),
       };
       advisorInfoTable.push(newRow);

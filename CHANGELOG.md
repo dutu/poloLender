@@ -6,10 +6,8 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 ## [0.12.0] - Unreleased
 
 ### Added
-- timestamp for console log output 
-
-### Changed
-- execute several API calls in parallel for improving speed
+- timestamp for console log output
+- display the minimum offer amount in the "status" tab 
 
 ## [0.11.0] - 2017-06-26
 
