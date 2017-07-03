@@ -690,7 +690,7 @@ const PoloLender = function(name) {
           }
         });
 
-        msg = `${c}: ● TOTAL: ${depositFunds[c]} `;
+        msg = `  ----------${c}----------\n\nTOTAL:   ${depositFunds[c]} `;
         if(rateBTCUSD && ratesBTC[c]) {
           let totalUSD = new Big(rateBTCUSD).times(ratesBTC[c]).times(depositFunds[c]).toFixed(0);
           msg += `(USD ${totalUSD}) `;
