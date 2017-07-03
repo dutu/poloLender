@@ -64,7 +64,7 @@ const PoloLender = function(name) {
 
 	const configDefault = {
 		startDate: '',
-    startMessage: 'Join poloLender discussion/support group on telegram: https://t.me/cryptozone',
+    startMessage: 'Initializing poloLender ...\n[Abbreviations]\nWAR: Weighted Average Rate\nEWAR: Effective WAR\nAPY: Annual Percentage Yield\nALHT: Average Loan Hold Time\n\nJoin poloLender discussion/support group on telegram: https://t.me/cryptozone',
 		reportEveryMinutes: 5,
 		startBalance: {},
 		restartTime: moment(),
@@ -662,8 +662,8 @@ const PoloLender = function(name) {
         offersCount: status.offersCount,
         activeLoans: status.activeLoansCount,
       };
-      msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
-      msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
+      msg = `PoloLender [v${pjson.version}] \nRunning for ${m.runningForDays} days \nRestarted at ${m.restartedAt}`;
+      msg += ` \nOffers/Loans: ${m.offersCount}/${m.activeLoans}`;
       logRep(`${msg}`);
 
       if (clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
@@ -695,7 +695,7 @@ const PoloLender = function(name) {
           let totalUSD = new Big(rateBTCUSD).times(ratesBTC[c]).times(depositFunds[c]).toFixed(0);
           msg += `(USD ${totalUSD}) `;
         }
-        msg += `• ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+        msg += `\nACTIVE:   ${activeLoansAmount} in ${activeLoansCount} Loans \nPROFIT:   ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
         msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(2)}%/day)`;
         if(rateBTCUSD && ratesBTC[c]) {
           let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
@@ -704,7 +704,7 @@ const PoloLender = function(name) {
         let wmrMsg = msgRate(status.wmr[c]);
         let ewmrMsg =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
         let apyMsg = msgApy(status.wmr[c]);
-        msg += ` • Daily war: ${wmrMsg} ewar: ${ewmrMsg} • APY: ${apyMsg} • alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
+        msg += ` \nDaily WAR: ${wmrMsg} \nEWAR: ${ewmrMsg} \nAPY: ${apyMsg} \nALHT: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}\n`;
         logRep(msg);
       });
     };
