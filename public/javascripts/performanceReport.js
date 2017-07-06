@@ -133,7 +133,7 @@ let performanceReportView = {
 
 let performanceReportTable = [];
 let updatePerformanceReport = function updatePerformanceReport(data) {
-  let runningDays = parseFloat(moment().diff(poloLenderApp.runningSince, "minutes", true).toString()) / 60 / 24;
+  let runningDays = parseFloat(moment().diff(poloLenderAppStatusData.runningSince, "minutes", true).toString()) / 60 / 24;
   _.forEach(data, (value, key) => {
     let currency = key;
     let performanceData = value;

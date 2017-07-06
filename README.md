@@ -114,16 +114,19 @@ Running on Heroku is highly recommended to ensure maximum up-time.
     npm install
     ```
 
-5. Define config vars required for configuring poloLender:
-    Rename the file `.env-template` to `.env`, then update the variables in `.env` file with your own values
-    
-    > Note: for Windows users to rename file `.env-template` to `.env`, you can use the following command: `ren .env-template .env`. Renaming by command is needed since Windows Explorer refuses filenames starting with a . (dot). 
-
 5. Start the app locally:
 
     ```
-    node server.js
+    npm start
     ```
+
+6. Open the poloLender Pro app in your browser:
+
+    Open your internet browser and type in the URL [http://localhost:5000](http://localhost:5000)
+
+
+7. Got to 'Settings' tab to set your poloLender configuration
+
 
 ## Running on Heroku
 
@@ -151,48 +154,40 @@ Once installed, you'll have access to the heroku command from your command line.
     heroku create
     git push heroku master
     heroku ps:scale web=0
-    heroku ps:scale worker=0
     ```
 
-6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) logging add-on
+6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) and [mLab](https://elements.heroku.com/addons/mongolab) logging add-ons
+
     ```
     heroku addons:create papertrail
+    heroku addons:create mongolab
     ```
 
-    Note: To help with abuse prevention, Heroku requires account verification for provisioning an add-on . If your account has not been verified, you will be directed to visit the verification site.
+    Note: The add-ons are free; however, to help with abuse prevention, Heroku requires account verification for provisioning an add-on . If your account has not been verified, you will be directed to visit the verification site.
 
 
 7. Open the papertrail console to see the log messages.
+
     ```
     heroku addons:open papertrail
     ```
 > Note: Keep the papertrail console open to monitor progress
 
-8. Define config vars required for configuring poloLender (replace the values below with your own)
 
-:
+8. Start the application
 
-    $ heroku config:set POLOLENDER_APIKEY={\"key\":\"V**********************t\",\"secret\":\"T*******************************u\"}
-    $ heroku config:set POLOLENDER_STARTTIME=2016-02-28T12:27:09+01:00
-    $ heroku config:set POLOLENDER_STARTBALANCE={\"BTC\":\"10\", \"ETH\":\"1100\", \"XMR\":\"1000\", \"XRP\":\"80000\", \"DASH\":\"1000\"}
-    $ heroku config:set POLOLENDER_LENDMAX={\"BTC\":\"4\", \"ETH\":\"100\", \"XMR\":\"2000\", \"XRP\":\"30000\", \"DASH\":\"100000\"}
-    $ heroku config:set POLOLENDER_MINRATE={\"BTC\":\"0\", \"ETH\":\"0\", \"XMR\":\"0\", \"XRP\":\"0\", \"DASH\":\"0\"}
-    $ heroku config:set POLOLENDER_REPORTINTERVAL=30
-    $ heroku config:set POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
-    $ heroku config:set POLOLENDER_TELEGRAM_USERID=111111111
-    $ heroku config:set POLOLENDER_TELEGRAM_REPORTINTERVAL=60
-
-Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
-
-9. Start the application
     ```
     heroku ps:scale web=1
     ```
 
-10. Visit the app in our browser
+9. Open the poloLenderPro in your browser
+
     ```
     heroku open
     ```
+
+10. Got to 'Settings' tab to set your poloLender configuration
+
 
 11. [Upgrade your application to Hobby](https://dashboard.heroku.com/# "upgrade to Hobby")
 > **Note**: By default the Heroku applications run on Free dyno. Free dyno sleeps after a period of activity. Please see https://devcenter.heroku.com/articles/free-dyno-hours#usage for details. It is highly recommended to upgrade the free Dyno to Hobby. Hobby dyno never sleeps. See: https://www.heroku.com/pricing
@@ -223,10 +218,10 @@ Updating the application when poloLender code is updated on github
 4. Start the app locally:
 
     ```
-    node server.js
+    npm start
     ```
 
-> **Note**: If you are requested to update node.js version, please do so by downloading and installing the applicable version. Go to [http://nodejs.org/node.js](http://nodejs.org/).
+6. Visit poloLender app in your internet browser and verify the app settings
 
 
 ## Running on Heroku
@@ -239,50 +234,37 @@ Updating the application when poloLender code is updated on github
 	git reset --hard origin/master
     ```
 
-2. Open the papertrail console to see the log messages
+2. Verify that both `papertrail:choklad` and `mongolab:sandbox` are provisioned for your app 
+
+    ```
+    heroku addons:create papertrail
+    heroku addons:create mongolab
+    ```
+
+3. if one of the addons above are not provisioned, provision the missing addons
+    ```
+    heroku addons:create mongolab
+    ```
+    and/or
+    ```
+    heroku addons:create papertrail
+    ````
+ 
+4. Open the papertrail console to see the log messages
     
     ```
     heroku addons:open papertrail
     ```
 
-3. Deploy updated code to heroku
+5. Deploy updated code to heroku
     
     ```
     git push heroku master
     ```
+
 The application will restart automatically with the newly deployed code
 
-# poloLender Pro configuration
-
-Bot configuration is done by setting environment variables or by specifying these in `.env` file.
-
-
-    # API key for your Poloniex account
-    POLOLENDER_APIKEY={"key":"V**********************t","secret":"T*******************************u"}
-
-    # Start time - this is used to calculate and display total profitability
-    POLOLENDER_STARTTIME=2016-02-28T12:27:09+01:00
-
-    # Start balance - this is used to calculate and display total profitability
-    POLOLENDER_STARTBALANCE={"BTC":"10", "ETH":"1100", "XMR":"1000", "XRP":"80000", "DASH":"1000"}
-
-    # Maximum amounts in your lending account that should be lended by the bot
-    POLOLENDER_LENDMAX={"BTC":"4", "ETH":"100", "XMR":"2000", "XRP":"30000", "DASH":"100000"}
-
-    # Minimum lending rate in percent.
-    POLOLENDER_MINRATE={"BTC":"0", "ETH":"0", "XMR":"0", "XRP":"0", "DASH":"0"}
-
-    # Report interval in minutes
-    POLOLENDER_REPORTINTERVAL=30
-    
-    #Telegram bot token and your user Id
-    POLOLENDER_TELEGRAM_TOKEN=123456789:AAHIxxxxxxxxxxxxxZxxxxxxxxxxxxxxxkk
-    POLOLENDER_TELEGRAM_USERID=111111111
-    
-    #Report interval in minutes for Telegram reports(default is 60 minutes)
-    POLOLENDER_TELEGRAM_REPORTINTERVAL=60
-
-Note: console log times will be displayed in the same timezone as POLOLENDER_STARTTIME
+6. Visit poloLender app in your internet browser and verify the app settings 
 
 # FAQ
 

@@ -1,16 +1,13 @@
-let poloLenderApp = {
-  lastClientMessage: '',
-  runningClientSemver: '',
-  restartedAt: '',
-  runningSince: '',
-};
-
-let advisor = {
+let poloLenderAppStatusData = {};
+let lendingEngineStatusData = {};
+let advisorEngineStatusData = {
   server: '',
-  connection: '',
+  connection: 'unknown',
+  authentication: {
+    status: 0,
+    message: 'unknown',
+  }
 };
-
-let poloLenderAppConnection = '';
 
 let width_col1 = 130;
 let width_col2 = 300;
@@ -19,8 +16,8 @@ let margin = -6;
 let ok = 0;
 let nok = 0;
 
-let poloLenderAppConfig = {
-  id: 'poloLenderApp',
+let poloLenderAppStatusConfig = {
+  id: 'poloLenderAppStatusConfig',
   autoheight: true, borderless: true, type: 'clean',
   margin: margin,
   padding: 0,
@@ -28,10 +25,28 @@ let poloLenderAppConfig = {
     {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
+        { width: width_col1, autoheight: true, template: 'Running since:' },
+        { id: 'poloLenderApp_runningSince', width: width_col2,
+          template: function (obj) {
+            if (!poloLenderAppStatusData.runningSince) {
+              return '';
+            }
+            let date = new Date(poloLenderAppStatusData.runningSince);
+            return `${webix.i18n.longDateFormatStr(date)}, ${webix.i18n.timeFormatStr(date)} (${moment(date).fromNow(false)})`;
+          }
+        },
+      ]
+    },
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
         { width: width_col1, autoheight: true, template: 'Version:' },
         { id: 'poloLenderApp_version', width: width_col2,
           template: function (obj) {
-            return `<b>${poloLenderApp.runningClientSemver}</b> ${poloLenderApp.lastClientMessage}`;
+            if (!poloLenderAppStatusData.runningClientSemver) {
+              return ''
+            }
+            return `${poloLenderAppStatusData.runningClientSemver} ${poloLenderAppStatusData.lastClientMessage}`;
           },
         },
       ]
@@ -42,8 +57,45 @@ let poloLenderAppConfig = {
         { width: width_col1, autoheight: true, template: 'Restarted:' },
         { id: 'poloLenderApp_restartedAt', width: width_col2,
           template: function (obj) {
-            let date = new Date(poloLenderApp.restartedAt);
-            return `<b>${webix.i18n.longDateFormatStr(date)}, ${webix.i18n.timeFormatStr(date)} (${moment(date).fromNow(false)})</b>`;
+            if (!poloLenderAppStatusData.restartedAt) {
+              return '';
+            }
+            let date = new Date(poloLenderAppStatusData.restartedAt);
+            return `${webix.i18n.longDateFormatStr(date)}, ${webix.i18n.timeFormatStr(date)} (${moment(date).fromNow(false)})`;
+          }
+        },
+      ]
+    },
+    {
+      id: 'poloLenderApp_clientMessage', autoheight: true, css: 'client-message',
+      template: function (obj) {
+        return poloLenderAppStatusData.message || '';
+      },
+    },
+  ],
+};
+
+let lendingEngineStatusConfig = {
+  id: 'lendingEngineStatusConfig',
+  autoheight: true, borderless: true, type: 'clean',
+  margin: margin,
+  padding: 0,
+  rows: [
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
+        { width: width_col1, autoheight: true, template: 'Status:' },
+        { id: 'lendingEngineStatus_status', width: width_col2,
+          template: function (obj) {
+            if (lendingEngineStatusConfig.isTradingEnabled) {
+              return `<b>Running</b>`;
+            } else {
+              let date = new Date(poloLenderAppStatusData.runningSince);
+              let msg = `<b>Stopped</b> on ${formatDate(date)} (${moment(date).fromNow(false)})`;
+              msg += lendingEngineStatusData.lendingEngineStopReason && `. ${lendingEngineStatusData.lendingEngineStopReason}` || '';
+              msg = `<span style="color:red">${msg}</span>`;
+              return msg;
+            }
           }
         },
       ]
@@ -52,7 +104,7 @@ let poloLenderAppConfig = {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
         { width: width_col1, autoheight: true, template: 'Poloniex API activity:' },
-        { id: 'poloLenderApp_apiActivity', width: width_col2,
+        { id: 'lendingEngineStatus_apiActivity', width: width_col2,
           template: function (obj) {
             let activityHtml;
             const indicatorOnForMs = 150;
@@ -86,8 +138,8 @@ let poloLenderAppConfig = {
   ],
 };
 
-let advisorConnectionConfig = {
-  id: 'advisorConnection',
+let advisorEngineStatusConfig = {
+  id: 'advisorEngineStatus',
   autoheight: true, borderless: true, type: 'clean',
   margin: margin,
   padding: 0,
@@ -96,8 +148,10 @@ let advisorConnectionConfig = {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
         { width: width_col1, autoheight: true, template: 'Running at:' },
-        { id: 'advisorConnection_server', width: width_col2,
-          template: function (obj) { return `<b>${advisor.server}</b>`; }
+        { id: 'advisorEngine_server', width: width_col2,
+          template: function (obj) {
+            return `<b>${advisorEngineStatusData.server}</b>`;
+          }
         },
       ]
     },
@@ -105,8 +159,10 @@ let advisorConnectionConfig = {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
         { width: width_col1, autoheight: true, template: 'Connection status:' },
-        { id: 'advisorConnection_status', width: width_col2,
-          template: function (obj) { return `<b>${poloLenderAppConnection === 'connected' && advisor.connection || 'unknown'}</b>`; },
+        { id: 'advisorEngine_connectionStatus', width: width_col2,
+          template: function (obj) {
+            return `<b>${advisorEngineStatusData.connection}</b>`;
+          },
         },
       ]
     },
@@ -153,23 +209,16 @@ let statusView = {
       type: 'clean',
       rows: [
         { view:"template", template:"poloLender Pro App", type:"section", css: 'section webix_section' },
-        poloLenderAppConfig,
+        poloLenderAppStatusConfig,
         { gravity: 0.1 },
-        { view:"template", template:"poloLending-Advisor Server", type:"section" },
-        advisorConnectionConfig,
+        { view:"template", template:"poloLender Pro Lending Engine", type:"section", css: 'section webix_section' },
+        lendingEngineStatusConfig,
+        { gravity: 0.1 },
+        { view:"template", template:"poloLending-Advisor Engine", type:"section" },
+        advisorEngineStatusConfig,
         { gravity: 0.1 },
         { view:"template", template:"poloLending-Advisor Info", type:"section" },
         advisorInfoTableConfig,
-        { gravity: 0.05 },
-        {
-          id: 'clientMessage',
-          autoheight: true,
-          css: 'client-message',
-          template: function (obj) {
-            return obj.message;
-          },
-          data: { message: '' },
-        },
         { gravity: 1 },
       ]
     },
@@ -177,39 +226,47 @@ let statusView = {
   ],
 };
 
-
-let updatePoloLenderApp = function updatePoloLenderApp(data) {
-  if (data) {
-    poloLenderApp = data.poloLenderApp;
-  }
-
+let updatePoloLenderAppStatus = function updatePoloLenderAppStatus() {
+  poloLenderAppStatusData = {
+    runningSince: config.startDate,
+    runningClientSemver: status.runningClientSemver,
+    lastClientMessage: clientMessage.lastClientMessage,
+    restartedAt: status.restarted,
+    message: clientMessage.message,
+  };
+  $$('poloLenderApp_runningSince').refresh();
   $$('poloLenderApp_version').refresh();
-  poloLenderApp_restaredAtUi.refresh();
-  $$('advisorConnection_status').refresh();
-  $$('advisorConnection_server').refresh();
+  $$('poloLenderApp_restartedAt').refresh();
+  $$('poloLenderApp_clientMessage').refresh();
 };
 
-let updateAdvisorConnection = function updateAdvisorConnection(data) {
-  advisor.server = data.advisor.server;
-  advisor.connection = data.advisor.connection;
-  $$('advisorConnection_status').refresh();
-  $$('advisorConnection_server').refresh();
-};
-
-let updateClientMessage = function updateClientMessage(data) {
-  poloLenderApp.lastClientSemver = _.has(data, 'clientMessage.lastClientSemver') && data.clientMessage.lastClientSemver || null;
-  poloLenderApp.lastClientMessage = _.has(data, 'clientMessage.lastClientMessage') && data.clientMessage.lastClientMessage || '';
-  $$('poloLenderApp_version').refresh();
-  $$('clientMessage').parse({ message: _.has(data, 'clientMessage.message') && data.clientMessage.message || ''});
+let updateLendingEngineStatusStatus = function updateLendingEngineStatusStatus() {
+  lendingEngineStatusData = {
+    isTradingEnabled: config.isTradingEnabled,
+    lendingEngineStopTime: config.lendingEngineStopTime,
+    lendingEngineStopReason: config.lastClientMessage,
+  };
+  $$('lendingEngineStatus_status').refresh();
+  $$('lendingEngineStatus_apiActivity').refresh();
 };
 
 let updateApiCallInfo = function updateApiCallInfo(data) {
-  poloLenderApp_apiActivityUi.parse(data);
+  lendingEngineStatus_apiActivityUi.parse(data);
+};
+
+let updateAdvisorEngineStatus = function updateAdvisorEngineStatus() {
+  advisorEngineStatusData = {
+    server: config.lendingAdvisor.server,
+    connection: status.lendingAdvisor && status.lendingAdvisor.connection || 'unknown',
+    authentication: status.lendingAdvisor && status.lendingAdvisor.authentication || { status: 0, message: 'unknown' },
+  };
+  $$('advisorEngine_server').refresh();
+  $$('advisorEngine_connectionStatus').refresh();
 };
 
 let advisorInfoTable = [];
-let updateAdvisorInfo = function updateAdvisorInfo(data) {
-  _.forEach(data.advisorInfo, function (value, key) {
+let updateAdvisorInfo = function updateAdvisorInfo(advisorInfo) {
+  _.forEach(advisorInfo, function (value, key) {
     let currency = key;
     let newCurrencyData = value;
     let existingCurrencyData = _.find(advisorInfoTable, { currency: key });
@@ -239,16 +296,16 @@ let updateAdvisorInfo = function updateAdvisorInfo(data) {
 };
 
 let advisorInfoTableUi;
-let poloLenderApp_restaredAtUi;
-let poloLenderApp_apiActivityUi;
+let lendingEngineStatus_apiActivityUi;
 
 let startRefreshingStatus = function startRefreshingStatus() {
-  setInterval(function refreshTable() {
-    advisorInfoTableUi.refreshColumns();
-    poloLenderApp_restaredAtUi.refresh();
-  }, 1000);
+  setInterval(function refreshPoloLenderAppStatus() {
+    $$('poloLenderApp_runningSince').refresh();
+    $$('poloLenderApp_restartedAt').refresh();
+    $$('poloLenderApp_clientMessage').refresh();
+  }, 5000);
 
   setInterval(function refreshPoloLenderAppInfo() {
-    poloLenderApp_apiActivityUi.refresh();
+    lendingEngineStatus_apiActivityUi.refresh();
   }, 50);
 };

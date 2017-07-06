@@ -1,3 +1,26 @@
+const finance = new Finance();
+
+const labelWidth = 100;
+const inputTextWidth = 200;
+const buttonWidth = 120;
+let savingDataMessage = null;
+
+let config = {};
+let status = {};
+let clientMessage = {};
+
+const showSavingDataMessage = function showSavingDataMessage() {
+  savingDataMessage = webix.message({
+    id: 'savingData',
+    text: '<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Saving data...',
+    expire: -1,
+  });
+};
+
+const hideProcessingDataMessage = function hideSavingDataMessage() {
+  webix.message.hide(savingDataMessage);
+};
+
 const returnCurrencyTemplate = function returnCurrencyTemplate (obj) {
   return `<i class="cc ${obj.currency}"></i> ${obj.currency}`;
 };
@@ -43,7 +66,3 @@ const formatDurationFromDays = function formatDurationFromDays(days) {
   let timeInSeconds = Math.round(days * 24 * 60 * 60);
   return formatDurationFromSeconds(timeInSeconds);
 };
-
-
-const finance = new Finance();
-let socket = io();

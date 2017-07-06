@@ -1,2 +1,1 @@
-web: node server.js
-worker: node server.js
+web: node -r babel-register app.js

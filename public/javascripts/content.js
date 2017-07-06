@@ -42,6 +42,7 @@ let tabview = {
     { header: "Performance", body:{ view:"scrollview", scroll: "xy", body: performanceReportView } },
     { header: "Live", body:{ view:"scrollview", scroll: "xy", body: liveView } },
     { header: "History", body:{ view:"scrollview", scroll: "xy", body: historyView } },
+    { header: "Settings", body:{ view:"scrollview", scroll: "xy", body: settingsView } },
     { header: "About", body:{ view:"scrollview", scroll: "xy", body: aboutView } },
   ],
 };
@@ -57,60 +58,9 @@ webix.ready(function () {
   $$("lendingHistoryInputForm").elements["period"].attachEvent("onChange", onPeriodChange);
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
 
-  socket.on('connect', function () {
-    poloLenderAppConnection = 'connected';
-    hideConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-  socket.on('reconnect', function () {
-    poloLenderAppConnection = 'connected';
-    hideConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-  socket.on("connect_error", function (err) {
-    poloLenderAppConnection = `connect error, ${err.type}: ${err.message}`;
-    showConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-  socket.on("reconnect_error", function (err) {
-    poloLenderAppConnection = `reconnect error, ${err.type}: ${err.message}`;
-    showConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-  socket.on('disconnect', function () {
-    poloLenderAppConnection = 'disconnected';
-    showConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-  socket.on("reconnecting", function (attemptNumber) {
-    poloLenderAppConnection = `reconnecting (${attemptNumber})`;
-    showConnectionErrorMessage();
-    updatePoloLenderApp();
-  });
-
-
-  let onevent = socket.onevent;
-  socket.onevent = function (packet) {
-    let args = packet.data || [];
-    onevent.call(this, packet);    // original call
-    packet.data = ['*'].concat(args);
-    onevent.call(this, packet);      // additional call to catch-all
-  };
-  socket.on('*', function (event, data) {
-  });
-
-  socket.on('advisorConnection', updateAdvisorConnection);
-  socket.on('clientMessage', updateClientMessage);
-  socket.on('advisorInfo', updateAdvisorInfo);
-  socket.on('poloLenderApp', updatePoloLenderApp);
-  socket.on('apiCallInfo', updateApiCallInfo);
-  socket.on('performanceReport', updatePerformanceReport);
-  socket.on('liveUpdates', updateLive);
-  socket.on('lendingHistory', updateLendingHistory);
-
   advisorInfoTableUi = $$('advisorInfoTable');
-  poloLenderApp_restaredAtUi = $$('poloLenderApp_restartedAt');
-  poloLenderApp_apiActivityUi = $$('poloLenderApp_apiActivity');
+  lendingEngineStatus_apiActivityUi = $$('lendingEngineStatus_apiActivity');
+  setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();
 });
