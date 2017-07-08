@@ -10,7 +10,7 @@ const getOldConfig = function getOldConfig() {
   try {
     env('./.env', {verbose: false, overwrite: true});
   } catch (err) {
-    log.notice(err.message);
+//    log.notice(err.message);
   }
 
   let oldConfig = _.cloneDeep(configDefault);
@@ -31,6 +31,7 @@ const getOldConfig = function getOldConfig() {
       secret: '',
     };
   }
+  log.info(`Migrating old config ${ev}`);
 
   try {
     ev = 'POLOLENDER_REPORTINTERVAL';
@@ -46,7 +47,7 @@ const getOldConfig = function getOldConfig() {
     debug(`${ev}=${process.env[ev]}`);
     oldConfig.reportEveryMinutes = configDefault.reportEveryMinutes;
   }
-  log.info(`Import old config ${ev}=${oldConfig.reportEveryMinutes}`);
+  log.info(`Migrating old config ${ev}=${oldConfig.reportEveryMinutes}`);
 
   try {
     ev = 'POLOLENDER_STARTTIME';
@@ -57,7 +58,7 @@ const getOldConfig = function getOldConfig() {
     oldConfig.utcOffset = 0;
     debug(`${ev}=${process.env[ev]}`);
   }
-  log.info(`Import old config ${ev}=${oldConfig.startDate}`);
+  log.info(`Migrating old config ${ev}=${oldConfig.startDate}`);
 
   let startBalance;
   try {
@@ -80,7 +81,7 @@ const getOldConfig = function getOldConfig() {
     }
   });
   val = JSON.stringify(oldConfig.startBalance);
-  log.info(`Import old config ${ev}=${val}`);
+  log.info(`Migrating old config ${ev}=${val}`);
 
   let lendMax;
   try {
@@ -103,7 +104,7 @@ const getOldConfig = function getOldConfig() {
     }
   });
   val = JSON.stringify(oldConfig.offerMaxAmount);
-  log.info(`Import old config ${ev}=${val}`);
+  log.info(`Migrating old config ${ev}=${val}`);
 
   let minRate;
   try {
@@ -126,7 +127,7 @@ const getOldConfig = function getOldConfig() {
     }
   });
   val = JSON.stringify(oldConfig.offerMinRate);
-  log.info(`Import old config ${ev}=${val}`);
+  log.info(`Migrating old config ${ev}=${val}`);
 
   try {
     ev = 'POLOLENDER_STARTTIME';
@@ -151,7 +152,7 @@ const getOldConfig = function getOldConfig() {
 
   oldConfig.telegramReportIntervalMin = val || oldConfig.reportEveryMinutes;
   if (oldConfig.telegramToken) {
-    log.info(`Import old config ${ev}=${oldConfig.telegramReportIntervalMin}`);
+    log.info(`Migrating old config ${ev}=${oldConfig.telegramReportIntervalMin}`);
   }
 
   ev = 'POLOLENDER_ADVISOR_TOKEN';

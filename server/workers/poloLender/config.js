@@ -89,7 +89,7 @@ export const getConfig = function getConfig(callback) {
           return callback(null, null);
         }
 
-        let err = doc && null || new Error ('config not found');
+        let err = !doc && new Error ('config not found') || null;
         let config = deserializeConfig(doc);
         callback(err, config);
       })
