@@ -23,7 +23,6 @@ export const PoloLender = function(name) {
 	const self = this;
 	self.me = name;
 
-  let browserData = {};
 	let logTg = null;
 	let poloPrivate;
 	let socket;
@@ -212,37 +211,37 @@ export const PoloLender = function(name) {
       },
     };
     socket.on('connect', function () {
-      socket.emit('authentication', { token: config.advisorToken }); //send the jwt
-      log.info(`Connected to server ${config.advisor}`);
+      socket.emit('authentication', { token: config.lendingAdvisor.accessToken }); //send the jwt
+      log.info(`Connected to server ${config.lendingAdvisor.server}`);
       status.lendingAdvisor.connection = 'connected';
       emitStatusUpdate();
     });
     socket.on('reconnect', function () {
-      log.info(`Reconnected to server ${config.advisor}`);
+      log.info(`Reconnected to server ${config.lendingAdvisor.server}`);
       status.lendingAdvisor.connection = 'reconnect';
       emitStatusUpdate();
     });
     socket.on("connect_error", function (err) {
       let error = JSON.parse(JSON.stringify(err));
       if (err.message) error.message = err.message;
-      log.warning(`Error connecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+      log.warning(`Error connecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
       status.lendingAdvisor.connection = `connect error ${JSON.stringify(error)}`;
       emitStatusUpdate();
     });
     socket.on("reconnect_error", function (err) {
       let error = JSON.parse(JSON.stringify(err));
       if (err.message) error.message = err.message;
-      log.warning(`Error reconnecting to server ${config.advisor}: ${JSON.stringify(error)}`);
+      log.warning(`Error reconnecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
       status.lendingAdvisor.connection = `reconnect error ${JSON.stringify(error)}`;
       emitStatusUpdate();
     });
     socket.on("disconnect", function () {
-      log.notice(`Disconnected from server ${config.advisor}`);
+      log.notice(`Disconnected from server ${config.lendingAdvisor.server}`);
       status.lendingAdvisor.connection = 'disconnected';
       emitStatusUpdate();
     });
     socket.on("reconnecting", function (attemptNumber) {
-      log.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
+      log.info(`Reconnecting to server ${config.lendingAdvisor.server} (${attemptNumber})`);
       status.lendingAdvisor.connection = 'reconnecting';
       emitStatusUpdate();
     });
@@ -264,7 +263,6 @@ export const PoloLender = function(name) {
       let smsg = JSON.stringify(msg);
       debug(`received send:loanOfferParameters = ${smsg}`);
       let loanOfferParameters;
-      browserData.advisorInfo = {};
       try {
         advisorInfo.time = msg.time;
         delete msg.time;
@@ -701,9 +699,12 @@ export const PoloLender = function(name) {
               poloPrivate = new Poloniex(config.apiKey.key, config.apiKey.secret, { socketTimeout: 60000 });
             }
 
-            if (!config.isTradingEnabled && newConfig.isTradingEnabled()) {
+            if (!config.isTradingEnabled && newConfig.isTradingEnabled) {
               log.info('execTrades: Lending engine has been enabled!');
+            }
 
+            if (config.isTradingEnabled && !newConfig.isTradingEnabled) {
+              log.info('execTrades: Lending engine has been disabled!');
             }
 
             if (!_.isEqual(config, newConfig)) {
@@ -719,7 +720,7 @@ export const PoloLender = function(name) {
         isTradingEnabled: function (callback) {
           let err = !config.isTradingEnabled && new Error('Trading is disabled') || null;
           if (!config.isTradingEnabled) {
-            log.warning('execTrades: Lending engine is disabled!', { lcl: 'lendingDisabled', llim: 30 });
+            log.warning('execTrades: Lending engine is disabled!', { lcl: 'lendingDisabled', llim: 5 * 60 });
           }
           callback(err, err && err.message || 'OK');
         },
@@ -744,7 +745,7 @@ export const PoloLender = function(name) {
                 _.delay(function (callback) {
                   _debugApiCallDuration('updateActiveLoans');
                   updateActiveLoans(function (err) {
-                    if (err && err.message.toLowerCase().includes('invalid api key')) {
+                    if (err && (err.message.toLowerCase().includes('invalid api key') || err.message.toLowerCase().includes('api key and secret required'))) {
                       config.isTradingEnabled = false;
                       saveConfig(config, (err, newConfig) => {
                         callback(null, "OK");
@@ -904,7 +905,7 @@ export const PoloLender = function(name) {
               log.crit(`Cannot load config: ${err.message}`);
             } else {
               config = result;
-              self.config = config;
+              self.config = result;
             }
             callback(err);
           });

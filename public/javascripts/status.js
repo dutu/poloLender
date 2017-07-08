@@ -46,7 +46,8 @@ let poloLenderAppStatusConfig = {
             if (!poloLenderAppStatusData.runningClientSemver) {
               return ''
             }
-            return `${poloLenderAppStatusData.runningClientSemver} ${poloLenderAppStatusData.lastClientMessage}`;
+
+            return `${poloLenderAppStatusData.runningClientSemver} ${poloLenderAppStatusData.lastClientMessage || ''}`;
           },
         },
       ]
@@ -84,16 +85,15 @@ let lendingEngineStatusConfig = {
     {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
-        { width: width_col1, autoheight: true, template: 'Status:' },
+        { width: width_col1, autoheight: true, template: 'Lending engine:' },
         { id: 'lendingEngineStatus_status', width: width_col2,
           template: function (obj) {
             if (lendingEngineStatusConfig.isTradingEnabled) {
               return `<b>Running</b>`;
             } else {
               let date = new Date(poloLenderAppStatusData.runningSince);
-              let msg = `<b>Stopped</b> on ${formatDate(date)} (${moment(date).fromNow(false)})`;
+              let msg = `<span style="color:red">Stopped</span> on ${formatDate(date)} (${moment(date).fromNow(false)})`;
               msg += lendingEngineStatusData.lendingEngineStopReason && `. ${lendingEngineStatusData.lendingEngineStopReason}` || '';
-              msg = `<span style="color:red">${msg}</span>`;
               return msg;
             }
           }

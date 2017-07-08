@@ -24,8 +24,6 @@ export const configDefault = {
     server: 'safe-hollows.crypto.zone',
     accessToken: '',
   },
-  advisor: '',
-  advisorToken: '',
   maxApiCallsPerDuration: 8,
   apiCallsDurationMS: 1000,
   advancedSettings: {
@@ -91,15 +89,18 @@ export const getConfig = function getConfig(callback) {
           return callback(null, null);
         }
 
+        let err = doc && null || new Error ('config not found');
         let config = deserializeConfig(doc);
-        callback(null, config);
+        callback(err, config);
       })
       .catch((err) => {
         callback(err, null);
       });
   } else {
-    let config = deserializeConfig(db.get('poloLenderConfig').value());
-    callback(null, config);
+    let doc = db.get('poloLenderConfig').value();
+    let err = !doc && new Error ('config not found') || null;
+    let config = deserializeConfig(doc);
+    callback(err, config);
   }
 };
 

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import env from 'node-env-file';
+import debug from 'debug';
 
 import { log } from '../../loggers';
 import { configDefault, getConfig, saveConfig } from './config';
@@ -154,7 +155,7 @@ const getOldConfig = function getOldConfig() {
   }
 
   ev = 'POLOLENDER_ADVISOR_TOKEN';
-  oldConfig.advisorToken = process.env[ev] || "";
+  oldConfig.lendingAdvisor.advisorToken = process.env[ev] || "";
 
   return oldConfig;
 };
@@ -162,16 +163,16 @@ const getOldConfig = function getOldConfig() {
 export const migrateConfig = function migrateConfig(callback) {
   getConfig((err, config) => {
     if (err) {
-      log.error(`getConfig: ${err.message}`);
-      return callback(err);
+      if (err.message !== 'config not found') {
+        log.error(`getConfig: ${err.message}`);
+        return callback(err);
+      }
+
+      let oldConfig = getOldConfig();
+      log.info(`migrateConfig: migrating config to database`);
+      saveConfig(oldConfig, callback);
     }
 
-    if (config && !_.isEqual(config, {})) {
-      return callback(null);
-    }
-
-    let oldConfig = getOldConfig();
-    log.info(`migrateConfig: migrating config to database`);
-    saveConfig(oldConfig, callback);
+    callback(null);
   });
 };
