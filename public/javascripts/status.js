@@ -92,7 +92,7 @@ let lendingEngineStatusConfig = {
               return `<b>Running</b>`;
             } else {
               let date = new Date(poloLenderAppStatusData.runningSince);
-              let msg = `<span style="color:red">Stopped</span> on ${formatDate(date)} (${moment(date).fromNow(false)})`;
+              let msg = `<span style="color:red">Stopped</span>`;
               msg += lendingEngineStatusData.lendingEngineStopReason && `. ${lendingEngineStatusData.lendingEngineStopReason}` || '';
               return msg;
             }

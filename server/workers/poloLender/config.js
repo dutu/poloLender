@@ -32,7 +32,7 @@ export const configDefault = {
     muteNonceErrors: false,
   },
   debug: {
-    debugApiCallDuration: true,
+    debugApiCallDuration: false,
   },
   status: {
     lendingEngineStopTime: moment(0).utc().format(),

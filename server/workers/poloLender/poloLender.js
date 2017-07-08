@@ -696,7 +696,7 @@ export const PoloLender = function(name) {
             }
 
             if (!_.isEqual(config.apiKey, newConfig.apiKey)) {
-              poloPrivate = new Poloniex(config.apiKey.key, config.apiKey.secret, { socketTimeout: 60000 });
+              poloPrivate = new Poloniex(newConfig.apiKey.key, newConfig.apiKey.secret, { socketTimeout: 60000 });
             }
 
             if (!config.isTradingEnabled && newConfig.isTradingEnabled) {
@@ -704,7 +704,7 @@ export const PoloLender = function(name) {
             }
 
             if (config.isTradingEnabled && !newConfig.isTradingEnabled) {
-              log.info('execTrades: Lending engine has been disabled!');
+              log.warning('execTrades: Lending engine has been disabled!');
             }
 
             if (!_.isEqual(config, newConfig)) {
@@ -747,8 +747,9 @@ export const PoloLender = function(name) {
                   updateActiveLoans(function (err) {
                     if (err && (err.message.toLowerCase().includes('invalid api key') || err.message.toLowerCase().includes('api key and secret required'))) {
                       config.isTradingEnabled = false;
+                      log.warning(`execTrades: Lending engine will be disabled`)
                       saveConfig(config, (err, newConfig) => {
-                        callback(null, "OK");
+                        callback(err, "OK");
                       });
                     } else {
                       callback(err, err && err.message || "OK");
