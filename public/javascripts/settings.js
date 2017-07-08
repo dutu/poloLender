@@ -28,7 +28,7 @@ let startSettingsConfig = {
                 let changeAndSetButtonUi = $$('changeAndSetStartDateButton');
                 let cancelEditSettingsButtonUi = $$('cancelEditStartSettingsButton');
                 if (startDateConfigUi.isEnabled()) {
-                  showSavingDataMessage();
+                  showProcessingDataMessage();
                   cancelEditSettingsButtonUi.disable();
                   socket.emit('updateConfig.startSettings', startSettings);
                 } else {
@@ -161,26 +161,3 @@ let setStartSetings = function setStartSetings() {
   changeAndSetStartDateButtonUi.refresh();
 };
 
-let updateConfig = function updateAppConfig(config) {
-  appConfig = config;
-  setStartSetings();
-};
-
-let updatedAppConfig = {
-  startSettings: function (errMessage, config) {
-    hideProcessingDataMessage();
-    if (errMessage) {
-      webix.message({
-        type: "error",
-        text: `Error updating settings: ${errMessage}`,
-      });
-    } else {
-      appConfig = config;
-      setStartSetings();
-      webix.message({
-        text: `Start settings updated`,
-      });
-
-    }
-  }
-};

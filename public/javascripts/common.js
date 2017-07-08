@@ -9,15 +9,15 @@ let config = {};
 let status = {};
 let clientMessage = {};
 
-const showSavingDataMessage = function showSavingDataMessage() {
+const showProcessingDataMessage = function showSavingDataMessage() {
   savingDataMessage = webix.message({
     id: 'savingData',
-    text: '<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Saving data...',
+    text: '<i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Processing...',
     expire: -1,
   });
 };
 
-const hideProcessingDataMessage = function hideSavingDataMessage() {
+const hideProcessingDataMessage = function hideProcessingDataMessage() {
   webix.message.hide(savingDataMessage);
 };
 
@@ -65,4 +65,13 @@ const formatDurationFromSeconds = function formatDurationFromDays(timeInSeconds)
 const formatDurationFromDays = function formatDurationFromDays(days) {
   let timeInSeconds = Math.round(days * 24 * 60 * 60);
   return formatDurationFromSeconds(timeInSeconds);
+};
+
+const socket = io();
+
+const onConfigUpdate = function onConfigUpdate(data) {
+  config = data;
+  updatePoloLenderAppStatus();
+  updateAdvisorEngineStatus();
+  updateLendingEngineStatusStatus();
 };

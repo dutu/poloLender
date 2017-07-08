@@ -85,24 +85,6 @@ let lendingEngineStatusConfig = {
     {
       autoheight: true, borderless: true, type: 'clean',
       cols: [
-        { width: width_col1, autoheight: true, template: 'Lending engine:' },
-        { id: 'lendingEngineStatus_status', width: width_col2,
-          template: function (obj) {
-            if (lendingEngineStatusConfig.isTradingEnabled) {
-              return `<b>Running</b>`;
-            } else {
-              let date = new Date(poloLenderAppStatusData.runningSince);
-              let msg = `<span style="color:red">Stopped</span>`;
-              msg += lendingEngineStatusData.lendingEngineStopReason && `. ${lendingEngineStatusData.lendingEngineStopReason}` || '';
-              return msg;
-            }
-          }
-        },
-      ]
-    },
-    {
-      autoheight: true, borderless: true, type: 'clean',
-      cols: [
         { width: width_col1, autoheight: true, template: 'Poloniex API activity:' },
         { id: 'lendingEngineStatus_apiActivity', width: width_col2,
           template: function (obj) {
@@ -133,6 +115,42 @@ let lendingEngineStatusConfig = {
           },
           data: { apiCallInfo: { error: null, timestamp: 0} },
         },
+      ]
+    },
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
+        { width: width_col1, autoheight: true, template: 'Lending engine:' },
+        { id: 'lendingEngineStatus_status', width: width_col2,
+          template: function (obj) {
+            if (lendingEngineStatusData.isTradingEnabled) {
+              return `Running`;
+            } else {
+              let date = new Date(poloLenderAppStatusData.runningSince);
+              let msg = `<span style="color:red">Stopped</span>`;
+              msg += lendingEngineStatusData.lendingEngineStopReason && `. ${lendingEngineStatusData.lendingEngineStopReason}` || '';
+              return msg;
+            }
+          }
+        },
+      ]
+    },
+    {
+      cols: [
+        { view: 'label',label: '', width: width_col1 },
+        {
+          view: 'button',
+          id: 'lendingEngineStartStopButton',
+          width: buttonWidth,
+          type: 'form',
+          value: 'Start',
+          click: function () {
+            config.isTradingEnabled = !config.isTradingEnabled;
+            showProcessingDataMessage();
+            socket.emit('updateConfig', config);
+          },
+        },
+        {},
       ]
     },
   ],
@@ -248,6 +266,10 @@ let updateLendingEngineStatusStatus = function updateLendingEngineStatusStatus()
   };
   $$('lendingEngineStatus_status').refresh();
   $$('lendingEngineStatus_apiActivity').refresh();
+  let lendingEngineStartStopButtonUi = $$('lendingEngineStartStopButton');
+  lendingEngineStartStopButtonUi.define('type', lendingEngineStatusData.isTradingEnabled && 'danger' || 'form');
+  lendingEngineStartStopButtonUi.setValue(lendingEngineStatusData.isTradingEnabled && 'Stop' || 'Start');
+  lendingEngineStartStopButtonUi.refresh();
 };
 
 let updateApiCallInfo = function updateApiCallInfo(data) {
@@ -256,9 +278,9 @@ let updateApiCallInfo = function updateApiCallInfo(data) {
 
 let updateAdvisorEngineStatus = function updateAdvisorEngineStatus() {
   advisorEngineStatusData = {
-    server: config.lendingAdvisor.server,
-    connection: status.lendingAdvisor && status.lendingAdvisor.connection || 'unknown',
-    authentication: status.lendingAdvisor && status.lendingAdvisor.authentication || { status: 0, message: 'unknown' },
+    server: config.lendingAdvisor && config.lendingAdvisor.server || '',
+    connection: status.lendingAdvisor && status.lendingAdvisor.connection || '',
+    authentication: status.lendingAdvisor && status.lendingAdvisor.authentication || { status: 0, message: '' },
   };
   $$('advisorEngine_server').refresh();
   $$('advisorEngine_connectionStatus').refresh();
@@ -266,7 +288,11 @@ let updateAdvisorEngineStatus = function updateAdvisorEngineStatus() {
 
 let advisorInfoTable = [];
 let updateAdvisorInfo = function updateAdvisorInfo(advisorInfo) {
-  _.forEach(advisorInfo, function (value, key) {
+  _.forEach(advisorInfo, (value, key) => {
+    if (key === 'time') {
+      return;
+    }
+
     let currency = key;
     let newCurrencyData = value;
     let existingCurrencyData = _.find(advisorInfoTable, { currency: key });

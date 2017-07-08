@@ -1,6 +1,5 @@
 
 const setupOnEvents = function setupOnEvents() {
-  let socket = io();
   let poloLenderAppConnection;
 
   socket.on('connect', function () {
@@ -46,11 +45,7 @@ const setupOnEvents = function setupOnEvents() {
   });
   */
 
-  socket.on('configUpdate', function (data) {
-    config = data;
-    updatePoloLenderAppStatus();
-    updateAdvisorEngineStatus();
-  });
+  socket.on('configUpdate', onConfigUpdate);
   socket.on('clientMessageUpdate', function(data) {
     clientMessage = data;
     updatePoloLenderAppStatus();
@@ -64,8 +59,25 @@ const setupOnEvents = function setupOnEvents() {
   socket.on('advisorInfo', function (data) {
     updateAdvisorInfo(data);
   });
+  socket.on('apiCallInfo', function (data) {
+    updateApiCallInfo(data);
+  });
   socket.on('performanceReport', updatePerformanceReport);
   socket.on('liveUpdates', updateLive);
   socket.on('lendingHistory', updateLendingHistory);
-  socket.on('updatedAppConfig.startSettings', updatedAppConfig.startSettings);
+  socket.on('updatedConfig', function updatedConfig(errMessage, newConfig) {
+    hideProcessingDataMessage();
+    if (errMessage) {
+      webix.message({
+        type: "error",
+        text: `Error: ${errMessage}`,
+      });
+    } else {
+      onConfigUpdate(newConfig);
+      webix.message({
+        text: `Config updated`,
+      });
+
+    }
+  });
 };

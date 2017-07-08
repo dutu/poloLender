@@ -135,39 +135,14 @@ export const PoloLender = function(name) {
     })
   };
 
-  const onUpdateAppConfig = {
-    startSettings: function (startSettings) {
-      let ev = `${self.me.toUpperCase()}_STARTTIME`;
-      let fromLine = new RegExp(`${ev}.*`, 'g');
-      let dateFormat = moment(config.startDate).creationData().format;
-      let toLine = `${ev}=${moment(startSettings.startDate).format(dateFormat)}`;
-      let replaceOptions = {
-        files: '.env',
-        from: /POLOLENDER_STARTTIME.*/,
-        to: toLine,
-      };
-      replace(replaceOptions, (err, changedFiles) => {
-        if (err) {
-          log.warning('updateConfig:', err);
-        }
-        if (!err && changedFiles.length === 0) {
-          log.notice(`updateAppConfig: ${env} not updated in .env file`, );
-        }
-        if (!err && changedFiles.length > 0) {
-          log.info(`Updated file ${changedFiles.join(', ')}`);
-          config.startDate = startSettings.startDate;
-        }
-        io.sockets.emit('updatedAppConfig.startSettings', err && err.message || null, config);
-      });
-    },
+  const onUpdateConfig = function (newConfig) {
+    saveConfig(newConfig, function (err) {
+      io.sockets.emit('updatedConfig', err, config);
+    });
   };
 
   const onBrowserConnection = function onBrowserConnection(socket) {
-    socket.on('returnLendingHistory', onReturnLendingHistory);
-    let updateAppConfigMessages = ['startSettings'];
-    updateAppConfigMessages.forEach((message) => {
-      socket.on(`updateAppConfig.${message}`, onUpdateAppConfig[message]);
-    });
+    socket.on(`updateConfig`, onUpdateConfig);
     emitConfigUpdate();
     emitStatusUpdate();
     emitClientMessageUpdate();
