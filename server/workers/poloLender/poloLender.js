@@ -135,13 +135,15 @@ export const PoloLender = function(name) {
     })
   };
 
-  const onUpdateConfig = function (newConfig) {
-    saveConfig(newConfig, function (err) {
-      io.sockets.emit('updatedConfig', err, config);
+  const onUpdateConfig = function (newConfig, source) {
+    config = newConfig;
+    saveConfig(config, (err, newConfig) => {
+      io.sockets.emit('updatedConfig', err, config, source);
     });
   };
 
   const onBrowserConnection = function onBrowserConnection(socket) {
+    socket.on('returnLendingHistory', onReturnLendingHistory);
     socket.on(`updateConfig`, onUpdateConfig);
     emitConfigUpdate();
     emitStatusUpdate();
@@ -418,7 +420,7 @@ export const PoloLender = function(name) {
             if (!(config.offerMaxAmount[currency] === "")) {
               // only if we are reserving any amount check if we are already trading more then offerMaxAmount
               amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-              if(amountTrading.gte(config.offerMaxAmount[currency] || '9999999')) {
+              if(amountTrading.gte(config.offerMaxAmount[currency] || 9999999)) {
                 // we are already trading higher then offerMaxAmount
                 return cb(null);
               }
@@ -479,7 +481,7 @@ export const PoloLender = function(name) {
         }
         else {
           amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-          amountMaxToTrade = new Big(config.offerMaxAmount[currency] || '9999999').minus(amountTrading);
+          amountMaxToTrade = new Big(config.offerMaxAmount[currency] || 9999999).minus(amountTrading);
 
           if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
             amountToTrade = new Big(availableFunds[currency]);
@@ -498,7 +500,7 @@ export const PoloLender = function(name) {
         autoRenew = "0";
 
         // Do not offer loans the the best return rate is less than the specified min rate.
-        minRate = new Big(config.offerMinRate[currency] || '0');
+        minRate = new Big(config.offerMinRate[currency] || 0);
         if (minRate.div(100).gt(lendingRate)) {
           return callback(null);
         }
@@ -592,7 +594,7 @@ export const PoloLender = function(name) {
       status.lastRun.report = now;
     }
 
-    if (now.diff(status.lastRun.reportTg, "minutes") >= config.telegramReportIntervalMin) {
+    if (config.telegramReports && config.telegramReports.isEnabled && config.telegramReports.reportEveryMin && now.diff(status.lastRun.reportTg, "minutes") >= config.telegramReports.reportEveryMin) {
       shouldRepTg = !!logTg;
       status.lastRun.reportTg = now;
     }
@@ -661,6 +663,7 @@ export const PoloLender = function(name) {
     });
   };
 
+  let currentApiKey = {};
   const execTrade = function execTrade() {
     async.series(
       {
@@ -670,8 +673,9 @@ export const PoloLender = function(name) {
               return callback(err);
             }
 
-            if (!_.isEqual(config.apiKey, newConfig.apiKey)) {
-              poloPrivate = new Poloniex(newConfig.apiKey.key, newConfig.apiKey.secret, { socketTimeout: 60000 });
+            if (!_.isEqual(currentApiKey, config.apiKey)) {
+              currentApiKey = config.apiKey;
+              poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
             }
 
             if (!config.isTradingEnabled && newConfig.isTradingEnabled) {
@@ -722,8 +726,10 @@ export const PoloLender = function(name) {
                   updateActiveLoans(function (err) {
                     if (err && (err.message.toLowerCase().includes('invalid api key') || err.message.toLowerCase().includes('api key and secret required'))) {
                       config.isTradingEnabled = false;
-                      log.warning(`execTrades: Lending engine will be disabled`)
-                      saveConfig(config, (err, newConfig) => {
+                      config.status.lendingEngineStopReason = err.message;
+                      log.warning(`execTrades: Lending engine will be disabled`);
+                      saveConfig(config, (err, config) => {
+                        emitConfigUpdate();
                         callback(err, "OK");
                       });
                     } else {
@@ -887,10 +893,11 @@ export const PoloLender = function(name) {
           });
         },
         function initialSetup(callback) {
-          poloPrivate = new Poloniex(config.apiKey.key, config.apiKey.secret, { socketTimeout: 60000 });
+          currentApiKey = config.apiKey;
+          poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
           setupBrowserComms();
           setupAdvisorComms();
-          addTelegramLogger();
+          addTelegramLogger(config.telegramReports && config.telegramReports.telegramToken, config.telegramReports && config.telegramReports.telegramUserId);
           callback(null);
         },
       ],

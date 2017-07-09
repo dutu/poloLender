@@ -1,6 +1,6 @@
 const finance = new Finance();
 
-const labelWidth = 100;
+const labelWidth = 180;
 const inputTextWidth = 200;
 const buttonWidth = 120;
 let savingDataMessage = null;
@@ -73,5 +73,13 @@ const onConfigUpdate = function onConfigUpdate(data) {
   config = data;
   updatePoloLenderAppStatus();
   updateAdvisorEngineStatus();
-  updateLendingEngineStatusStatus();
+  updateLendingEngineStatus();
+  updatedConfigHandlers.apiKeySettings();
+  updatedConfigHandlers.startSettings();
+  updatedConfigHandlers.lendingSettings();
+  updatedConfigHandlers.consoleReportsSettings();
+  updatedConfigHandlers.telegramReportsSettings();
+  updatedConfigHandlers.lendingAdvisorSettings();
 };
+
+let updatedConfigHandlers = {};

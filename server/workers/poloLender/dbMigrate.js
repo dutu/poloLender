@@ -96,7 +96,7 @@ const getOldConfig = function getOldConfig() {
       if(!_.isFinite(val)) {
         throw val;
       } else {
-        oldConfig.offerMaxAmount[key] = val.toString();
+        oldConfig.offerMaxAmount[key] = val;
       }
     } catch (err) {
       debug(`${ev}=${process.env[ev]}`);
@@ -119,7 +119,7 @@ const getOldConfig = function getOldConfig() {
       if(!_.isFinite(val)) {
         throw val;
       } else {
-        oldConfig.offerMinRate[key] = val.toString();
+        oldConfig.offerMinRate[key] = val;
       }
     } catch (err) {
       debug(`${ev}=${process.env[ev]}`);
@@ -137,26 +137,31 @@ const getOldConfig = function getOldConfig() {
     oldConfig.restartTime = moment(0);
   }
   val = oldConfig.restartTime.utc().format();
-  log.info(`Import old config ${ev}=${val}`);
+  log.info(`Migrating old config ${ev}=${val}`);
+
+  ev = 'POLOLENDER_TELEGRAM_USERID';
+  oldConfig.telegramReports.telegramUserId = process.env[ev];
+  if (oldConfig.telegramReports.telegramUserId) {
+    log.info(`Migrating old config ${ev}=${oldConfig.telegramReports.telegramUserId}`);
+  }
 
   ev = 'POLOLENDER_TELEGRAM_TOKEN';
-  oldConfig.telegramToken = process.env[ev];
-  ev = 'POLOLENDER_TELEGRAM_USERID';
-  oldConfig.telegramUserId = process.env[ev];
+  oldConfig.telegramReports.telegramToken = process.env[ev];
+  if (oldConfig.telegramReports.telegramToken) {
+    log.info(`Migrating old config ${ev}=${oldConfig.telegramReports.telegramToken}`);
+  }
 
   ev = 'POLOLENDER_TELEGRAM_REPORTINTERVAL';
   val = Number(process.env[ev]);
-  if (oldConfig.telegramToken && !_.isFinite(val)) {
-    debug(`${ev}=${process.env[ev]}`);
-  }
-
-  oldConfig.telegramReportIntervalMin = val || oldConfig.reportEveryMinutes;
-  if (oldConfig.telegramToken) {
-    log.info(`Migrating old config ${ev}=${oldConfig.telegramReportIntervalMin}`);
+  if (_.isFinite(val)) {
+    oldConfig.telegramReports.reportEveryMin= process.env[ev];
+    if (oldConfig.telegramReports.reportEveryMin) {
+      log.info(`Migrating old config ${ev}=${oldConfig.telegramReports.reportEveryMin}`);
+    }
   }
 
   ev = 'POLOLENDER_ADVISOR_TOKEN';
-  oldConfig.lendingAdvisor.advisorToken = process.env[ev] || "";
+  oldConfig.lendingAdvisor.accessToken = process.env[ev] || "";
 
   return oldConfig;
 };
@@ -172,6 +177,7 @@ export const migrateConfig = function migrateConfig(callback) {
       let oldConfig = getOldConfig();
       log.info(`migrateConfig: migrating config to database`);
       saveConfig(oldConfig, callback);
+      return;
     }
 
     callback(null);

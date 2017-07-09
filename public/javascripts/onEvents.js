@@ -49,7 +49,7 @@ const setupOnEvents = function setupOnEvents() {
   socket.on('clientMessageUpdate', function(data) {
     clientMessage = data;
     updatePoloLenderAppStatus();
-    updateLendingEngineStatusStatus();
+    updateLendingEngineStatus();
   });
   socket.on('statusUpdate', function (data) {
     status = data;
@@ -65,7 +65,11 @@ const setupOnEvents = function setupOnEvents() {
   socket.on('performanceReport', updatePerformanceReport);
   socket.on('liveUpdates', updateLive);
   socket.on('lendingHistory', updateLendingHistory);
-  socket.on('updatedConfig', function updatedConfig(errMessage, newConfig) {
+  socket.on('updatedConfig', function updatedConfig(errMessage, newConfig, source) {
+    if (_.isFunction(updatedConfigHandlers[source])) {
+      updatedConfigHandlers[source].call();
+    }
+
     hideProcessingDataMessage();
     if (errMessage) {
       webix.message({
@@ -77,7 +81,6 @@ const setupOnEvents = function setupOnEvents() {
       webix.message({
         text: `Config updated`,
       });
-
     }
   });
 };

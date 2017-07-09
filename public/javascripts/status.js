@@ -168,7 +168,7 @@ let advisorEngineStatusConfig = {
         { width: width_col1, autoheight: true, template: 'Running at:' },
         { id: 'advisorEngine_server', width: width_col2,
           template: function (obj) {
-            return `<b>${advisorEngineStatusData.server}</b>`;
+            return `${advisorEngineStatusData.server}`;
           }
         },
       ]
@@ -179,7 +179,7 @@ let advisorEngineStatusConfig = {
         { width: width_col1, autoheight: true, template: 'Connection status:' },
         { id: 'advisorEngine_connectionStatus', width: width_col2,
           template: function (obj) {
-            return `<b>${advisorEngineStatusData.connection}</b>`;
+            return `${advisorEngineStatusData.connection}`;
           },
         },
       ]
@@ -258,11 +258,11 @@ let updatePoloLenderAppStatus = function updatePoloLenderAppStatus() {
   $$('poloLenderApp_clientMessage').refresh();
 };
 
-let updateLendingEngineStatusStatus = function updateLendingEngineStatusStatus() {
+let updateLendingEngineStatus = function updateLendingEngineStatus() {
   lendingEngineStatusData = {
     isTradingEnabled: config.isTradingEnabled,
-    lendingEngineStopTime: config.lendingEngineStopTime,
-    lendingEngineStopReason: config.lastClientMessage,
+    lendingEngineStopTime: config.status && config.status.lendingEngineStopTime || '',
+    lendingEngineStopReason: config.status && config.status.lendingEngineStopReason || '',
   };
   $$('lendingEngineStatus_status').refresh();
   $$('lendingEngineStatus_apiActivity').refresh();

@@ -4,6 +4,7 @@ import moment from 'moment';
 import _ from 'lodash';
 
 import { log } from '../../loggers';
+import { io } from '../../httpServer';
 
 const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
@@ -16,13 +17,23 @@ export const configDefault = {
   isTradingEnabled: true,
   startDate: moment().utc().format(),
   startMessage: 'Join poloLender discussion/support group on telegram: https://t.me/cryptozone',
-  reportEveryMinutes: 5,
+  reportEveryMinutes: 240,
   startBalance: {},
   offerMinRate: {},
   offerMaxAmount: {},
   lendingAdvisor: {
     server: 'safe-hollows.crypto.zone',
     accessToken: '',
+  },
+  apiKey: {
+    key: '',
+    secret: '',
+  },
+  telegramReports: {
+    isEnabled: false,
+    reportEveryMin: 240,
+    telegramToken: '',
+    telegramUserId: '',
   },
   maxApiCallsPerDuration: 8,
   apiCallsDurationMS: 1000,
