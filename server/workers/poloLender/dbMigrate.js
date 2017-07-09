@@ -10,7 +10,7 @@ const getOldConfig = function getOldConfig() {
   try {
     env('./.env', {verbose: false, overwrite: false});
   } catch (err) {
-//    log.notice(err.message);
+    log.notice(err.message);
   }
 
   let oldConfig = _.cloneDeep(configDefault);
@@ -51,7 +51,9 @@ const getOldConfig = function getOldConfig() {
 
   try {
     ev = 'POLOLENDER_STARTTIME';
-    oldConfig.startDate = moment(process.env[ev]);
+    let startDate = moment(process.env[ev]);
+    let creationData = startDate.creationData();
+    oldConfig.startDate = startDate.format(creationData.format);
     oldConfig.utcOffset = moment.parseZone(process.env[ev]).utcOffset();
   } catch (err) {
     oldConfig.startDate = configDefault.startDate;
@@ -127,16 +129,6 @@ const getOldConfig = function getOldConfig() {
     }
   });
   val = JSON.stringify(oldConfig.offerMinRate);
-  log.info(`Migrating old config ${ev}=${val}`);
-
-  try {
-    ev = 'POLOLENDER_STARTTIME';
-    oldConfig.restartTime = moment(process.env[ev]);
-  } catch (err) {
-    debug(`${ev}=${process.env[ev]}`);
-    oldConfig.restartTime = moment(0);
-  }
-  val = oldConfig.restartTime.utc().format();
   log.info(`Migrating old config ${ev}=${val}`);
 
   ev = 'POLOLENDER_TELEGRAM_USERID';

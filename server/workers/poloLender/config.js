@@ -97,12 +97,11 @@ export const getConfig = function getConfig(callback) {
     ConfigModel.findOne({}).lean()
       .then((doc) => {
         if (!doc) {
-          return callback(null, null);
+          return callback(new Error ('config not found'), null);
         }
 
-        let err = !doc && new Error ('config not found') || null;
         let config = deserializeConfig(doc);
-        callback(err, config);
+        callback(null, config);
       })
       .catch((err) => {
         callback(err, null);

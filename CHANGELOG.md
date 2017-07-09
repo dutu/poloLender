@@ -3,11 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.12.0] - Unreleased
+## [1.0.0] - Unreleased
 
 ### Added
+- UI for Performance Reports
 - timestamp for console log output
 - display the minimum offer amount in the "status" tab 
+
+### Changed
+- Configuration is only done through the UI
 
 ## [0.11.0] - 2017-06-26
 
