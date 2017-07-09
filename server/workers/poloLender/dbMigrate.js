@@ -8,7 +8,7 @@ import { configDefault, getConfig, saveConfig } from './config';
 
 const getOldConfig = function getOldConfig() {
   try {
-    env('./.env', {verbose: false, overwrite: true});
+    env('./.env', {verbose: false, overwrite: false});
   } catch (err) {
 //    log.notice(err.message);
   }
