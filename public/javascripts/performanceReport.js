@@ -84,7 +84,7 @@ let performanceReportTableConfig = {
     { id: 'startBalance', header:[{ text: 'Start balance', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight },
     { id: 'totalFunds', header: [{text: 'Current balance', colspan: 2, css: 'table-header-center' }, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight, template: returnTotalFundsTemplate },
     { id: 'totalFundsUSD', header:[null, { text: 'Worth USD', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
-    { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 2, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, tooltip: tooltip },
+    { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 2, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, minWidth: 51, cssFormat: alignCenter, tooltip: tooltip },
     { id: 'activeLoansAmount', header:[null, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
     { id: 'profit', header:[{text: 'Profit', colspan: 3, css: 'table-header-center' }, {text: 'Currency', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitTemplate, cssFormat: alignRight },
     { id: 'profitPerc', header: [null, {text: '%', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, template: returnProfitPercTemplate, cssFormat: alignRight },
@@ -134,16 +134,24 @@ let performanceReportView = {
 let performanceReportTable = [];
 let updatePerformanceReport = function updatePerformanceReport(data) {
   let runningDays = parseFloat(moment().diff(poloLenderAppStatusData.runningSince, "minutes", true).toString()) / 60 / 24;
-  _.forEach(data, (value, key) => {
-    let currency = key;
-    let performanceData = value;
+  lendingCurrencies.slice().reverse().forEach((currency) => {
+    let performanceData = data[currency];
+    let existingCurrencyDataIndex = _.findIndex(performanceReportTable, { currency: currency });
+
+    if (existingCurrencyDataIndex > -1 && !performanceData) {
+      performanceReportTable.splice(existingCurrencyDataIndex, 1);
+    }
+
+    if (!performanceData) {
+      return;
+    }
+
     const toUSD = function toUSD(amount) {
       if (!performanceData.rateBTC || !performanceData.rateBTCUSD || !amount) {
         return 0;
       }
       return (parseFloat(amount) * parseFloat(performanceData.rateBTC) * parseFloat(performanceData.rateBTCUSD));
     };
-    let existingCurrencyDataIndex = _.findIndex(performanceReportTable, { currency: key });
     let existingCurrencyData = existingCurrencyDataIndex > -1 && performanceReportTable[existingCurrencyDataIndex] || null;
     let newRow = {
       currency: currency,
@@ -170,6 +178,7 @@ let updatePerformanceReport = function updatePerformanceReport(data) {
       performanceReportTable.splice(existingCurrencyDataIndex, 1, newRow);
     }
   });
+
   let performanceReportTableUi = $$('performanceReportTable');
   performanceReportTableUi.clearAll();
   performanceReportTableUi.define({

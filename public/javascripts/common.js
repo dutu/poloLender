@@ -1,3 +1,4 @@
+let lendingCurrencies = ['FCT', 'ETH', 'XRP', 'XMR', 'STR', 'MAID', 'LTC', 'DASH', 'DOGE', 'CLAM', 'BTS', 'BTC' ];
 const finance = new Finance();
 
 const labelWidth = 180;

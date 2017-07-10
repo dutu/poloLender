@@ -89,7 +89,7 @@ let lendingEngineStatusConfig = {
         { id: 'lendingEngineStatus_apiActivity', width: width_col2,
           template: function (obj) {
             let activityHtml;
-            const indicatorOnForMs = 150;
+            const indicatorOnForMs = 50;
             const banIconTimeoutMs = 60000;
             let ago = Date.now() - obj.apiCallInfo.timestamp;
             if (ago < indicatorOnForMs) {

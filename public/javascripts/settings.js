@@ -1,4 +1,3 @@
-let startBalanceCurrencies = ['FCT', 'ETH', 'XRP', 'XMR', 'STR', 'MAID', 'LTC', 'DASH', 'DOGE', 'CLAM', 'BTS', 'BTC' ];
 let lendingAdvisorServers = ['safe-hollows.crypto.zone'];
 let appConfig = {};
 
@@ -154,7 +153,7 @@ let startSettingsConfig = {
                   cancelEditSettingsButtonUi.show();
                   cancelEditSettingsButtonUi.enable();
                   startDateConfigUi.enable();
-                  startBalanceCurrencies.forEach((currency) => {
+                  lendingCurrencies.forEach((currency) => {
                     $$(`startBalance.${currency}`).enable();
                   });
                 }
@@ -178,7 +177,7 @@ let startSettingsConfig = {
                 cancelEditButtonUi.hide();
                 let startDateConfigUi = $$('startDateConfig');
                 startDateConfigUi.disable();
-                startBalanceCurrencies.forEach((currency) => {
+                lendingCurrencies.forEach((currency) => {
                   $$(`startBalance.${currency}`).disable();
                 });
               },
@@ -191,7 +190,7 @@ let startSettingsConfig = {
   ],
 };
 
-startBalanceCurrencies.forEach((currency) => {
+lendingCurrencies.forEach((currency) => {
   let currencyConfig = {
       cols: [
         { view: 'label', label: '', width: 28 },
@@ -231,7 +230,7 @@ let lendingSettingsConfig = {
               value: 'Change',
               click: function () {
                 let fields = [];
-                startBalanceCurrencies.forEach((currency) => {
+                lendingCurrencies.forEach((currency) => {
                   fields.push(`offerMinRate.${currency}`);
                   fields.push(`offerMaxAmount.${currency}`);
                   });
@@ -270,7 +269,7 @@ let lendingSettingsConfig = {
               value: 'Cancel',
               click: function () {
                 let fields = [];
-                startBalanceCurrencies.forEach((currency) => {
+                lendingCurrencies.forEach((currency) => {
                   fields.push(`offerMinRate.${currency}`);
                   fields.push(`offerMaxAmount.${currency}`);
                 });
@@ -294,7 +293,7 @@ let lendingSettingsConfig = {
   ],
 };
 
-startBalanceCurrencies.forEach((currency) => {
+lendingCurrencies.forEach((currency) => {
   let currencyConfig = {
     cols: [
       { view: 'label', label: '', width: 28 },
@@ -626,7 +625,7 @@ updatedConfigHandlers.startSettings = function updatedConfigHandlers_startSettin
   let changeAndSetStartSettingsButtonUi = $$('changeAndSetStartSettingsButton');
   let cancelEditStartSettingsButtonUi = $$('cancelEditStartSettingsButton');
   $$('startDateConfig').disable();
-  startBalanceCurrencies.forEach((currency) => {
+  lendingCurrencies.forEach((currency) => {
     $$(`startBalance.${currency}`).disable();
   });
   cancelEditStartSettingsButtonUi.hide();
@@ -653,12 +652,12 @@ updatedConfigHandlers.apiKeySettings = function updatedConfigHandlers_apiKeySett
 updatedConfigHandlers.lendingSettings = function updatedConfigHandlers_lendingSettings() {
   let formId = 'lendingSettings';
   let fields = [];
-  startBalanceCurrencies.forEach((currency) => {
+  lendingCurrencies.forEach((currency) => {
     fields.push(`offerMinRate.${currency}`);
     fields.push(`offerMaxAmount.${currency}`);
   });
 
-  startBalanceCurrencies.forEach((currency) => {
+  lendingCurrencies.forEach((currency) => {
     if (!Number.isFinite(parseFloat(config.offerMinRate[currency]))) {
       config.offerMinRate[currency] = 0;
     }

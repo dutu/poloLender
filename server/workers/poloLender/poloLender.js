@@ -97,6 +97,7 @@ export const PoloLender = function(name) {
   };
 
   const emitPerformanceUpdate = function emitPerformanceUpdate() {
+    performanceReports = {};
     currencies.forEach(currency => {
       if ((!depositFunds[currency] || parseFloat(depositFunds[currency]) === 0) && (!config.startBalance[currency] || parseFloat(config.startBalance[currency]) === 0)) {
         return;
