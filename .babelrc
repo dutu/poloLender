@@ -1,0 +1,8 @@
+{
+  "presets": ["env"],
+  "sourceMaps": "both",
+  "ignore": [
+    "foo.js",
+    "public/**/*.js"
+  ]
+}

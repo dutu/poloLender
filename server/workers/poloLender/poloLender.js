@@ -1,45 +1,45 @@
-const ioClient = require('socket.io-client');
-const _ = require('lodash');
-const Big = require ('big.js');
-const moment = require('moment');
-const async = require ('async');
-const debug = require('debug')('pololender');
-const Bitfinex = require('bitfinex');
-const semver = require('semver');
-const Poloniex = require('poloniex-api-node');
-const winston = require('winston');
-const Finance = require('financejs');
+import ioClient from 'socket.io-client';
+import _ from 'lodash';
+import Big from 'big.js';
+import moment from 'moment';
+import async from 'async';
+import debug from 'debug';
+import Bitfinex from 'bitfinex';
+import semver from 'semver';
+import Poloniex from 'poloniex-api-node';
 
-require('winston-telegram').Telegram;
+import { log, addTelegramLogger } from '../../loggers';
+import { msgApy, msgLoanReturned, msgNewCredit, msgRate, strAR } from './msg';
+import { migrateConfig } from './dbMigrate';
+import { io } from '../../httpServer';
+import { connectDb, getConfig, saveConfig } from './config';
+import { debugApiCallDuration, debugCycleDuration, debugTimer } from './debug';
+
+debug('pololender');
 
 const pjson = require('../../../package.json');
-let srv = require ('../../core/srv');
-let io = srv.io;
-let finance = new Finance();
 
-const PoloLender = function(name) {
+export const PoloLender = function(name) {
 	const self = this;
-  let emitPerformanceUpdate;
-  let emitLiveUpdate;
-
 	self.me = name;
 
-  let browserData = {};
-	let log = srv.logger;
 	let logTg = null;
 	let poloPrivate;
 	let socket;
-
 	let currencies = [];
 	let status = {
-		restarted: Date.now(),
+		restarted: moment().utc().format(),
+    runningClientSemver: pjson.version,
 		activeLoansCount: 0,
 		count: 0,
 		lastRun: {
 			report: moment(0),
       reportTg: moment(0),
     },
-		wmr: {}
+		wmr: {},
+    lendingAdvisor: {
+		  connection: '',
+    },
 	};
 	let performanceReports = {};
 	let anyCanceledOffer;
@@ -50,7 +50,6 @@ const PoloLender = function(name) {
   let availableFunds = {};
   let depositFunds = {};
   let ev;
-  let val;
   let ratesBTC = {
     BTC: '1',
   };
@@ -62,185 +61,105 @@ const PoloLender = function(name) {
     openOffers: [],
   };
 
-	const configDefault = {
-		startDate: '',
-    startMessage: 'Join poloLender discussion/support group on telegram: https://t.me/cryptozone',
-		reportEveryMinutes: 5,
-		startBalance: {},
-		restartTime: moment(),
-		offerMinRate: {},
-		offerMaxAmount: {},
-		advisor: 'safe-hollows.crypto.zone',
-    advisorToken: '',
-    maxApiCallsPerDuration: 8,
-    apiCallsDurationMS: 1000,
-	};
 	let config = {};
-
+	self.config = config;
 	let apiCallTimes = [];
 	let waitOneMinute = null;
 	let callsLast100 = [];
 
-	_.assign(config, configDefault);
-
 	let bfxPublic = new Bitfinex();
+  let poloPublic = new Poloniex();
 
-	const setConfig = function setConfig() {
-		advisorInfo.time = "";
-		// API keys
-		try {
-			ev = self.me.toUpperCase() + "_APIKEY";
-			let apiKey = JSON.parse(process.env[ev]);
-			self.apiKey = {
-				key: apiKey.key || "",
-				secret: apiKey.secret || "secret"
-			};
-		}
-		catch (err) {
-			self.apiKey  = {
-				key: "",
-				secret: ""
-			};
-			log.alert(`Environment variable ${ev}  is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-			log.alert(`Application will now exit. Correct the environment variable ${ev} and start the application again`);
-			process.exit(1);
-		}
+  let _debugApiCallDuration = _.bind(debugApiCallDuration, this);
+  let _debugCycleDuration = _.bind(debugCycleDuration, this);
 
-		try {
-			ev = self.me.toUpperCase() + "_REPORTINTERVAL";
-			val = Number(process.env[ev]);
-			if(!_.isFinite(val)) {
-				throw val;
-			}
-			else {
-				config.reportEveryMinutes = val;
-			}
-		}
-		catch (err) {
-			log.error(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-			config.reportEveryMinutes = configDefault.reportEveryMinutes;
-		}
-		log.info(`Using ${ev}=${config.reportEveryMinutes}`);
+  const emitConfigUpdate = function emitConfigUpdate() {
+    let configWitoutSecret = _.cloneDeep(config);
+    configWitoutSecret.apiKey.secret = '●●●●●';
+    io.sockets.emit('configUpdate', configWitoutSecret);
+  };
 
-		try {
-			ev = self.me.toUpperCase() + "_STARTTIME";
-			config.startDate = moment(process.env[ev]);
-			config.utcOffset = moment.parseZone(process.env[ev]).utcOffset();
-		} catch (err) {
-			log.error(`Environment variable ${ev} is invalid (should be a date). Please see documentation at https://github.com/dutu/poloLender/`);
-			config.startDate = configDefault.startDate;
-			config.utcOffset = 0;
-			debug(`${ev}=${process.env[ev]}`);
-		}
-		log.info(`Using ${ev}=${config.startDate}`);
+  const emitStatusUpdate = function emitStatusUpdate() {
+    io.sockets.emit('statusUpdate', status);
+  };
 
-		let startBalance;
-		try {
-			ev = self.me.toUpperCase() + "_STARTBALANCE";
-			startBalance = JSON.parse(process.env[ev]);
-		} catch (err) {
-			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-		}
-		_.forEach(startBalance, function (value, key) {
-      try {
-        val = Number(value);
-        if(!_.isFinite(val)) {
-          throw val;
-        } else {
-          config.startBalance[key] = val.toString();
-        }
-      } catch (err) {
-        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-        debug(`${ev}=${process.env[ev]}`);
-        throw err;
+  const emitClientMessageUpdate = function emitClientMessageUpdate() {
+    io.sockets.emit('clientMessageUpdate', clientMessage);
+  };
+
+  const emitApiCallUpdate = function emitApiCallUpdate(apiCallInfo) {
+    let data = {
+      apiCallInfo: {
+        timestamp: apiCallInfo.timestamp,
+        error: apiCallInfo.error,
+      },
+    };
+
+    io.sockets.emit('apiCallInfo', data);
+  };
+
+  const emitPerformanceUpdate = function emitPerformanceUpdate() {
+    performanceReports = {};
+    currencies.forEach(currency => {
+      if ((!depositFunds[currency] || parseFloat(depositFunds[currency]) === 0) && (!config.startBalance[currency] || parseFloat(config.startBalance[currency]) === 0)) {
+        return;
       }
-		});
-		val = JSON.stringify(config.startBalance);
-		log.info(`Using ${ev}=${val}`);
 
-		let lendMax;
-		try {
-			ev = self.me.toUpperCase() + "_LENDMAX";
-			lendMax = JSON.parse(process.env[ev]);
-		} catch (err) {
-			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-		}
-    _.forEach(lendMax, function (value, key) {
-      try {
-        val = Number(value);
-        if(!_.isFinite(val)) {
-          throw val;
-        } else {
-          config.offerMaxAmount[key] = val.toString();
-        }
-      } catch (err) {
-        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-        debug(`${ev}=${process.env[ev]}`);
-        throw err;
+      let wmr = new Big(status.wmr[currency] || 0).times(100);
+      performanceReports[currency] = {
+        startBalance: config.startBalance[currency] || 0,
+        totalFunds: depositFunds[currency] || 0,
+        activeLoansCount: _.filter(activeLoans, { currency: currency }).length,
+        activeLoansAmount: _.filter(activeLoans, { currency: currency }).reduce((sum, activeLoan) => { return sum = sum.plus(activeLoan.amount) }, new Big(0)).toFixed(8),
+        rateBTC: ratesBTC[currency],
+        rateBTCUSD: rateBTCUSD,
+        wmr: wmr.toFixed(6),
+      };
+    });
+
+    io.sockets.emit('performanceReport', performanceReports);
+  };
+
+  const emitLiveUpdate = function emitLiveUpdate() {
+    io.sockets.emit('liveUpdates', liveData);
+  };
+
+  const emitAdvisorInfoUpdate = function emitAdvisorInfoUpdate() {
+    io.sockets.emit('advisorInfo', advisorInfo);
+  };
+
+  const onReturnLendingHistory = function onReturnLendingHistory(data) {
+    poloPrivate.returnLendingHistory(data.start, data.end, data.limit, (err, result) => {
+      if (err) {
+        log.notice(`returnLendingHistory: ${err.message}`);
       }
-		});
-		val = JSON.stringify(config.offerMaxAmount);
-		log.info(`Using ${ev}=${val}`);
 
-		let minRate;
-		try {
-			ev = self.me.toUpperCase() + "_MINRATE";
-			minRate = JSON.parse(process.env[ev]);
-		} catch (err) {
-			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-		}
-    _.forEach(minRate, function (value, key) {
-      try {
-        val = Number(value);
-        if(!_.isFinite(val)) {
-          throw val;
-        } else {
-          config.offerMinRate[key] = val.toString();
-        }
-      } catch (err) {
-        log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-        debug(`${ev}=${process.env[ev]}`);
-        throw err;
-      }
-		});
-		val = JSON.stringify(config.offerMinRate);
-		log.info(`Using ${ev}=${val}`);
+      io.sockets.emit('lendingHistory', err && err.message || null, result);
+    })
+  };
 
-		try {
-			ev = self.me.toUpperCase() + "_STARTTIME";
-			config.restartTime = moment(process.env[ev]);
-		} catch (err) {
-			log.error(`Environment variable ${ev} is invalid. Please see documentation at https://github.com/dutu/poloLender/`);
-			debug(`${ev}=${process.env[ev]}`);
-			config.restartTime = moment(0);
-		}
-		val = config.restartTime.utc().format();
-		log.info(`Using ${ev}=${val}`);
-
-    ev = self.me.toUpperCase() + '_TELEGRAM_TOKEN';
-		config.telegramToken = process.env[ev];
-    ev = self.me.toUpperCase() + '_TELEGRAM_USERID';
-    config.telegramUserId = process.env[ev];
-
-    ev = self.me.toUpperCase() + '_TELEGRAM_REPORTINTERVAL';
-    val = Number(process.env[ev]);
-    if (config.telegramToken && !_.isFinite(val)) {
-      log.warning(`Environment variable ${ev} is invalid (should be a number). Please see documentation at https://github.com/dutu/poloLender/`);
-      debug(`${ev}=${process.env[ev]}`);
+  const onUpdateConfig = function (newConfig, source) {
+    if (newConfig.apiKey.secret === '●●●●●') {
+      newConfig.apiKey.secret = config.apiKey.secret;
     }
 
-    config.telegramReportIntervalMin = val || config.reportEveryMinutes;
-    if (config.telegramToken) {
-      log.info(`Using ${ev}=${config.telegramReportIntervalMin}`);
-    }
+    config = newConfig;
+    saveConfig(config, (err, newConfig) => {
+      let configWitoutSecret = _.cloneDeep(config);
+      configWitoutSecret.apiKey.secret = '●●●●●';
+      io.sockets.emit('updatedConfig', err, configWitoutSecret, source);
+    });
+  };
 
-    ev = self.me.toUpperCase() + '_ADVISOR_TOKEN';
-    config.advisorToken = process.env[ev] || "";
+  const onBrowserConnection = function onBrowserConnection(socket) {
+    socket.on('returnLendingHistory', onReturnLendingHistory);
+    socket.on(`updateConfig`, onUpdateConfig);
+    emitConfigUpdate();
+    emitStatusUpdate();
+    emitClientMessageUpdate();
+    emitAdvisorInfoUpdate();
+    emitPerformanceUpdate();
+    emitLiveUpdate();
   };
 
   const apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
@@ -264,169 +183,212 @@ const PoloLender = function(name) {
     setTimeout(callback, timeout);
   };
 
-  const execTrade = function execTrade() {
-    const strAR = function strAR(str, length) {
-      if (str.length > length)
-        return str;
-      let result = "                             " + str;
-      result = result.substring(result.length - length);
-      return result
-    };
-
-    const msgRate = function msgRate(perDayProc) {
-      let perDay = new Big(perDayProc).times(100).toFixed(6);
-      let pa = new Big(perDayProc).times(365*100).toFixed(1);
-      let apy = (finance.CI(parseFloat(pa) * 0.85 / 182, 1, 100, 182) - 100).toFixed(1);
-      return `${perDay}%`;
-    };
-
-    const msgApy = function msgRate(perDayProc) {
-      let pa = new Big(perDayProc).times(365*100).toFixed(1);
-      let apy = (finance.CI(parseFloat(pa) * 0.85 / 182, 1, 100, 182) - 100).toFixed(1);
-      return `${apy}%`;
-    };
-
-    const msgLoanReturned = function msgLoanReturned(element) {
-      let canceledAC, createdAt, created, msg,holdingTimeSeconds;
-      createdAt = moment.utc(element.date);
-      created = createdAt.fromNow();
-      canceledAC = {
-        id: element.id,
-        currency: element.currency,
-        amount: strAR(new Big(element.amount).toFixed(8), 14),
-        rate: new Big(element.rate).toFixed(8),
-        period: element.period,
-        createdAt: createdAt,
-        expires: ""
-      };
-      let holdingTimeInSeconds = moment().diff(createdAt, "seconds");
-      let htHours = Math.floor(holdingTimeInSeconds / 60 /60);
-      let htMin = Math.floor((holdingTimeInSeconds - htHours * 60 *60) / 60);
-      let htSec = holdingTimeInSeconds - htHours * 60 *60 - htMin * 60;
-      let msgHt = `${htHours}h ${htMin}m ${htSec}s`;
-      msg = "Loan returned #" + canceledAC.id + " " + canceledAC.currency + " " + canceledAC.amount + " at " + msgRate(canceledAC.rate) + `, holding time: ${msgHt}`;
-      log.info(msg);
-    };
-
-    const msgNewCredit = function msgNewCredit(element) {
-    let newAC, createdAt, expiresAt, expires, msg;
-    createdAt = moment.utc(element.date);
-    expiresAt = moment.utc(element.date).add(element.duration, "days");
-    expires = expiresAt.fromNow();
-    newAC = {
-      id: element.id,
-      currency: element.currency,
-      amount: strAR(new Big(element.amount).toFixed(8), 14),
-      rate: strAR(new Big(element.rate) .toFixed(8), 7),
-      period: element.duration,
-      createdAt: createdAt,
-      expires: expires
-    };
-    msg = "Loan taken    #" + newAC.id + " " + newAC.currency + " " + newAC.amount + " at " + msgRate(newAC.rate) + ", created " + newAC.createdAt.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm");
-    msg += ", expires " + expires;
-    log.info(msg);
+  const setupBrowserComms = function setupBrowserComms() {
+    io.on('connection', onBrowserConnection);
   };
 
-    const updateActiveLoans = function updateActiveLoans(callback) {
-      const updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
-        const dateNow = Date.now();
-        let found;
+  const setupAdvisorComms = function setupAdvisorComms() {
+    socket = ioClient(`http://${config.lendingAdvisor.server}/`);
+    status.lendingAdvisor = {
+      connection: '',
+      authentication: {
+        status: 200,
+        message: '',
+      },
+    };
+    socket.on('connect', function () {
+      socket.emit('authentication', { token: config.lendingAdvisor.accessToken }); //send the jwt
+      log.info(`Connected to server ${config.lendingAdvisor.server}`);
+      status.lendingAdvisor.connection = 'connected';
+      emitStatusUpdate();
+    });
+    socket.on('reconnect', function () {
+      log.info(`Reconnected to server ${config.lendingAdvisor.server}`);
+      status.lendingAdvisor.connection = 'reconnect';
+      emitStatusUpdate();
+    });
+    socket.on("connect_error", function (err) {
+      let error = JSON.parse(JSON.stringify(err));
+      if (err.message) error.message = err.message;
+      log.warning(`Error connecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
+      status.lendingAdvisor.connection = `connect error ${JSON.stringify(error)}`;
+      emitStatusUpdate();
+    });
+    socket.on("reconnect_error", function (err) {
+      let error = JSON.parse(JSON.stringify(err));
+      if (err.message) error.message = err.message;
+      log.warning(`Error reconnecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
+      status.lendingAdvisor.connection = `reconnect error ${JSON.stringify(error)}`;
+      emitStatusUpdate();
+    });
+    socket.on("disconnect", function () {
+      log.notice(`Disconnected from server ${config.lendingAdvisor.server}`);
+      status.lendingAdvisor.connection = 'disconnected';
+      emitStatusUpdate();
+    });
+    socket.on("reconnecting", function (attemptNumber) {
+      log.info(`Reconnecting to server ${config.lendingAdvisor.server} (${attemptNumber})`);
+      status.lendingAdvisor.connection = 'reconnecting';
+      emitStatusUpdate();
+    });
+    socket.on("authentication", function (response) {
+      status.lendingAdvisor.authentication = response;
+      if (response.status === 200) {
+        let msg = `Authentication with server $${config.lendingAdvisor.server} successful`;
+        msg += response.status && `: ${response.message}` || '';
+        log.info(msg);
+      } else {
+        let msg = `Advisor authentication error`;
+        msg += response.status && ` ${response.status}` || '';
+        msg += response.message && `: ${response.message}` || '';
+        log.error(msg);
+      }
+      emitStatusUpdate();
+    });
+    socket.on("send:loanOfferParameters", function (msg) {
+      let smsg = JSON.stringify(msg);
+      debug(`received send:loanOfferParameters = ${smsg}`);
+      let loanOfferParameters;
+      try {
+        advisorInfo.time = msg.time;
+        delete msg.time;
+        _.forOwn(msg, function(value, key) {
+          advisorInfo[key] = {
+            averageLoanHoldingTime: value.averageLoanHoldingTime,
+            bestReturnRate: value.bestReturnRate,
+            bestDuration: value.bestDuration,
+            minOrderAmount: value.minOrderAmount || '1',
+          };
+        });
+      }
+      catch (error) {
+        log.error(`Cannot parse loanOfferParameters ${smsg}`);
+        debug(`Cannot parse loanOfferParameters: ${error.message}`);
+      }
+      emitAdvisorInfoUpdate();
+    });
+    socket.on("send:clientMessage", function (msg) {
+      let smsg = JSON.stringify(msg);
+      debug(`received send:clientMessage = ${smsg}`);
+      let loanOfferParameters;
+      if(_.isObject(msg)) {
+        clientMessage = {
+          time: msg.time,
+          message: msg.message,
+          lastClientSemver: msg.lastClientSemver,
+        };
+        if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+          clientMessage.lastClientMessage = ` - available ${clientMessage.lastClientSemver}. Please update your app!`;
+        } else {
+          clientMessage.lastClientMessage = '';
+        }
+      } else {
+        log.error(`Cannot parse clientMessage ${smsg}`);
+      }
+      emitClientMessageUpdate();
+    });
+  };
+
+  const updateActiveLoans = function updateActiveLoans(callback) {
+    const updateWithNewActiveLoans = function updateWithNewActiveLoans(newActiveLoans) {
+      const dateNow = Date.now();
+      let found;
+      activeLoans.forEach(function (element, index, array) {
+        found = _.find(newActiveLoans, {id: element.id});
+        if (typeof found === "undefined") {
+          let returnedLoan = {
+            "id": element.id,
+            "date": moment.utc(element.date).toDate(),
+            "currency": element.currency,
+            "rate": element.rate,
+            "duration": element.duration,
+            "returned": dateNow
+          };
+          msgLoanReturned(element);
+          anyChangedLoans[element.currency] = true;
+        }
+      });
+      newActiveLoans.forEach(function (element, index, array) {
+        found = _.find(activeLoans, {id: element.id});
+        if (typeof found === "undefined") {
+          msgNewCredit(element, config);
+          anyChangedLoans[element.currency] = true;
+          anyNewLoans[element.currency] = true;
+          status.activeLoansCount++;
+        }
+      });
+      activeLoans = newActiveLoans;
+
+      let currenciesNewActiveLoans = [];
+      newActiveLoans.forEach(function (element, index, array) {
+        currenciesNewActiveLoans.push(element.currency)
+      });
+      currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
+    };
+
+    poloPrivate.returnActiveLoans(function (err, result) {
+      let apiMethod = 'returnActiveLoans';
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
+      let newActiveLoans;
+      if (err) {
+        log.notice("returnActiveLoans: " + err.message);
+        if (_.includes(err.message, 'IP has been banned')) {
+          log.info('API activity stopped for 1 minute');
+          waitOneMinute = Date.now();
+        }
+
+        return apiCallLimitDelay(apiMethod, () => callback(err));
+      }
+
+
+      newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
+      liveData.activeLoans = newActiveLoans;
+      updateWithNewActiveLoans(newActiveLoans);
+      // update wmr
+      currencies.forEach(function (c, index, array) {
+        let sum = new Big(0);
+        let sumOfProd = new Big(0);
         activeLoans.forEach(function (element, index, array) {
-          found = _.find(newActiveLoans, {id: element.id});
-          if (typeof found === "undefined") {
-            let returnedLoan = {
-              "id": element.id,
-              "date": moment.utc(element.date).toDate(),
-              "currency": element.currency,
-              "rate": element.rate,
-              "duration": element.duration,
-              "returned": dateNow
-            };
-            msgLoanReturned(element);
-            anyChangedLoans[element.currency] = true;
+          if (element.currency.toUpperCase() === c.toUpperCase()) {
+            sum = sum.plus(element.amount);
+            sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
           }
         });
-        newActiveLoans.forEach(function (element, index, array) {
-          found = _.find(activeLoans, {id: element.id});
-          if (typeof found === "undefined") {
-            msgNewCredit(element);
-            anyChangedLoans[element.currency] = true;
-            anyNewLoans[element.currency] = true;
-            status.activeLoansCount++;
-          }
-        });
-        activeLoans = newActiveLoans;
+        status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
+      });
+      return apiCallLimitDelay(apiMethod, () => callback(null));
+    });
+  };
 
-        let currenciesNewActiveLoans = [];
-        newActiveLoans.forEach(function (element, index, array) {
-          currenciesNewActiveLoans.push(element.currency)
-        });
-        currenciesNewActiveLoans = _.uniq(currenciesNewActiveLoans);
-      };
-
-      poloPrivate.returnActiveLoans(function (err, result) {
-        let apiMethod = 'returnActiveLoans';
-        emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
-        let newActiveLoans;
-        if (err) {
-          log.notice("returnActiveLoans: " + err.message);
-          if (_.includes(err.message, 'IP has been banned')) {
-            log.info('API activity stopped for 1 minute');
-            waitOneMinute = Date.now();
-          }
-
-          return apiCallLimitDelay(apiMethod, () => callback(err));
+  const updateActiveOffers = function updateActiveOffers(callback) {
+    poloPrivate.returnOpenLoanOffers(function (err, result) {
+      let apiMethod = 'returnOpenLoanOffers';
+      emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
+      if (err) {
+        log.notice("returnOpenLoanOffers: " + err.message);
+        if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+          log.info('API activity stopped for 1 minute');
+          waitOneMinute = Date.now();
         }
 
+        return apiCallLimitDelay(apiMethod, () => callback(err));
+      }
 
-        newActiveLoans = result.hasOwnProperty("provided") ? result.provided : [];
-        liveData.activeLoans = newActiveLoans;
-        updateWithNewActiveLoans(newActiveLoans);
-        // update wmr
-        currencies.forEach(function (c, index, array) {
-          let sum = new Big(0);
-          let sumOfProd = new Big(0);
-          activeLoans.forEach(function (element, index, array) {
-            if (element.currency.toUpperCase() === c.toUpperCase()) {
-              sum = sum.plus(element.amount);
-              sumOfProd = sumOfProd.plus(new Big(element.amount).times(element.rate));
-            }
-          });
-          status.wmr[c] = sum.eq(0) ? "0" : sumOfProd.div(sum).toFixed(8);
+      liveData.openOffers = result;
+      currencies.forEach(function (c, i, a) {
+        let newActiveOffers;
+        newActiveOffers = result[c] || [];
+        let newOffers = false;
+        newActiveOffers.forEach(function (element, index, array) {
+          newOffers = newOffers || !_.find(activeOffers[c], { id: element.id });
         });
-        return apiCallLimitDelay(apiMethod, () => callback(null));
+        activeOffers[c] = newActiveOffers;
       });
-    };
+      return apiCallLimitDelay(apiMethod, () => callback(null));
+    });
+  };
 
-    const updateActiveOffers = function updateActiveOffers(callback) {
-      poloPrivate.returnOpenLoanOffers(function (err, result) {
-        let apiMethod = 'returnOpenLoanOffers';
-        emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
-        if (err) {
-          log.notice("returnOpenLoanOffers: " + err.message);
-          if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-            log.info('API activity stopped for 1 minute');
-            waitOneMinute = Date.now();
-          }
-
-          return apiCallLimitDelay(apiMethod, () => callback(err));
-        }
-
-        liveData.openOffers = result;
-        currencies.forEach(function (c, i, a) {
-          let newActiveOffers;
-          newActiveOffers = result[c] || [];
-          let newOffers = false;
-          newActiveOffers.forEach(function (element, index, array) {
-            newOffers = newOffers || !_.find(activeOffers[c], { id: element.id });
-          });
-          activeOffers[c] = newActiveOffers;
-        });
-        return apiCallLimitDelay(apiMethod, () => callback(null));
-      });
-    };
-
-    const updateAvailableFunds = function updateAvailableFunds(callback) {
+  const updateAvailableFunds = function updateAvailableFunds(callback) {
     poloPrivate.returnAvailableAccountBalances("lending", function (err, result) {
       let apiMethod = 'returnAvailableAccountBalances';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
@@ -447,7 +409,7 @@ const PoloLender = function(name) {
     });
   };
 
-    const cancelHighOffers = function cancelHighOffers(callback) {
+  const cancelHighOffers = function cancelHighOffers(callback) {
     async.forEachOfSeries(activeOffers,
       // for each currency in activeOffers
       function(activeOffersOneCurrency, currency, callback) {
@@ -467,7 +429,7 @@ const PoloLender = function(name) {
             if (!(config.offerMaxAmount[currency] === "")) {
               // only if we are reserving any amount check if we are already trading more then offerMaxAmount
               amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-              if(amountTrading.gte(config.offerMaxAmount[currency] || '9999999')) {
+              if(amountTrading.gte(config.offerMaxAmount[currency] || 9999999)) {
                 // we are already trading higher then offerMaxAmount
                 return cb(null);
               }
@@ -509,87 +471,87 @@ const PoloLender = function(name) {
       });
   };
 
-    const postOffers = function postOffers(callback) {
-      let curr = _.intersection(Object.keys(advisorInfo), currencies);
-      async.forEachOfSeries(curr,
-        // for each currency
-        function(currency, index, callback) {
-          let amountTrading;
-          let amountToTrade;
-          let amount;
-          let amountMaxToTrade;
-          let duration;
-          let autoRenew;
-          let lendingRate;
-          let minRate;
+  const postOffers = function postOffers(callback) {
+    let curr = _.intersection(Object.keys(advisorInfo), currencies);
+    async.forEachOfSeries(curr,
+      // for each currency
+      function(currency, index, callback) {
+        let amountTrading;
+        let amountToTrade;
+        let amount;
+        let amountMaxToTrade;
+        let duration;
+        let autoRenew;
+        let lendingRate;
+        let minRate;
 
-          if (config.offerMaxAmount[currency] === '') {
-            amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
+        if (config.offerMaxAmount[currency] === '') {
+          amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
+        }
+        else {
+          amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
+          amountMaxToTrade = new Big(config.offerMaxAmount[currency] || 9999999).minus(amountTrading);
+
+          if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
+            amountToTrade = new Big(availableFunds[currency]);
+          } else {
+            amountToTrade = amountMaxToTrade;
           }
-          else {
-            amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-            amountMaxToTrade = new Big(config.offerMaxAmount[currency] || '9999999').minus(amountTrading);
+        }
 
-            if (new Big(availableFunds[currency]).lt(amountMaxToTrade)) {
-              amountToTrade = new Big(availableFunds[currency]);
-            } else {
-              amountToTrade = amountMaxToTrade;
-            }
-          }
+        if (amountToTrade.lt(advisorInfo[currency].minOrderAmount || '1')) {
+          return callback(null);
+        }
 
-          if (amountToTrade.lt(advisorInfo[currency].minOrderAmount || '1')) {
-            return callback(null);
-          }
+        amount = amountToTrade.toFixed(8);
+        lendingRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
+        duration = advisorInfo[currency] && advisorInfo[currency].bestDuration || '2';
+        autoRenew = "0";
 
-          amount = amountToTrade.toFixed(8);
-          lendingRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
-          duration = advisorInfo[currency] && advisorInfo[currency].bestDuration || '2';
-          autoRenew = "0";
+        // Do not offer loans the the best return rate is less than the specified min rate.
+        minRate = new Big(config.offerMinRate[currency] || 0);
+        if (minRate.div(100).gt(lendingRate)) {
+          return callback(null);
+        }
 
-          // Do not offer loans the the best return rate is less than the specified min rate.
-          minRate = new Big(config.offerMinRate[currency] || '0');
-          if (minRate.div(100).gt(lendingRate)) {
-            return callback(null);
-          }
+        if (process.env[self.me+"_NOTRADE"] === "true") {
+          log.notice("Post offer: NO TRADE");
+          return callback(new Error("NO TRADE"));
+        }
 
-          if (process.env[self.me+"_NOTRADE"] === "true") {
-            log.notice("Post offer: NO TRADE");
-            return callback(new Error("NO TRADE"));
-          }
-
-          poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
-            let apiMethod = 'createLoanOffer';
-            emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
-            if (err) {
-              log.notice("createLoanOffer: " + err.message);
-              if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-                log.info('API activity stopped for 1 minute');
-                waitOneMinute = Date.now();
-              }
-
-              return apiCallLimitDelay(apiMethod, () => callback(null));
+        poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
+          let apiMethod = 'createLoanOffer';
+          emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
+          if (err) {
+            log.notice("createLoanOffer: " + err.message);
+            if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
+              log.info('API activity stopped for 1 minute');
+              waitOneMinute = Date.now();
             }
 
-            status.offersCount++;
-            let newAO = {
-              id: result.orderID,
-              currency: currency,
-              amount: strAR(new Big(amount).toFixed(8), 14),
-              rate: strAR(new Big(lendingRate).toFixed(8), 7),
-              period: duration
-            };
-            let msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
-            log.info(msg);
             return apiCallLimitDelay(apiMethod, () => callback(null));
-          });
-        },
-        function (err){
-          callback(err);
-        });
-    };
+          }
 
-    const updateRates = function updateRates() {
-    poloPrivate.returnTicker(function (err, result) {
+          status.offersCount++;
+          let newAO = {
+            id: result.orderID,
+            currency: currency,
+            amount: strAR(new Big(amount).toFixed(8), 14),
+            rate: strAR(new Big(lendingRate).toFixed(8), 7),
+            period: duration
+          };
+          let msg = `Loan offered  #${newAO.id} ${newAO.currency} ${newAO.amount} at ` + msgRate(newAO.rate) + `, duration ${newAO.period} days`;
+          log.info(msg);
+          return apiCallLimitDelay(apiMethod, () => callback(null));
+        });
+      },
+      function (err){
+        callback(err);
+      });
+  };
+
+  const updateRates = function updateRates() {
+    poloPublic.returnTicker(function (err, result) {
       let apiMethod = 'returnTicker';
       emitApiCallUpdate({
         timestamp: Date.now(),
@@ -613,412 +575,276 @@ const PoloLender = function(name) {
     });
   };
 
-    const updateRateBTCUSD = function updateRateBTCUSD() {
-      bfxPublic.ticker("btcusd", function (err, result) {
-        if(err) {
-          log.notice("bfxPublic.ticker: " + err.message);
-          return;
-        }
-
-        rateBTCUSD = new Big(result.last_price).toString();
-      });
-
-    };
-
-    const report = function report() {
-      emitPerformanceUpdate();
-
-      let shouldRepCon = false;
-      let shouldRepTg = false;
-      const logRep = function logRep(msg) {
-        if (shouldRepCon) log.report(msg);
-        if (shouldRepTg) logTg.report(msg);
-      };
-
-      let now = moment();
-      if (now.diff(status.lastRun.report, "minutes") >= config.reportEveryMinutes) {
-        shouldRepCon = true;
-        status.lastRun.report = now;
-      }
-
-      if (now.diff(status.lastRun.reportTg, "minutes") >= config.telegramReportIntervalMin) {
-        shouldRepTg = !!logTg;
-        status.lastRun.reportTg = now;
-      }
-
-      if (!shouldRepTg && !shouldRepCon) {
+  const updateRateBTCUSD = function updateRateBTCUSD() {
+    bfxPublic.ticker("btcusd", function (err, result) {
+      if(err) {
+        log.notice("bfxPublic.ticker: " + err.message);
         return;
       }
 
-      let msg, since;
-      status.offersCount = status.offersCount || status.activeLoansCount;
-
-      // since = startDate.fromNow(true);
-      since = now.diff(config.startDate, "days");
-      let m = {
-        runningForDays: since,
-        restartedAgo: self.started.fromNow(),
-        restartedAt: self.started.utcOffset(config.utcOffset).format("YYYY-MM-DD HH:mm"),
-        offersCount: status.offersCount,
-        activeLoans: status.activeLoansCount,
-      };
-      msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
-      msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
-      logRep(`${msg}`);
-
-      if (clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-        logRep(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
-      }
-
-      if (clientMessage.message) {
-        logRep(`${clientMessage.message}`);
-      }
-
-      currencies.forEach(function (c, index, array) {
-        if (new Big(depositFunds[c]).lte(0)) {
-          return;
-        }
-
-        let profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
-        let minutes = now.diff(config.restartTime, "minutes", true);
-        let activeLoansCount = 0;
-        let activeLoansAmount = new Big(0);
-        activeLoans.forEach(function (l, index, array) {
-          if (l.currency === c) {
-            activeLoansCount++;
-            activeLoansAmount = activeLoansAmount.plus(l.amount);
-          }
-        });
-
-        msg = `${c}: ● TOTAL: ${depositFunds[c]} `;
-        if(rateBTCUSD && ratesBTC[c]) {
-          let totalUSD = new Big(rateBTCUSD).times(ratesBTC[c]).times(depositFunds[c]).toFixed(0);
-          msg += `(USD ${totalUSD}) `;
-        }
-        msg += `• ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-        msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(2)}%/day)`;
-        if(rateBTCUSD && ratesBTC[c]) {
-          let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
-          msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
-        }
-        let wmrMsg = msgRate(status.wmr[c]);
-        let ewmrMsg =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
-        let apyMsg = msgApy(status.wmr[c]);
-        msg += ` • Daily war: ${wmrMsg} ewar: ${ewmrMsg} • APY: ${apyMsg} • alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
-        logRep(msg);
-      });
-    };
-
-    async.series({
-      updateRates: function (callback) {
-        updateRateBTCUSD();
-        updateRates();
-        callback(null);
-      },
-      updateActiveLoans: function(callback){
-        updateActiveLoans(function (err) {
-          callback(err, err && err.message || "OK");
-        });
-      },
-      updateActiveOffers: function(callback) {
-        updateActiveOffers(function (err) {
-          callback(err, err && err.message || "OK");
-        });
-      },
-      emitLiveUpdate: function (callback) {
-        emitLiveUpdate();
-        callback(null, 'OK');
-      },
-      updateBalances: function(callback) {
-        updateAvailableFunds(function (err) {
-          if (err) {
-            return callback(err, err.message);
-          }
-
-          currencies.forEach(function (c, index, array) {
-            let amountActiveOffers = new Big(0);
-            let amountActiveLoans = new Big(0);
-            if (_.isArray(activeOffers[c]))
-              activeOffers[c].forEach(function (o, index, array) {
-                amountActiveOffers = amountActiveOffers.plus(o.amount);
-              });
-            activeLoans.forEach(function (l, index, array) {
-              if (l.currency == c)
-                amountActiveLoans = amountActiveLoans.plus(l.amount);
-            });
-            depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c] || 0).toFixed(8);
-          });
-          callback(null, "OK");
-        });
-      },
-      report: function (callback) {
-        report();
-        callback(null, 'OK');
-      },
-      cancelHighOffers: function (callback) {          // cancel offers if price is too high
-        cancelHighOffers(function (err){
-          callback(null, err && err.message || "OK");
-        });
-      },
-      updateAvailableFunds: function (callback) {
-        if (!anyCanceledOffer) {
-          return callback(null, "OK");
-        }
-
-        updateAvailableFunds(function (err) {
-          anyCanceledOffer = false;
-          callback(err, err && err.message || "OK");
-        });
-      },
-      postOffers: function (callback) {
-        postOffers(function (err){
-          callback(err, err && err.message || "OK");
-        });
-      },
-    },
-    function(err, results) {
-      if (!err) {
-                  status.lastRun.speedCount++;
-      }
-
-      apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
-      let timeout = Math.max(0, config.apiCallsDurationMS - (Date.now() - apiCallTimes[0]), waitOneMinute && 60000 || 0);
-      setTimeout(function() {
-        if (waitOneMinute) {
-          log.info('API activity resumed');
-        }
-        waitOneMinute = null;
-
-        execTrade();
-      }, timeout);
-    });
-  };
-
-  emitPerformanceUpdate = function emitPerformanceUpdate() {
-    currencies.forEach(currency => {
-      if ((!depositFunds[currency] || parseFloat(depositFunds[currency]) === 0) && (!config.startBalance[currency] || parseFloat(config.startBalance[currency]) === 0)) {
-        return;
-      }
-
-      let wmr = new Big(status.wmr[currency]).times(100);
-      performanceReports[currency] = {
-        startBalance: config.startBalance[currency] || 0,
-        totalFunds: depositFunds[currency] || 0,
-        activeLoansCount: _.filter(activeLoans, { currency: currency }).length,
-        activeLoansAmount: _.filter(activeLoans, { currency: currency }).reduce((sum, activeLoan) => { return sum = sum.plus(activeLoan.amount) }, new Big(0)).toFixed(8),
-        rateBTC: ratesBTC[currency],
-        rateBTCUSD: rateBTCUSD,
-        wmr: wmr.toFixed(6),
-      };
+      rateBTCUSD = new Big(result.last_price).toString();
     });
 
-    srv.io.sockets.emit('performanceReport', performanceReports);
   };
 
-  emitLiveUpdate = function emitLiveUpdate() {
-    srv.io.sockets.emit('liveUpdates', liveData);
-  };
-
-  const onReturnLendingHistory = function onReturnLendingHistory(data) {
-    poloPrivate.returnLendingHistory(data.start, data.end, data.limit, (err, result) => {
-      if (err) {
-        log.notice(`returnLendingHistory: ${err.message}`);
-      }
-
-      srv.io.sockets.emit('lendingHistory', err && err.message || null, result);
-    })
-  };
-
-  const emitPoloLenderAppUpdate = function emitPoloLenderAppUpdate() {
-    let data = {
-      poloLenderApp: {
-        runningClientSemver: pjson.version,
-        restartedAt: status.restarted,
-        runningSince: config.startDate,
-      }
-    };
-
-    srv.io.sockets.emit('poloLenderApp', data);
-  };
-
-  const emitApiCallUpdate = function emitApiCallUpdate(apiCallInfo) {
-    let data = {
-      apiCallInfo: {
-        timestamp: apiCallInfo.timestamp,
-        error: apiCallInfo.error,
-      },
-    };
-
-    srv.io.sockets.emit('apiCallInfo', data);
-  };
-
-  const emitAdvisorConnectionUpdate = function emitAdvisorConnectionUpdate() {
-    srv.io.sockets.emit('advisorConnection', { advisor: browserData.advisor });
-  };
-
-  const emitClientMessageUpdate = function emitClientMessageUpdate() {
-    srv.io.sockets.emit('clientMessage', { clientMessage: browserData.clientMessage || ''});
-  };
-
-  const emitAdvisorInfoUpdate = function emitAdvisorInfoUpdate() {
-    srv.io.sockets.emit('advisorInfo', { advisorInfo: browserData.advisorInfo || {} });
-  };
-
-  const onBrowserConnection = function onBrowserConnection(socket) {
-    socket.on('returnLendingHistory', onReturnLendingHistory);
-    emitPoloLenderAppUpdate();
-    emitAdvisorConnectionUpdate();
-    emitClientMessageUpdate();
-    emitAdvisorInfoUpdate();
+  const report = function report() {
     emitPerformanceUpdate();
-    emitLiveUpdate();
-  };
 
-  const addTelegramLogger = function addTelegramLogger() {
-    if (!config.telegramToken || !config.telegramUserId) {
-      log.notice('Bot reports will NOT be sent via telegram (token and/or userId not configured)');
+    let shouldRepCon = false;
+    let shouldRepTg = false;
+    const logRep = function logRep(msg) {
+      if (shouldRepCon) log.report(msg);
+      if (shouldRepTg) logTg.report(msg);
+    };
+
+    let now = moment();
+    if (now.diff(status.lastRun.report, "minutes") >= config.reportEveryMinutes) {
+      shouldRepCon = true;
+      status.lastRun.report = now;
+    }
+
+    if (config.telegramReports && config.telegramReports.isEnabled && config.telegramReports.reportEveryMin && now.diff(status.lastRun.reportTg, "minutes") >= config.telegramReports.reportEveryMin) {
+      shouldRepTg = !!logTg;
+      status.lastRun.reportTg = now;
+    }
+
+    if (!shouldRepTg && !shouldRepCon) {
       return;
     }
 
+    let msg, since;
+    status.offersCount = status.offersCount || status.activeLoansCount;
 
-    let customLogLevels = _.clone(winston.config.syslog.levels);
-    delete customLogLevels.emerg;
-    customLogLevels.report = 0;
-    logTg = new (winston.Logger)({
-      levels: customLogLevels,
-      exitOnError: false,
-      transports: [
-        new (winston.transports.Telegram)({
-          token : config.telegramToken,
-          chatId : config.telegramUserId,
-          level: 'report',
-          handleExceptions: true,
-        }),
-      ]
+    // since = startDate.fromNow(true);
+    since = now.diff(config.startDate, "days");
+    let utcOffset = moment.parseZone(config.startDate).utcOffset();
+    let m = {
+      runningForDays: since,
+      restartedAgo: self.started.fromNow(),
+      restartedAt: self.started.utcOffset(utcOffset).format("YYYY-MM-DD HH:mm"),
+      offersCount: status.offersCount,
+      activeLoans: status.activeLoansCount,
+    };
+    msg = `♣ poloLender ${pjson.version} running for ${m.runningForDays} days • restarted ${m.restartedAgo} (${m.restartedAt})`;
+    msg += ` • Offers/Loans: ${m.offersCount}/${m.activeLoans}`;
+    logRep(`${msg}`);
+
+    if (clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
+      logRep(`New poloLender revision available (current: ${pjson.version}, available: ${clientMessage.lastClientSemver}). Visit https://github.com/dutu/poloLender/ to update`);
+    }
+
+    if (clientMessage.message) {
+      logRep(`${clientMessage.message}`);
+    }
+
+    currencies.forEach(function (c, index, array) {
+      if (new Big(depositFunds[c]).lte(0)) {
+        return;
+      }
+
+      let profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
+      let minutes = now.diff(config.startDate, "minutes", true);
+      let activeLoansCount = 0;
+      let activeLoansAmount = new Big(0);
+      activeLoans.forEach(function (l, index, array) {
+        if (l.currency === c) {
+          activeLoansCount++;
+          activeLoansAmount = activeLoansAmount.plus(l.amount);
+        }
+      });
+
+      msg = `${c}: ● TOTAL: ${depositFunds[c]} `;
+      if(rateBTCUSD && ratesBTC[c]) {
+        let totalUSD = new Big(rateBTCUSD).times(ratesBTC[c]).times(depositFunds[c]).toFixed(0);
+        msg += `(USD ${totalUSD}) `;
+      }
+      msg += `• ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
+      msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(3)}%/day)`;
+      if(rateBTCUSD && ratesBTC[c]) {
+        let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
+        msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(3)}/day)`;
+      }
+      let wmrMsg = msgRate(status.wmr[c]);
+      let ewmrMsg =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
+      let apyMsg = msgApy(status.wmr[c]);
+      msg += ` • Daily war: ${wmrMsg} ewar: ${ewmrMsg} • APY: ${apyMsg} • alht: ${advisorInfo[c] && advisorInfo[c].averageLoanHoldingTime || ''}`;
+      logRep(msg);
     });
   };
 
-  self.start = function() {
-		status.lastRun.speedCount= 0;
-		self.started = moment();
-		log.report(configDefault.startMessage);
-		setConfig();
-    addTelegramLogger();
-    if (logTg) {
-      logTg.report(configDefault.startMessage);
-    }
+  let currentApiKey = {};
+  const execTrade = function execTrade() {
+    async.series(
+      {
+        updateConfig: function (callback) {
+          getConfig((err, newConfig) => {
+            if (err) {
+              return callback(err);
+            }
 
-    debug("Starting...");
-    poloPrivate = new Poloniex(self.apiKey.key, self.apiKey.secret, { socketTimeout: 60000 });
+            if (!_.isEqual(currentApiKey, config.apiKey)) {
+              currentApiKey = config.apiKey;
+              poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
+            }
 
-    srv.io.on('connection', onBrowserConnection);
+            if (!config.isTradingEnabled && newConfig.isTradingEnabled) {
+              log.info('execTrades: Lending engine has been enabled!');
+            }
 
-    socket = ioClient(`http://${config.advisor}/`);
-    browserData.advisor = {
-      server: config.advisor,
-      connection: '',
-      authenticate: {},
-    };
-		socket.on('connect', function () {
-      socket.emit('authenticate', { token: config.advisorToken }); //send the jwt
-      log.info(`Connected to server ${config.advisor}`);
-      browserData.advisor.connection = 'connected';
-      emitAdvisorConnectionUpdate();
-    });
-		socket.on('reconnect', function () {
-			log.info(`Reconnected to server ${config.advisor}`);
-      browserData.advisor.connection = 'reconnect';
-      emitAdvisorConnectionUpdate();
-		});
-		socket.on("connect_error", function (err) {
-			let error = JSON.parse(JSON.stringify(err));
-			if (err.message) error.message = err.message;
-			log.warning(`Error connecting to server ${config.advisor}: ${JSON.stringify(error)}`);
-      browserData.advisor.connection = `connect error ${JSON.stringify(error)}`;
-      emitAdvisorConnectionUpdate();
-		});
-		socket.on("reconnect_error", function (err) {
-			let error = JSON.parse(JSON.stringify(err));
-			if (err.message) error.message = err.message;
-			log.warning(`Error reconnecting to server ${config.advisor}: ${JSON.stringify(error)}`);
-      browserData.advisor.connection = `reconnect error ${JSON.stringify(error)}`;
-      emitAdvisorConnectionUpdate();
-		});
-		socket.on("disconnect", function () {
-			log.notice(`Disconnected from server ${config.advisor}`);
-      browserData.advisor.connection = 'disconnected';
-      emitAdvisorConnectionUpdate();
-		});
-		socket.on("reconnecting", function (attemptNumber) {
-			log.info(`Reconnecting to server ${config.advisor} (${attemptNumber})`);
-      browserData.advisor.connection = 'reconnecting';
-      emitAdvisorConnectionUpdate();
-		});
-    socket.on("authenticate", function (response) {
-      if (response.authorized) {
-        let msg = `Authentication with server $${config.advisor} successful`;
-        msg += response.message && `: ${response.message}` || '';
-        log.info(msg);
-      } else {
-        let msg = `Advisor authentication error`;
-        msg += response.errorCode && ` ${response.errorCode}` || '';
-        msg += response.message && `: ${response.message}` || '';
-        log.error(msg);
-      }
-      browserData.advisor.authenticate = response;
-      emitAdvisorConnectionUpdate();
-    });
-		socket.on("send:loanOfferParameters", function (msg) {
-			let smsg = JSON.stringify(msg);
-			debug(`received send:loanOfferParameters = ${smsg}`);
-			let loanOfferParameters;
-      browserData.advisorInfo = {};
-			try {
-				advisorInfo.time = msg.time;
-				delete msg.time;
-				_.forOwn(msg, function(value, key) {
-					advisorInfo[key] = {
-						averageLoanHoldingTime: value.averageLoanHoldingTime,
-						bestReturnRate: value.bestReturnRate,
-						bestDuration: value.bestDuration,
-						minOrderAmount: value.minOrderAmount || '1',
-					};
-          browserData.advisorInfo[key] = advisorInfo[key];
-        });
-			}
-			catch (error) {
-				log.error(`Cannot parse loanOfferParameters ${smsg}`);
-				debug(`Cannot parse loanOfferParameters: ${error.message}`);
-      }
-      emitAdvisorInfoUpdate();
-		});
-		socket.on("send:clientMessage", function (msg) {
-			let smsg = JSON.stringify(msg);
-			debug(`received send:clientMessage = ${smsg}`);
-			let loanOfferParameters;
-			if(_.isObject(msg)) {
-        clientMessage = {
-					time: msg.time,
-					message: msg.message,
-					lastClientSemver: msg.lastClientSemver,
-        };
-        if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-          clientMessage.lastClientMessage = ` - available ${clientMessage.lastClientSemver}. Please update your app!`;
-        } else {
-          clientMessage.lastClientMessage = '';
+            if (config.isTradingEnabled && !newConfig.isTradingEnabled) {
+              log.warning('execTrades: Lending engine has been disabled!');
+            }
+
+            if (!_.isEqual(config, newConfig)) {
+              config = newConfig;
+              emitConfigUpdate();
+            }
+
+            config = newConfig;
+            self.config = newConfig;
+            callback(null);
+          });
+        },
+        isTradingEnabled: function (callback) {
+          let err = !config.isTradingEnabled && new Error('Trading is disabled') || null;
+          if (!config.isTradingEnabled) {
+            log.warning('execTrades: Lending engine is disabled!', { lcl: 'lendingDisabled', llim: 5 * 60 });
+          }
+          callback(err, err && err.message || 'OK');
+        },
+        updates: function (callback) {
+          let method = config.advancedSettings.parallelApiExecution && 'parallel' || 'series';
+          let step = config.advancedSettings.parallelApiExecution && config.advancedSettings.nonceDelay || 0;
+          let nonceDelay = -step;
+          async[method] (
+            {
+              updateRates: function (callback) {
+                nonceDelay += step;
+                _.delay(function (callback) {
+                  _debugCycleDuration();
+                  _debugApiCallDuration('updateRates');
+                  updateRateBTCUSD();
+                  updateRates();
+                  callback(null);
+                }, nonceDelay, callback);
+              },
+              updateActiveLoans: function(callback){
+                nonceDelay += step;
+                _.delay(function (callback) {
+                  _debugApiCallDuration('updateActiveLoans');
+                  updateActiveLoans(function (err) {
+                    if (err && (err.message.toLowerCase().includes('invalid api key') || err.message.toLowerCase().includes('api key and secret required'))) {
+                      config.isTradingEnabled = false;
+                      config.status.lendingEngineStopReason = err.message;
+                      log.warning(`execTrades: Lending engine will be disabled`);
+                      saveConfig(config, (err, config) => {
+                        emitConfigUpdate();
+                        callback(err, "OK");
+                      });
+                    } else {
+                      callback(err, err && err.message || "OK");
+                    }
+                  });
+                }, nonceDelay, callback);
+              },
+              updateActiveOffers: function(callback) {
+                nonceDelay += step;
+                _.delay(function (callback) {
+                  _debugApiCallDuration('updateActiveOffers');
+                  updateActiveOffers(function (err) {
+                    callback(err, err && err.message || "OK");
+                  });
+                }, nonceDelay, callback);
+              },
+              updateBalances: function(callback) {
+                nonceDelay += step;
+                _.delay(function (callback) {
+                  _debugApiCallDuration('updateBalances');
+                  updateAvailableFunds(function (err) {
+                    if (err) {
+                      return callback(err, err.message);
+                    }
+
+                    currencies.forEach(function (c, index, array) {
+                      let amountActiveOffers = new Big(0);
+                      let amountActiveLoans = new Big(0);
+                      if (_.isArray(activeOffers[c]))
+                        activeOffers[c].forEach(function (o, index, array) {
+                          amountActiveOffers = amountActiveOffers.plus(o.amount);
+                        });
+                      activeLoans.forEach(function (l, index, array) {
+                        if (l.currency == c)
+                          amountActiveLoans = amountActiveLoans.plus(l.amount);
+                      });
+                      depositFunds[c] = amountActiveOffers.plus(amountActiveLoans).plus(availableFunds[c] || 0).toFixed(8);
+                    });
+                    callback(null, "OK");
+                  });
+                }, nonceDelay, callback);
+              },
+            },
+            function (err) {
+              callback(err);
+            });
+        },
+        emitLiveUpdate: function (callback) {
+          _debugApiCallDuration('emitLiveUpdate');
+          emitLiveUpdate();
+          callback(null, 'OK');
+        },
+        report: function (callback) {
+          _debugApiCallDuration('report');
+          report();
+          callback(null, 'OK');
+        },
+        cancelHighOffers: function (callback) {          // cancel offers if price is too high
+          _debugApiCallDuration('cancelHighOffers');
+          cancelHighOffers(function (err){
+            callback(null, err && err.message || "OK");
+          });
+        },
+        updateAvailableFunds: function (callback) {
+          _debugApiCallDuration('updateAvailableFunds');
+          if (!anyCanceledOffer) {
+            return callback(null, "OK");
+          }
+
+          updateAvailableFunds(function (err) {
+            anyCanceledOffer = false;
+            callback(err, err && err.message || "OK");
+          });
+        },
+        postOffers: function (callback) {
+          _debugApiCallDuration('postOffers');
+          postOffers(function (err){
+            callback(err, err && err.message || "OK");
+          });
+        },
+      },
+      function(err, results) {
+        if (!err) {
+          status.lastRun.speedCount++;
         }
-        browserData.clientMessage = clientMessage;
-			} else {
-				log.error(`Cannot parse clientMessage ${smsg}`);
-				browserData.clientMessage = '';
-			}
-      emitClientMessageUpdate();
-		});
 
+        apiCallTimes.splice(0, apiCallTimes.length + 1 - config.maxApiCallsPerDuration);
+        let timeNow = Date.now();
+        let timeout = Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0]), waitOneMinute && 60000 || 0);
+        setTimeout(function() {
+          if (waitOneMinute) {
+            log.info('API activity resumed');
+          }
+          waitOneMinute = null;
+
+          execTrade();
+        }, timeout);
+      });
+  };
+
+  const getCurrencies = function getCurrencies(callback) {
     let err;
-		async.doWhilst(
-		  function getCurrencies(callback) {
-        poloPrivate.returnCurrencies((error, result) => {
+    async.doWhilst(
+      function returnCurrencies(callback) {
+        poloPublic.returnCurrencies((error, result) => {
           err = error;
           let apiMethod = 'returnCurrencies';
           emitApiCallUpdate({
@@ -1045,16 +871,73 @@ const PoloLender = function(name) {
         });
       },
       function isError() {
-		    return err;
+        return err;
       },
       function () {
-        execTrade();
+        callback(null);
       }
     );
+  };
+
+  const setupConfig = function setupConfig(callback) {
+    async.series(
+      [
+        function (callback) {
+          migrateConfig((err) => {
+            if(err) {
+              log.error(`migrateConfig: could not migrate the config`);
+            }
+            callback(err);
+          })
+        },
+        function (callback) {
+          getConfig((err, result) => {
+            if (err) {
+              log.crit(`Cannot load config: ${err.message}`);
+            } else {
+              config = result;
+              self.config = result;
+            }
+            callback(err);
+          });
+        },
+        function initialSetup(callback) {
+          currentApiKey = config.apiKey;
+          poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
+          setupBrowserComms();
+          setupAdvisorComms();
+          logTg = addTelegramLogger(config.telegramReports && config.telegramReports.telegramToken, config.telegramReports && config.telegramReports.telegramUserId);
+          callback(null);
+        },
+      ],
+      function (err) {
+        callback(err);
+      });
+  };
+
+  self.start = function() {
+    debug("Starting...");
+    status.lastRun.speedCount= 0;
+    self.started = moment();
+    async.parallel(
+      [
+        getCurrencies,
+        setupConfig,
+      ],
+      function (err) {
+        if (err) {
+          log.crit(`Application could not start and will now exit!`);
+          return;
+        }
+
+        log.report(config.startMessage);
+        if (logTg && config.telegramReports.isEnabled) {
+          logTg.report(config.startMessage);
+        }
+        execTrade();
+      });
 	};
 
 	self.stop = function () {
 	};
 };
-
-module.exports = PoloLender;
