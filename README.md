@@ -37,17 +37,13 @@ The application code is open source and shared on github at https://github.com/d
 
 # What's new
 
-The reports can now be sent on Telegram messenger to your phone. See the [FAQ](https://github.com/dutu/poloLender/blob/master/faq.md) for how to setup it up. 
+Configuration is now done through the web UI (Settings tab)
 
-A Web interface has been implemented (starting with v0.7.0).
-
-Preview:
-![](http://storage2.static.itmages.com/i/17/0406/h_1491488764_5621703_28a89befdf.png)
-
+![](http://i.imgur.com/VSjGuor.jpg)
 
 # Supported crypto-currencies
 
-![](http://i.imgur.com/n2NfChC.jpg)
+![](http://i.imgur.com/wj8Bf6o.jpg)
 
 # How it works
 
@@ -156,7 +152,7 @@ Once installed, you'll have access to the heroku command from your command line.
     heroku ps:scale web=0
     ```
 
-6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) and [mLab](https://elements.heroku.com/addons/mongolab) logging add-ons
+6. Provision the [papertrail](https://devcenter.heroku.com/articles/papertrail) and [mLab](https://elements.heroku.com/addons/mongolab) add-ons
 
     ```
     heroku addons:create papertrail
@@ -241,7 +237,7 @@ Updating the application when poloLender code is updated on github
     heroku addons:create mongolab
     ```
 
-3. if one of the addons above are not provisioned, provision the missing addons
+3. If addons above are not provisioned, provision the missing addons
     ```
     heroku addons:create mongolab
     ```
