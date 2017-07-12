@@ -59,7 +59,6 @@ webix.ready(function () {
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
 
   advisorInfoTableUi = $$('advisorInfoTable');
-  lendingEngineStatus_apiActivityUi = $$('lendingEngineStatus_apiActivity');
   setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();

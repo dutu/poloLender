@@ -333,7 +333,7 @@ let updateAdvisorInfo = function updateAdvisorInfo(advisorInfo) {
 };
 
 let advisorInfoTableUi;
-let lendingEngineStatus_apiActivityUi;
+let lendingEngineStatus_apiActivityUi = null;
 
 let startRefreshingStatus = function startRefreshingStatus() {
   setInterval(function refreshPoloLenderAppStatus() {
@@ -342,6 +342,7 @@ let startRefreshingStatus = function startRefreshingStatus() {
     $$('poloLenderApp_clientMessage').refresh();
   }, 5000);
 
+  lendingEngineStatus_apiActivityUi = $$('lendingEngineStatus_apiActivity');
   setInterval(function refreshPoloLenderAppInfo() {
     lendingEngineStatus_apiActivityUi.render();
   }, 50);
