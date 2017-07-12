@@ -15,14 +15,14 @@ let apiKeySettingsConfig = {
         {
           cols: [
             { view: 'label',label: 'Key', width: labelWidth, tooltip: 'Poloniex API key'  },
-            { view: 'text', id: 'apiKey.key', name: 'apiKey.key', width: inputTextWidth, disabled: true, value: '', tooltip: 'Poloniex API key', validate: webix.rules.isNotEmpty },
+            { view: 'text', id: 'apiKey.key', name: 'apiKey.key', width: inputTextWidth * 1.5, disabled: true, value: '', tooltip: 'Poloniex API key', validate: webix.rules.isNotEmpty },
             {},
           ]
         },
         {
           cols: [
             { view: 'label',label: 'Secret', width: labelWidth, tooltip: 'Poloniex API secret' },
-            { view: 'text', id: 'apiKey.secret', name: 'apiKey.secret', width: inputTextWidth, disabled: true, value: '', tooltip: 'Poloniex API secret', validate: webix.rules.isNotEmpty },
+            { view: 'text', id: 'apiKey.secret', name: 'apiKey.secret', width: inputTextWidth * 1.5, disabled: true, value: '', tooltip: 'Poloniex API secret', validate: webix.rules.isNotEmpty },
             {},
           ]
         },
@@ -52,6 +52,7 @@ let apiKeySettingsConfig = {
                   config.apiKey = settingsValues.apiKey;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  $$('apiKey.secret').setValue('');
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
                   changeSettingsButtonUi.refresh();

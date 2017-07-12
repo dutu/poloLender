@@ -1,7 +1,7 @@
 import winston from 'winston';
 import _  from 'lodash';
 import moment from 'moment';
-import RateLimiter from 'limiter';
+import { isHeroku } from "./workers/poloLender/config"
 
 require('winston-telegram').Telegram;
 
@@ -18,7 +18,7 @@ export let consoleLogger = new (winston.Logger)({
 		new (winston.transports.Console)({
 			colorize: 'all',
       timestamp: function () {
-			  return moment().format('YYYY-MM-DD HH:mm:ss');
+			  return !isHeroku && moment().format('YYYY-MM-DD HH:mm:ss') || '';
       },
 		}),
   ]
@@ -77,7 +77,7 @@ export const addTelegramLogger = function addTelegramLogger(telegramToken, teleg
   let customLogLevels = _.clone(winston.config.syslog.levels);
   delete customLogLevels.emerg;
   customLogLevels.report = 0;
-  logTg = new (winston.Logger)({
+  return new (winston.Logger)({
     levels: customLogLevels,
     exitOnError: false,
     transports: [
@@ -89,6 +89,5 @@ export const addTelegramLogger = function addTelegramLogger(telegramToken, teleg
       }),
     ]
   });
-};
 
-export let logTg = null;
+};

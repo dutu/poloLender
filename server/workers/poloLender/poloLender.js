@@ -8,7 +8,7 @@ import Bitfinex from 'bitfinex';
 import semver from 'semver';
 import Poloniex from 'poloniex-api-node';
 
-import { log, logTg, addTelegramLogger } from '../../loggers';
+import { log, addTelegramLogger } from '../../loggers';
 import { msgApy, msgLoanReturned, msgNewCredit, msgRate, strAR } from './msg';
 import { migrateConfig } from './dbMigrate';
 import { io } from '../../httpServer';
@@ -74,7 +74,9 @@ export const PoloLender = function(name) {
   let _debugCycleDuration = _.bind(debugCycleDuration, this);
 
   const emitConfigUpdate = function emitConfigUpdate() {
-    io.sockets.emit('configUpdate', config);
+    let configWitoutSecret = _.cloneDeep(config);
+    configWitoutSecret.apiKey.secret = '●●●●●';
+    io.sockets.emit('configUpdate', configWitoutSecret);
   };
 
   const emitStatusUpdate = function emitStatusUpdate() {
@@ -137,9 +139,15 @@ export const PoloLender = function(name) {
   };
 
   const onUpdateConfig = function (newConfig, source) {
+    if (newConfig.apiKey.secret === '●●●●●') {
+      newConfig.apiKey.secret = config.apiKey.secret;
+    }
+
     config = newConfig;
     saveConfig(config, (err, newConfig) => {
-      io.sockets.emit('updatedConfig', err, config, source);
+      let configWitoutSecret = _.cloneDeep(config);
+      configWitoutSecret.apiKey.secret = '●●●●●';
+      io.sockets.emit('updatedConfig', err, configWitoutSecret, source);
     });
   };
 
@@ -635,7 +643,7 @@ export const PoloLender = function(name) {
       }
 
       let profit = new Big(depositFunds[c]).minus(config.startBalance[c] || '0');
-      let minutes = now.diff(config.restartTime, "minutes", true);
+      let minutes = now.diff(config.startDate, "minutes", true);
       let activeLoansCount = 0;
       let activeLoansAmount = new Big(0);
       activeLoans.forEach(function (l, index, array) {
@@ -651,10 +659,10 @@ export const PoloLender = function(name) {
         msg += `(USD ${totalUSD}) `;
       }
       msg += `• ${activeLoansAmount} in ${activeLoansCount} active loans ● PROFIT: ${profit.toFixed(8)} (${profit.div(minutes).times(60*24).toFixed(3)}/day)`;
-      msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(2)}%/day)`;
+      msg += ` = ${(profit/config.startBalance[c] * 100).toFixed(2)}% (${(profit/config.startBalance[c] * 100 /(minutes/60/24) ).toFixed(3)}%/day)`;
       if(rateBTCUSD && ratesBTC[c]) {
         let rateCurrencyUSD = new Big(rateBTCUSD).times(ratesBTC[c]).toString();
-        msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(2)}/day)`;
+        msg += ` ≈ USD ${profit.times(rateCurrencyUSD).toFixed(0)} (${profit.times(rateCurrencyUSD).div(minutes).times(60*24).toFixed(3)}/day)`;
       }
       let wmrMsg = msgRate(status.wmr[c]);
       let ewmrMsg =  msgRate(new Big(status.wmr[c]).times(0.85).toFixed(8));
@@ -898,7 +906,7 @@ export const PoloLender = function(name) {
           poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
           setupBrowserComms();
           setupAdvisorComms();
-          addTelegramLogger(config.telegramReports && config.telegramReports.telegramToken, config.telegramReports && config.telegramReports.telegramUserId);
+          logTg = addTelegramLogger(config.telegramReports && config.telegramReports.telegramToken, config.telegramReports && config.telegramReports.telegramUserId);
           callback(null);
         },
       ],
@@ -923,7 +931,7 @@ export const PoloLender = function(name) {
         }
 
         log.report(config.startMessage);
-        if (logTg) {
+        if (logTg && config.telegramReports.isEnabled) {
           logTg.report(config.startMessage);
         }
         execTrade();

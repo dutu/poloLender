@@ -4,7 +4,6 @@ import moment from 'moment';
 import _ from 'lodash';
 
 import { log } from '../../loggers';
-import { io } from '../../httpServer';
 
 const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;

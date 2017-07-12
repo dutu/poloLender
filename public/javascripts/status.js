@@ -5,7 +5,7 @@ let advisorEngineStatusData = {
   connection: 'unknown',
   authentication: {
     status: 0,
-    message: 'unknown',
+    message: '',
   }
 };
 
@@ -184,6 +184,17 @@ let advisorEngineStatusConfig = {
         },
       ]
     },
+    {
+      autoheight: true, borderless: true, type: 'clean',
+      cols: [
+        { width: width_col1, autoheight: true, template: 'Authentication:' },
+        { id: 'advisorEngine_authenticationStatus', width: width_col2,
+          template: function (obj) {
+            return `${advisorEngineStatusData.authentication.message}`;
+          },
+        },
+      ]
+    },
   ],
 };
 
@@ -216,7 +227,7 @@ let advisorInfoTableConfig = {
   tooltip: true,
 };
 
-let statusView = {
+var statusView = {
   id: 'status',
   scroll: 'xy',
   borderless: true,
