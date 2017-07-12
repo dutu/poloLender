@@ -172,6 +172,7 @@ Once installed, you'll have access to the heroku command from your command line.
 
 :
 
+    $ heroku config:set POLOLENDER_WEB_PORT=5000
     $ heroku config:set POLOLENDER_APIKEY={\"key\":\"V**********************t\",\"secret\":\"T*******************************u\"}
     $ heroku config:set POLOLENDER_STARTTIME=2016-02-28T12:27:09+01:00
     $ heroku config:set POLOLENDER_STARTBALANCE={\"BTC\":\"10\", \"ETH\":\"1100\", \"XMR\":\"1000\", \"XRP\":\"80000\", \"DASH\":\"1000\"}
@@ -256,6 +257,9 @@ The application will restart automatically with the newly deployed code
 
 Bot configuration is done by setting environment variables or by specifying these in `.env` file.
 
+
+    # Web interface port bind
+    PORT=5000
 
     # API key for your Poloniex account
     POLOLENDER_APIKEY={"key":"V**********************t","secret":"T*******************************u"}
