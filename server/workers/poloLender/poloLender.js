@@ -83,7 +83,7 @@ export const PoloLender = function(name) {
 
   const authClientsEmit = function authClientsEmit() {
     let args = [...arguments];
-    _.filter(authClients, {isReadWriteAllowed: true}).forEach((authClient) => {
+    _.filter(authClients, {isReadAllowed: true}).forEach((authClient) => {
       let client = io.sockets.clients().connected[authClient.id];
        if (client) {
          client.emit.apply(client, args);
