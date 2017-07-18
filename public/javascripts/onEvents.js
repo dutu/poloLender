@@ -4,6 +4,9 @@ const setupOnEvents = function setupOnEvents() {
 
   socket.on('connect', function () {
     poloLenderAppConnection = 'connected';
+    if (storage.browserAuth && storage.browserAuth.token) {
+      socket.emit('authorization', storage.browserAuth.token, 'onConnect');
+    }
     hideConnectionErrorMessage();
     updatePoloLenderAppStatus();
   });
@@ -45,6 +48,9 @@ const setupOnEvents = function setupOnEvents() {
   });
   */
 
+
+  socket.on('tokenValidated', onTokenValidated);
+  socket.on('newTokenGenerated', onNewTokenGenerated);
   socket.on('configUpdate', onConfigUpdate);
   socket.on('clientMessageUpdate', function(data) {
     clientMessage = data;

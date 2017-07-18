@@ -10,3 +10,4 @@ app/tests/coverage/
 .idea/
 .env
 /package-lock.json
+/config.json

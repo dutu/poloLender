@@ -30,7 +30,6 @@ let header = {
   data: { value: 'poloLender Pro' },
 };
 
-
 let tabview = {
   view: 'tabview',
   multiview: { keepViews: true },
@@ -47,14 +46,75 @@ let tabview = {
   ],
 };
 
-webix.ready(function () {
-  webix.ui({
-      rows: [
-        header,
-        tabview,
-      ]
-  });
+socket.on('authorized', function(data) {
+  let authClient = data;
+  hideProcessingDataMessage();
+  if (!authClient.isReadAllowed) {
+    webix.message({ type:'error', text: 'Invalid token' });
+    storage.browserAuth = {
+      isChangeEnabled: storage.browserAuth && storage.browserAuth.isChangeEnabled ? storage.browserAuth.isChangeEnabled : true,
+    };
+    store.set('poloLender',  { browserAuth: storage.browserAuth });
+    return;
+  }
 
+  mainUi.show();
+  authUi.hide();
+
+
+  if (authClient.isReadWriteAllowed){
+    webix.message({text: 'Authorized for read/write' });
+  } else {
+    webix.message({text: 'Authorized for read/only' });
+  }
+
+  updatedConfigHandlers.browserAuthSettings();
+});
+
+webix.ready(function () {
+  authUi = webix.ui({
+    view: 'window',
+    head: 'poloLender Pro Authorization',
+    modal: true,
+    position: 'center',
+    width: 380,
+    body: {
+      view: 'form',
+      complexData: true,
+      elements: [
+        { view: 'text', id: 'token', name: 'token', label: 'Authorization token:', labelWidth: 130, tooltip: "Check your console log and\nenter your read/only or read/write authorization token" },
+        { view: 'select', id: 'rememberForDays', name: 'rememberForDays', label: 'Remember token for:', labelWidth: 130, options: [{ id: 0, value: 'this session' }, { id: 1, value: '1 day' }, { id: 7, value: '7 days' }, { id: 30, value: '30 days' }], value: 30, tooltip: "Remember the token and don't ask for it for a number of days" },
+        { view: 'button', value: 'Submit',
+          click: function (elementId, event) {
+            showProcessingDataMessage();
+            let auth = this.getFormView().getValues();
+            storage.browserAuth = {
+              token: auth.token,
+              isReadWriteAllowed: false,
+              expiresOn: auth.rememberForDays === '0' ? -1 : new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
+              isChangeEnabled: storage.browserAuth && storage.browserAuth.isChangeEnabled ? storage.browserAuth.isChangeEnabled : true,
+              rememberForDays: auth.rememberForDays,
+            };
+            store.set('poloLender',  { browserAuth: storage.browserAuth });
+            let formId = this.getFormView().config.id;
+            socket.emit('authorization', storage.browserAuth.token, `${formId}`);
+          }
+        }
+      ]
+    },
+    move: true
+  });
+  authUi.show();
+
+  mainUi = webix.ui({
+    rows: [
+      header,
+      tabview,
+    ]
+  });
+  mainUi.hide();
+
+  setEnableConfigChanges(store.get('poloLender').browserAuth.isChangeEnabled);
   $$("lendingHistoryInputForm").elements["period"].attachEvent("onChange", onPeriodChange);
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
 
@@ -62,4 +122,19 @@ webix.ready(function () {
   setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();
+
+  storage = store.get('poloLender') || {};
+
+  if (!storage || !storage.browserAuth || !storage.browserAuth.token || !storage.browserAuth.expiresOn) {
+    storage.browserAuth = {};
+    store.set('poloLender',  { browserAuth: {} });
+  } else {
+    if (storage.browserAuth.expiresOn === 'never' || Date.now() < new Date(storage.browserAuth.expiresOn).getTime()) {
+      socket.emit('authorization', storage.browserAuth.token, ``);
+    } else {
+      webix.message({ type:'error', text: 'Authorization token expired' });
+      storage.browserAuth = {};
+      store.set('poloLender',  { browserAuth: storage.browserAuth });
+    }
+  }
 });

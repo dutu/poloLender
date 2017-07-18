@@ -3,6 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.0] - 2017-07-18
+
+### Added
+- Web UI requires authentication
+- http port can be set in `config.json` file (setting not available in web GUI)
+
+### Changed
+- Currency lending offer is posted at `Min lending rate` when the value is bigger than lending-advisor rate ([#106](https://github.com/dutu/poloLender/issues/106))
+
 ## [1.0.0] - 2017-07-12
 
 ### Added

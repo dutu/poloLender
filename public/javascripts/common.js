@@ -5,9 +5,12 @@ const labelWidth = 180;
 const inputTextWidth = 200;
 const buttonWidth = 120;
 let savingDataMessage = null;
+let authUi;
+let mainUi;
 
 let config = {};
 let status = {};
+let storage = {};
 let clientMessage = {};
 
 const showProcessingDataMessage = function showSavingDataMessage() {
@@ -66,6 +69,23 @@ const formatDurationFromSeconds = function formatDurationFromDays(timeInSeconds)
 const formatDurationFromDays = function formatDurationFromDays(days) {
   let timeInSeconds = Math.round(days * 24 * 60 * 60);
   return formatDurationFromSeconds(timeInSeconds);
+};
+
+const setEnableConfigChanges = function setEnableConfigChanges (newValue, oldValue) {
+  let changeButtons = [ 'changeAndSetStartSettingsButton', 'changelendingSettingsButton', 'changeapiKeySettingsButton', 'changelendingSettingsButton', 'changeconsoleReportsSettingsButton', 'changetelegramReportsSettingsButton', 'changetelegramReportsSettingsButton', 'changelendingAdvisorSettingsButton', 'lendingEngineStartStopButton'];
+  changeButtons.forEach((button) => {
+    let buttonUi = $$(button);
+    if (buttonUi) {
+      if (newValue) {
+        buttonUi.enable();
+      } else {
+        buttonUi.disable();
+      }
+    }
+    let s = store.get('poloLender');
+    s.browserAuth.isChangeEnabled = newValue;
+    store.set('poloLender',  { browserAuth: s.browserAuth });
+  });
 };
 
 const socket = io();

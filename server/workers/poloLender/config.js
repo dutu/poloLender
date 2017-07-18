@@ -13,6 +13,12 @@ const isMongo = !!mongodbURI;
 export const isHeroku = !!(process.env.DYNO || process.env.NODE_HOME && process.env.NODE_HOME.indexOf('heroku'));
 
 export const configDefault = {
+  port: 5000,
+  authToken: {
+    readOnly: '',
+    readWrite: '',
+    tokenExpiresOn: 'never',
+  },
   isTradingEnabled: true,
   startDate: moment().utc().format(),
   startMessage: 'Join poloLender discussion/support group on telegram: https://t.me/cryptozone',

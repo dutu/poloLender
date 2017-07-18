@@ -7,7 +7,9 @@ import debug from 'debug';
 import Bitfinex from 'bitfinex';
 import semver from 'semver';
 import Poloniex from 'poloniex-api-node';
+import uniqid from 'uniqid';
 
+import { httpServerStart } from '../../httpServer';
 import { log, addTelegramLogger } from '../../loggers';
 import { msgApy, msgLoanReturned, msgNewCredit, msgRate, strAR } from './msg';
 import { migrateConfig } from './dbMigrate';
@@ -41,6 +43,7 @@ export const PoloLender = function(name) {
 		  connection: '',
     },
 	};
+	let authClients = [];
 	let performanceReports = {};
 	let anyCanceledOffer;
   let anyNewLoans = {};
@@ -73,18 +76,33 @@ export const PoloLender = function(name) {
   let _debugApiCallDuration = _.bind(debugApiCallDuration, this);
   let _debugCycleDuration = _.bind(debugCycleDuration, this);
 
+  const isWriteAllowed = function isWriteAllowed(cliendId) {
+    let authClient = _.find(authClients, { id: cliendId });
+    return authClient && authClient.isReadWriteAllowed;
+  };
+
+  const authClientsEmit = function authClientsEmit() {
+    let args = [...arguments];
+    _.filter(authClients, {isReadWriteAllowed: true}).forEach((authClient) => {
+      let client = io.sockets.clients().connected[authClient.id];
+       if (client) {
+         client.emit.apply(client, args);
+       }
+    });
+  };
+
   const emitConfigUpdate = function emitConfigUpdate() {
     let configWitoutSecret = _.cloneDeep(config);
     configWitoutSecret.apiKey.secret = '●●●●●';
-    io.sockets.emit('configUpdate', configWitoutSecret);
+    authClientsEmit('configUpdate', configWitoutSecret);
   };
 
   const emitStatusUpdate = function emitStatusUpdate() {
-    io.sockets.emit('statusUpdate', status);
+    authClientsEmit('statusUpdate', status);
   };
 
   const emitClientMessageUpdate = function emitClientMessageUpdate() {
-    io.sockets.emit('clientMessageUpdate', clientMessage);
+    authClientsEmit('clientMessageUpdate', clientMessage);
   };
 
   const emitApiCallUpdate = function emitApiCallUpdate(apiCallInfo) {
@@ -95,7 +113,7 @@ export const PoloLender = function(name) {
       },
     };
 
-    io.sockets.emit('apiCallInfo', data);
+    authClientsEmit('apiCallInfo', data);
   };
 
   const emitPerformanceUpdate = function emitPerformanceUpdate() {
@@ -117,15 +135,90 @@ export const PoloLender = function(name) {
       };
     });
 
-    io.sockets.emit('performanceReport', performanceReports);
+    authClientsEmit('performanceReport', performanceReports);
   };
 
   const emitLiveUpdate = function emitLiveUpdate() {
-    io.sockets.emit('liveUpdates', liveData);
+    authClientsEmit('liveUpdates', liveData);
   };
 
   const emitAdvisorInfoUpdate = function emitAdvisorInfoUpdate() {
-    io.sockets.emit('advisorInfo', advisorInfo);
+    authClientsEmit('advisorInfo', advisorInfo);
+  };
+
+  const onAuthorization = function onAuthorization(data) {
+    let token = data;
+    let authClient = {
+      id: this.id,
+      isReadAllowed: config.authToken.readOnly === token || config.authToken.readWrite === token,
+      isReadWriteAllowed: config.authToken.readWrite === token,
+    };
+
+    let authClientIndex = _.findIndex(authClients, { id: authClient.id });
+    if (authClientIndex === -1) {
+      authClients.push(authClient);
+    } else {
+      authClients.splice(authClientIndex, 0, authClient);
+    }
+
+    let client = io.sockets.clients().connected[authClient.id];
+    client.emit('authorized', authClient);
+
+    if (authClient.isReadAllowed) {
+      emitConfigUpdate();
+      emitStatusUpdate();
+      emitClientMessageUpdate();
+      emitAdvisorInfoUpdate();
+      emitPerformanceUpdate();
+      emitLiveUpdate();
+    }
+  };
+
+  const onValidateToken = function onValidateToken(token) {
+    let authClient = {
+      id: this.id,
+      token: token,
+      isReadAllowed: config.authToken.readOnly === token || config.authToken.readWrite === token,
+      isReadWriteAllowed: config.authToken.readWrite === token,
+    };
+
+    let client = io.sockets.clients().connected[authClient.id];
+    if (client) {
+      client.emit('tokenValidated', authClient);
+    }
+  };
+
+  const onGenerateNewToken = function onGenerateNewToken(data) {
+    let clientId = this.id;
+    if (!isWriteAllowed(clientId)) {
+      return;
+    }
+
+    let tokenExpiresIn = data;
+    let tokenExpiresOn = tokenExpiresIn === '0' ? 'never' : new Date(Date.now() + parseFloat(tokenExpiresIn) * 24 * 60 *60 * 1000);
+
+    config.authToken = {
+      readOnly: uniqid('ro-'),
+      readWrite: uniqid('rw-'),
+      tokenExpiresOn: tokenExpiresOn,
+    };
+    saveConfig(config);
+
+    log.info(`Your read/only authorization token is: ${config.authToken.readOnly}`);
+    log.info(`Your read/write authorization token is: ${config.authToken.readWrite}`);
+    log.info(`Token expires on: ${config.authToken.tokenExpiresOn}`);
+
+    let authClient = {
+      id: clientId,
+      token: config.authToken.readWrite,
+      isReadAllowed: true,
+      isReadWriteAllowed: true,
+    };
+
+    let client = io.sockets.clients().connected[clientId];
+    if (client) {
+      client.emit('newTokenGenerated', authClient);
+    }
   };
 
   const onReturnLendingHistory = function onReturnLendingHistory(data) {
@@ -134,11 +227,15 @@ export const PoloLender = function(name) {
         log.notice(`returnLendingHistory: ${err.message}`);
       }
 
-      io.sockets.emit('lendingHistory', err && err.message || null, result);
+      authClientsEmit('lendingHistory', err && err.message || null, result);
     })
   };
 
   const onUpdateConfig = function (newConfig, source) {
+    if (!isWriteAllowed(this.id)) {
+      return;
+    }
+
     if (newConfig.apiKey.secret === '●●●●●') {
       newConfig.apiKey.secret = config.apiKey.secret;
     }
@@ -147,19 +244,17 @@ export const PoloLender = function(name) {
     saveConfig(config, (err, newConfig) => {
       let configWitoutSecret = _.cloneDeep(config);
       configWitoutSecret.apiKey.secret = '●●●●●';
-      io.sockets.emit('updatedConfig', err, configWitoutSecret, source);
+      authClientsEmit('updatedConfig', err && err.message || null, configWitoutSecret, source);
     });
   };
 
   const onBrowserConnection = function onBrowserConnection(socket) {
+    socket.on('authorization', onAuthorization);
+    socket.on(`validateToken`, onValidateToken);
+    socket.on(`generateNewToken`, onGenerateNewToken);
     socket.on('returnLendingHistory', onReturnLendingHistory);
     socket.on(`updateConfig`, onUpdateConfig);
-    emitConfigUpdate();
-    emitStatusUpdate();
-    emitClientMessageUpdate();
-    emitAdvisorInfoUpdate();
-    emitPerformanceUpdate();
-    emitLiveUpdate();
+
   };
 
   const apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
@@ -482,8 +577,6 @@ export const PoloLender = function(name) {
         let amountMaxToTrade;
         let duration;
         let autoRenew;
-        let lendingRate;
-        let minRate;
 
         if (config.offerMaxAmount[currency] === '') {
           amountToTrade = new Big(availableFunds[currency]);       // we are not reserving any funds
@@ -504,15 +597,12 @@ export const PoloLender = function(name) {
         }
 
         amount = amountToTrade.toFixed(8);
-        lendingRate = advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05';
+        let advisorRate = parseFloat(advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05');
         duration = advisorInfo[currency] && advisorInfo[currency].bestDuration || '2';
         autoRenew = "0";
 
-        // Do not offer loans the the best return rate is less than the specified min rate.
-        minRate = new Big(config.offerMinRate[currency] || 0);
-        if (minRate.div(100).gt(lendingRate)) {
-          return callback(null);
-        }
+        let minRate = parseFloat(config.offerMinRate[currency] || 0);
+        let lendingRate = Math.max(minRate, advisorRate).toString();
 
         if (process.env[self.me+"_NOTRADE"] === "true") {
           log.notice("Post offer: NO TRADE");
@@ -902,6 +992,20 @@ export const PoloLender = function(name) {
           });
         },
         function initialSetup(callback) {
+          if (!config.authToken || !config.authToken.readOnly || !config.authToken.readWrite) {
+            config.authToken = {
+              readOnly: uniqid('ro-'),
+              readWrite: uniqid('rw-'),
+              tokenExpiresOn: 'never',
+            };
+            saveConfig(config)
+          }
+
+          log.info(`Your read/only authorization token is: ${config.authToken.readOnly}`);
+          log.info(`Your read/write authorization token is: ${config.authToken.readWrite}`);
+          log.info(`Token expires on: ${config.authToken.tokenExpiresOn}`);
+
+          httpServerStart(config.port);
           currentApiKey = config.apiKey;
           poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
           setupBrowserComms();
@@ -919,10 +1023,10 @@ export const PoloLender = function(name) {
     debug("Starting...");
     status.lastRun.speedCount= 0;
     self.started = moment();
-    async.parallel(
+    async.series(
       [
-        getCurrencies,
         setupConfig,
+        getCurrencies,
       ],
       function (err) {
         if (err) {

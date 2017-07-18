@@ -1,6 +1,6 @@
 {
   "name": "poloLenderPro",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "smart Poloniex lending bot - an automated engine for lending funds on Poloniex exchange",
   "author": "dutu <dutu@protonmail.com>",
   "license": "MIT",
@@ -61,6 +61,7 @@
     "serve-favicon": "^2.4.3",
     "socket.io": "^2.0.3",
     "socket.io-client": "^2.0.3",
+    "uniqid": "^4.1.1",
     "winston": "^2.3.1",
     "winston-telegram": "^1.2.0"
   },

@@ -145,6 +145,11 @@ let lendingEngineStatusConfig = {
           type: 'form',
           value: 'Start',
           click: function () {
+            if (!storage.browserAuth.isReadWriteAllowed) {
+              webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+              return;
+            }
+
             config.isTradingEnabled = !config.isTradingEnabled;
             showProcessingDataMessage();
             socket.emit('updateConfig', config);
@@ -227,7 +232,7 @@ let advisorInfoTableConfig = {
   tooltip: true,
 };
 
-var statusView = {
+let statusView = {
   id: 'status',
   scroll: 'xy',
   borderless: true,
@@ -263,10 +268,14 @@ let updatePoloLenderAppStatus = function updatePoloLenderAppStatus() {
     restartedAt: status.restarted,
     message: clientMessage.message,
   };
-  $$('poloLenderApp_runningSince').refresh();
-  $$('poloLenderApp_version').refresh();
-  $$('poloLenderApp_restartedAt').refresh();
-  $$('poloLenderApp_clientMessage').refresh();
+  let poloLenderApp_runningSinceUi = $$('poloLenderApp_runningSince');
+  if (poloLenderApp_runningSinceUi) poloLenderApp_runningSinceUi.refresh();
+  let poloLenderApp_versionUi = $$('poloLenderApp_version');
+  if (poloLenderApp_versionUi) poloLenderApp_versionUi.refresh();
+  let poloLenderApp_restartedAtUi = $$('poloLenderApp_restartedAt');
+  if (poloLenderApp_restartedAtUi) poloLenderApp_restartedAtUi.refresh();
+  let poloLenderApp_clientMessageUi = $$('poloLenderApp_clientMessage');
+  if (poloLenderApp_clientMessageUi) poloLenderApp_clientMessageUi.refresh();
 };
 
 let updateLendingEngineStatus = function updateLendingEngineStatus() {

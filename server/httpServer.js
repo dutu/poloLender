@@ -47,7 +47,7 @@ const onListening = function onListening() {
 
 export let io = null;
 
-export const httpServerStart = function httpServerStart() {
+export const httpServerStart = function httpServerStart(port) {
   const app = express();
 
 // view engine setup
@@ -85,7 +85,7 @@ export const httpServerStart = function httpServerStart() {
   });
 
 
-  const httpPort = process.env.PORT || '5000';
+  const httpPort = process.env.PORT || port || '5000';
   app.set('port', httpPort);
 
   const httpServer = http.createServer(app);

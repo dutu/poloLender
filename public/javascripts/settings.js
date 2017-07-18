@@ -1,7 +1,129 @@
 let lendingAdvisorServers = ['safe-hollows.crypto.zone'];
 let appConfig = {};
 
-let settingsName = 'apiKey';
+let settingsName = 'browserAuth';
+let browserAuthConfig = {
+  id: `${settingsName}Settings`,
+  view: 'form',
+  borderless: true,
+  type: 'clean',
+  complexData: true,
+  elements: [
+    {
+      rows: [
+        { view: 'template', template:"Browser UI authorization", type: 'section', /*css: 'section webix_section'*/ },
+        {
+          cols: [
+            { view: 'label',label: 'Enable config changes', width: labelWidth, tooltip: 'Enable/Disable config changes' },
+            { view: 'checkbox', id: 'browserAuth.isChangeEnabled', name: 'browserAuth.isChangeEnabled', value: 0, tooltip: 'Enable/Disable config changes',
+              on: { onChange: setEnableConfigChanges },
+            },
+            {},
+          ]
+        },
+        {
+          cols: [
+            { view: 'label',label: 'Auth token', width: labelWidth, tooltip: 'Check your console log and\nenter your read/only or read/write authorization token'  },
+            { view: 'text', id: 'browserAuth.token', name: 'browserAuth.token', width: inputTextWidth * 1.5, disabled: true, value: '', tooltip: 'Check your console log and\nenter your read/only or read/write authorization token', validate: webix.rules.isNotEmpty },
+            {},
+          ]
+        },
+        {
+          cols: [
+            { view: 'label',label: 'Remember token for:', width: labelWidth, tooltip: 'Remember the token and don\'t ask for it for a number of days' },
+            { view: 'select', id: 'browserAuth.rememberForDays', name: 'browserAuth.rememberForDays', width: buttonWidth, disabled: true, options: [{ id: 0, value: 'this session' }, { id: 1, value: '1 day' }, { id: 7, value: '7 days' }, { id: 30, value: '30 days' }], value: 30, tooltip: "Remember the token and don't ask for it for a number of days" },
+            {},
+          ]
+        },
+        {
+          cols: [
+            { view: 'label',label: 'New token', width: labelWidth, tooltip: '' },
+            {
+              view: 'button',
+              id: `browserAuth.generateNewToken`,
+              width: buttonWidth,
+              disabled: true,
+              value: 'Generate',
+              click: function () {
+                let settingsValues = this.getFormView().getValues();
+                if (!storage.browserAuth.isReadWriteAllowed) {
+                  webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                  return;
+                }
+
+                socket.emit('generateNewToken', settingsValues.browserAuth.tokenExpiresIn);
+                showProcessingDataMessage();
+              },
+            },
+            { view: 'select', id: 'browserAuth.tokenExpiresIn', name: 'browserAuth.tokenExpiresIn', width: buttonWidth, disabled: true, options: [{ id: 0, value: 'never expires' }, { id: 1, value: 'valid for 1 day' }, { id: 7, value: 'valid for 7 days' }, { id: 30, value: 'valid for 30 days' }], value: '30', tooltip: "Token validity duration" },
+            {},
+          ]
+        },
+
+        {
+          cols: [
+            { view: 'label',label: '', width: labelWidth },
+            {
+              view: 'button',
+              id: `change${settingsName}SettingsButton`,
+              width: buttonWidth,
+              value: 'Change',
+              click: function () {
+                let fields = ['browserAuth.token', 'browserAuth.rememberForDays', 'browserAuth.tokenExpiresIn', 'browserAuth.generateNewToken'];
+                let settingsValues = this.getFormView().getValues();
+                let formId = this.getFormView().config.id;
+                let changeSettingsButtonUi = $$(`change${formId}Button`);
+                let cancelEditSettingsButtonUi = $$(`cancelEdit${formId}Button`);
+                if ($$(fields[0]).isEnabled()) {
+                  let isValid = this.getFormView().validate();
+                  if (!isValid) {
+                    webix.message({ type:'error', text: 'Invalid values' });
+                    return;
+                  }
+
+                  showProcessingDataMessage();
+                  //cancelEditSettingsButtonUi.disable();
+                  socket.emit('validateToken', settingsValues.browserAuth.token );
+                } else {
+                  changeSettingsButtonUi.define('type', 'form');
+                  changeSettingsButtonUi.setValue('Update');
+                  changeSettingsButtonUi.refresh();
+                  cancelEditSettingsButtonUi.show();
+                  cancelEditSettingsButtonUi.enable();
+                  fields.forEach(field => $$(field).enable());
+                }
+              },
+            },
+            {
+              view: 'button',
+              id: `cancelEdit${settingsName}SettingsButton`,
+              width: buttonWidth,
+              type: 'danger',
+              hidden: true,
+              value: 'Cancel',
+              click: function () {
+                let fields = ['browserAuth.isChangeEnabled', 'browserAuth.token', 'browserAuth.rememberForDays', 'browserAuth.tokenExpiresIn', 'browserAuth.generateNewToken'];
+                let formId = this.getFormView().config.id;
+                this.getFormView().clearValidation();
+                updatedConfigHandlers[formId]();
+                let changeSettingsButtonUi = $$(`change${formId}Button`);
+                let cancelEditSettingsButtonUi = $$(`cancelEdit${formId}Button`);
+                changeSettingsButtonUi.define('type', '');
+                changeSettingsButtonUi.setValue('Change');
+                changeSettingsButtonUi.refresh();
+                cancelEditSettingsButtonUi.hide();
+                fields.forEach(field => $$(field).disable());
+              },
+            },
+            {},
+          ]
+        },
+      ]
+    }
+  ],
+};
+
+settingsName = 'apiKey';
 let apiKeySettingsConfig = {
   id: `${settingsName}Settings`,
   view: 'form',
@@ -52,6 +174,11 @@ let apiKeySettingsConfig = {
                   config.apiKey = settingsValues.apiKey;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   $$('apiKey.secret').setValue('');
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
@@ -104,7 +231,7 @@ let startSettingsConfig = {
         {
           cols: [
             { view: 'label', label: 'Start date', width: labelWidth, tooltip: 'Used to calculate profitability' },
-            { view: 'datepicker', id: 'startDateConfig', timepicker: true, disabled: true, value: new Date(parseInt(moment(appConfig.startDate).format('x'))), format:'%Y-%m-%d %H:%i', name: 'startDate', width: 180 },
+            { view: 'datepicker', id: 'startDateConfig', timepicker: true, disabled: true, value: new Date(parseInt(moment(appConfig.startDate).format('x'))), format:'%Y-%m-%d %H:%i', name: 'startDate', width: inputTextWidth },
             {},
           ]
         },
@@ -148,6 +275,11 @@ let startSettingsConfig = {
                   config.startBalance = startSettings.startBalance;
                   socket.emit('updateConfig', config, 'startSettings');
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   changeAndSetButtonUi.define('type', 'form');
                   changeAndSetButtonUi.setValue('Update');
                   changeAndSetButtonUi.refresh();
@@ -252,6 +384,11 @@ let lendingSettingsConfig = {
                   config.offerMaxAmount = settingsValues.offerMaxAmount;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
                   changeSettingsButtonUi.refresh();
@@ -345,6 +482,11 @@ let consoleReportsSettingsConfig = {
                   config.reportEveryMinutes = settingsValues.reportEveryMinutes;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
                   changeSettingsButtonUi.refresh();
@@ -383,7 +525,6 @@ let consoleReportsSettingsConfig = {
     }
   ],
 };
-
 
 let validateTelegramData = function validateTelegramData(value, key){
   let formValues = this.getValues();
@@ -457,6 +598,11 @@ let telegramReportsSettingsConfig = {
                   config.telegramReports = settingsValues.telegramReports;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
                   changeSettingsButtonUi.refresh();
@@ -547,6 +693,11 @@ let lendingAdvisorSettingsConfig = {
                   config.lendingAdvisor = settingsValues.lendingAdvisor;
                   socket.emit('updateConfig', config, `${formId}`);
                 } else {
+                  if (!storage.browserAuth.isReadWriteAllowed) {
+                    webix.message({ type:'error', text: 'Not authorized!<br>Read/write auth token required' });
+                    return;
+                  }
+
                   changeSettingsButtonUi.define('type', 'form');
                   changeSettingsButtonUi.setValue('Update');
                   changeSettingsButtonUi.refresh();
@@ -595,6 +746,8 @@ let settingsView = {
     {
       type: 'clean',
       rows: [
+        browserAuthConfig,
+        { view: 'template', template: '', height: 20},
         apiKeySettingsConfig,
         { view: 'template', template: '', height: 20},
         startSettingsConfig,
@@ -610,6 +763,76 @@ let settingsView = {
     },
     {},
   ],
+};
+
+const onTokenValidated = function onTokenValidated(data) {
+  let authClient = data;
+  hideProcessingDataMessage();
+  if (!authClient.isReadAllowed) {
+    webix.message({ type:'error', text: 'Invalid token' });
+    return;
+  }
+
+  let settingsValues = $$('browserAuthSettings').getValues();
+
+  if (!authClient.isReadWriteAllowed && settingsValues.browserAuth.isChangeEnabled) {
+    webix.message({ type:'error', text: 'Cannot enable config changes!\nNeed read/write auth token' });
+  }
+
+  storage.browserAuth = {
+    token: authClient.token,
+    isReadWriteAllowed: authClient.isReadWriteAllowed,
+    expiresOn: new Date(Date.now() + parseFloat(settingsValues.browserAuth.rememberForDays || 0) * 24 * 60 * 60 * 1000),
+    isChangeEnabled: settingsValues.browserAuth.isChangeEnabled,
+    rememberForDays: settingsValues.browserAuth.rememberForDays,
+  };
+  store.set('poloLender',  { browserAuth: storage.browserAuth });
+  socket.emit('authorization', storage.browserAuth.token, null);
+
+  webix.message({
+    text: `Config updated`,
+  });
+  updatedConfigHandlers.browserAuthSettings();
+};
+
+const onNewTokenGenerated = function onNewTokenGenerated(data) {
+  let authClient = data;
+  hideProcessingDataMessage();
+  let settingsValues = $$('browserAuthSettings').getValues();
+  storage.browserAuth = {
+    token: authClient.token,
+    isReadWriteAllowed: authClient.isReadWriteAllowed,
+    expiresOn: new Date(Date.now() + parseFloat(settingsValues.browserAuth.rememberForDays || 0) * 24 * 60 * 60 * 1000),
+    isChangeEnabled: settingsValues.browserAuth.isChangeEnabled,
+    rememberForDays: settingsValues.browserAuth.rememberForDays,
+  };
+  store.set('poloLender',  { browserAuth: storage.browserAuth });
+  //socket.emit('authorization', storage.browserAuth.token, null);
+
+  webix.message({
+    text: `Config updated`,
+  });
+  updatedConfigHandlers.browserAuthSettings();
+};
+
+updatedConfigHandlers.browserAuthSettings = function updatedConfigHandlers_browserAuthSettings() {
+  let formId = 'browserAuthSettings';
+  let fields = ['browserAuth.token', 'browserAuth.rememberForDays', 'browserAuth.tokenExpiresIn', 'browserAuth.generateNewToken'];
+
+  let browserAuth = _.defaultsDeep(storage.browserAuth, $$(formId).getValues().browserAuth);
+  browserAuth.isChangeEnabled = storage.browserAuth.isReadWriteAllowed ? browserAuth.isChangeEnabled : false;
+  browserAuth.rememberForDays = storage.browserAuth.rememberForDays;
+  $$(formId).setValues({ browserAuth: storage.browserAuth});
+
+  let changeSettingsButtonUi = $$(`change${formId}Button`);
+  let cancelEditSettingsButtonUi = $$(`cancelEdit${formId}Button`);
+  cancelEditSettingsButtonUi.hide();
+  changeSettingsButtonUi.define('type', '');
+  changeSettingsButtonUi.setValue('Change');
+  changeSettingsButtonUi.refresh();
+
+
+  fields.forEach(field => $$(field).disable());
 };
 
 updatedConfigHandlers.startSettings = function updatedConfigHandlers_startSettings() {
