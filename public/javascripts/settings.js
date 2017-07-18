@@ -787,7 +787,7 @@ const onTokenValidated = function onTokenValidated(data) {
     rememberForDays: settingsValues.browserAuth.rememberForDays,
   };
   store.set('poloLender',  { browserAuth: storage.browserAuth });
-  socket.emit('authorization', storage.browserAuth.token, null);
+//  socket.emit('authorization', storage.browserAuth.token, null);
 
   webix.message({
     text: `Config updated`,
