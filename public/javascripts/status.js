@@ -353,6 +353,6 @@ let startRefreshingStatus = function startRefreshingStatus() {
 
   lendingEngineStatus_apiActivityUi = $$('lendingEngineStatus_apiActivity');
   setInterval(function refreshPoloLenderAppInfo() {
-    lendingEngineStatus_apiActivityUi.render();
+    lendingEngineStatus_apiActivityUi.refresh();
   }, 50);
 };

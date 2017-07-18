@@ -2,9 +2,8 @@ let liveUpdatedAt = null;
 let liveStatusUi = null;
 
 const startRefreshingLiveUpdateStatus = function startRefreshingLiveUpdateStatus() {
-  liveStatusUi = $$('liveStatus');
   setInterval(function refreshLiveUpdateStatus() {
-    liveStatusUi.render();
+    liveStatusUi.refresh();
   }, 50);
 };
 

@@ -831,7 +831,6 @@ updatedConfigHandlers.browserAuthSettings = function updatedConfigHandlers_brows
   changeSettingsButtonUi.setValue('Change');
   changeSettingsButtonUi.refresh();
 
-
   fields.forEach(field => $$(field).disable());
 };
 

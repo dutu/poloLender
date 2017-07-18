@@ -46,31 +46,6 @@ let tabview = {
   ],
 };
 
-socket.on('authorized', function(data) {
-  let authClient = data;
-  hideProcessingDataMessage();
-  if (!authClient.isReadAllowed) {
-    webix.message({ type:'error', text: 'Invalid token' });
-    storage.browserAuth = {
-      isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
-    };
-    store.set('poloLender',  { browserAuth: storage.browserAuth });
-    return;
-  }
-
-  mainUi.show();
-  authUi.hide();
-
-
-  if (authClient.isReadWriteAllowed){
-    webix.message({text: 'Authorized for read/write' });
-  } else {
-    webix.message({text: 'Authorized for read/only' });
-  }
-
-  updatedConfigHandlers.browserAuthSettings();
-});
-
 webix.ready(function () {
   authUi = webix.ui({
     view: 'window',
@@ -96,8 +71,7 @@ webix.ready(function () {
               rememberForDays: auth.rememberForDays,
             };
             store.set('poloLender',  { browserAuth: storage.browserAuth });
-            let formId = this.getFormView().config.id;
-            socket.emit('authorization', storage.browserAuth.token, `${formId}`);
+            socket.emit('authorization', storage.browserAuth.token);
           }
         }
       ]
@@ -121,6 +95,7 @@ webix.ready(function () {
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
 
   advisorInfoTableUi = $$('advisorInfoTable');
+  liveStatusUi = $$('liveStatus');
   setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();
