@@ -52,7 +52,7 @@ socket.on('authorized', function(data) {
   if (!authClient.isReadAllowed) {
     webix.message({ type:'error', text: 'Invalid token' });
     storage.browserAuth = {
-      isChangeEnabled: storage.browserAuth && storage.browserAuth.isChangeEnabled ? storage.browserAuth.isChangeEnabled : true,
+      isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
     };
     store.set('poloLender',  { browserAuth: storage.browserAuth });
     return;
@@ -92,7 +92,7 @@ webix.ready(function () {
               token: auth.token,
               isReadWriteAllowed: false,
               expiresOn: auth.rememberForDays === '0' ? -1 : new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
-              isChangeEnabled: storage.browserAuth && storage.browserAuth.isChangeEnabled ? storage.browserAuth.isChangeEnabled : true,
+              isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
               rememberForDays: auth.rememberForDays,
             };
             store.set('poloLender',  { browserAuth: storage.browserAuth });
@@ -114,7 +114,9 @@ webix.ready(function () {
   });
   mainUi.hide();
 
-  setEnableConfigChanges(store.get('poloLender').browserAuth.isChangeEnabled);
+  let s = store.get('poloLender');
+  let isChangeEnabled = s.browserAuth && s.browserAuth.hasOwnProperty('isChangeEnabled') ? s.browserAuth.isChangeEnabled : true;
+  setEnableConfigChanges(isChangeEnabled);
   $$("lendingHistoryInputForm").elements["period"].attachEvent("onChange", onPeriodChange);
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
 
