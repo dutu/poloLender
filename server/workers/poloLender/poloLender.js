@@ -601,7 +601,7 @@ export const PoloLender = function(name) {
         duration = advisorInfo[currency] && advisorInfo[currency].bestDuration || '2';
         autoRenew = "0";
 
-        let minRate = parseFloat(config.offerMinRate[currency] || 0);
+        let minRate = parseFloat(config.offerMinRate[currency] || 0) / 100;
         let lendingRate = Math.max(minRate, advisorRate).toString();
 
         if (process.env[self.me+"_NOTRADE"] === "true") {
