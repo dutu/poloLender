@@ -32,7 +32,7 @@ let header = {
 
 let tabview = {
   view: 'tabview',
-  multiview: { keepViews: true },
+//  multiview: { keepViews: true },
   sizeToContent: true,
   id: 'contentTabview',
   animate: { type: "flip", subtype: "vertical" },
@@ -40,6 +40,7 @@ let tabview = {
     { header: "Status", body:{ view:"scrollview", scroll: "xy", body: statusView } },
     { header: "Performance", body:{ view:"scrollview", scroll: "xy", body: performanceReportView } },
     { header: "Live", body:{ view:"scrollview", scroll: "xy", body: liveView } },
+    { header: "Logtrail", body: logtrailView },
     { header: "History", body:{ view:"scrollview", scroll: "xy", body: historyView } },
     { header: "Settings", body:{ view:"scrollview", scroll: "xy", body: settingsView } },
     { header: "About", body:{ view:"scrollview", scroll: "xy", body: aboutView } },

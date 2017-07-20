@@ -3,6 +3,12 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.0] - unreleased
+
+### Added
+- Web UI tab for Logtrail
+
+
 ## [1.1.0] - 2017-07-18
 
 ### Added

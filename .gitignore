@@ -11,3 +11,4 @@ app/tests/coverage/
 .env
 /package-lock.json
 /config.json
+/logtrail.json

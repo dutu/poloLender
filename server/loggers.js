@@ -1,7 +1,12 @@
 import winston from 'winston';
 import _  from 'lodash';
 import moment from 'moment';
-import { isHeroku } from "./workers/poloLender/config"
+import { v4 as uuid } from 'uuid';
+
+import { io } from './httpServer';
+import { isHeroku } from "./workers/poloLender/config";
+import { saveLogTrailItem } from './workers/poloLender/logtrail';
+
 
 require('winston-telegram').Telegram;
 
@@ -12,15 +17,65 @@ let customLogColors = _.clone(winston.config.allColors);
 customLogColors.report = 'cyan';
 winston.addColors(customLogColors);
 
-export let consoleLogger = new (winston.Logger)({
+class IoSocketTransport extends winston.Transport {
+  constructor(options) {
+    super(options);
+    this.name = 'IoSocketTransport';
+    this.io = options.io;
+    this.eventName = options.eventName;
+  }
+
+  log(level, msg, meta, callback) {
+    if (io) {
+      io.sockets.emit(this.eventName, level, msg, meta);
+    }
+    callback(null, true);
+  }
+}
+
+winston.transports.IoSocketTransport = IoSocketTransport;
+
+class DbTransport extends winston.Transport {
+  constructor(options) {
+    super(options);
+    this.name = 'DbTransport';
+  }
+
+  log(level, msg, meta, callback) {
+    let logtrailItem = {
+      level,
+      msg,
+      uuid: meta.uuid,
+      timestamp: new Date(meta.timestamp),
+    };
+    saveLogTrailItem(logtrailItem);
+    callback(null, true);
+  }
+}
+
+winston.transports.DbTransport = DbTransport;
+
+let customLogger = new (winston.Logger)({
 	levels: customLogLevels,
 	transports: [
-		new (winston.transports.Console)({
-			colorize: 'all',
-      timestamp: function () {
-			  return !isHeroku && moment().format('YYYY-MM-DD HH:mm:ss') || '';
-      },
-		}),
+    new (winston.transports.IoSocketTransport)({
+      io: io,
+      eventName: 'logtrail',
+    }),
+    new (winston.transports.DbTransport)({
+    }),
+  ]
+});
+
+let consoleLogger = new (winston.Logger)({
+  levels: customLogLevels,
+  transports: [
+    new (winston.transports.Console)({
+      colorize: 'all',
+        timestamp: function () {
+          return !isHeroku && moment().format('YYYY-MM-DD HH:mm:ss') || '';
+        },
+    }),
   ]
 });
 
@@ -36,7 +91,8 @@ class LimiterTransport extends winston.Transport {
     let lcl = meta && meta.lcl || null;
     let llim = meta && meta.llim || 0;
     if (!lcl || llim === 0) {
-      consoleLogger[level](msg, meta);
+      customLogger[level](msg, meta);
+      consoleLogger[level](msg);
     } else {
       let newLog = {
         lcl: lcl,
@@ -47,7 +103,8 @@ class LimiterTransport extends winston.Transport {
       if (lastLogIndex === -1 || newLog.at > this.lastLogs[lastLogIndex].at + llim * 1000) {
         delete meta.lcl;
         delete meta.llim;
-        consoleLogger[level](msg, meta);
+        customLogger[level](msg, meta);
+        consoleLogger[level](msg);
         if (lastLogIndex === -1) {
           this.lastLogs.push(newLog);
         } else {
@@ -66,6 +123,14 @@ export let log = new winston.Logger({
   levels: customLogLevels,
   transports: [
     new (winston.transports.LimiterTransport)(),
+  ],
+  rewriters: [
+    function (level, msg, meta) {
+      meta.uuid = uuid();
+      meta.timestamp = Date.now();
+      meta.level = level;
+      return meta;
+    },
   ]
 });
 
@@ -85,9 +150,8 @@ export const addTelegramLogger = function addTelegramLogger(telegramToken, teleg
         token : telegramToken,
         chatId : telegramUserId,
         level: 'report',
-        handleExceptions: true,
+//        handleExceptions: true,
       }),
     ]
   });
-
 };

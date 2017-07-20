@@ -113,4 +113,6 @@ const setupOnEvents = function setupOnEvents() {
       });
     }
   });
+  socket.on('logtrail', onLogtrail);
+
 };

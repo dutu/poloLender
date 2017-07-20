@@ -224,7 +224,8 @@ export const PoloLender = function(name) {
   const onReturnLendingHistory = function onReturnLendingHistory(data) {
     poloPrivate.returnLendingHistory(data.start, data.end, data.limit, (err, result) => {
       if (err) {
-        log.notice(`returnLendingHistory: ${err.message}`);
+        let msg = `returnLendingHistory: ${err.message}`;
+        log.notice(msg);
       }
 
       authClientsEmit('lendingHistory', err && err.message || null, result);
@@ -293,36 +294,42 @@ export const PoloLender = function(name) {
     };
     socket.on('connect', function () {
       socket.emit('authentication', { token: config.lendingAdvisor.accessToken }); //send the jwt
-      log.info(`Connected to server ${config.lendingAdvisor.server}`);
+      let msg = `Connected to server ${config.lendingAdvisor.server}`;
+      log.info(msg);
       status.lendingAdvisor.connection = 'connected';
       emitStatusUpdate();
     });
     socket.on('reconnect', function () {
-      log.info(`Reconnected to server ${config.lendingAdvisor.server}`);
+      let msg = `Reconnected to server ${config.lendingAdvisor.server}`;
+      log.info(msg);
       status.lendingAdvisor.connection = 'reconnect';
       emitStatusUpdate();
     });
     socket.on("connect_error", function (err) {
       let error = JSON.parse(JSON.stringify(err));
       if (err.message) error.message = err.message;
-      log.warning(`Error connecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
+      let msg = `Error connecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`;
+      log.warning(msg);
       status.lendingAdvisor.connection = `connect error ${JSON.stringify(error)}`;
       emitStatusUpdate();
     });
     socket.on("reconnect_error", function (err) {
       let error = JSON.parse(JSON.stringify(err));
       if (err.message) error.message = err.message;
-      log.warning(`Error reconnecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`);
+      let msg = `Error reconnecting to server ${config.lendingAdvisor.server}: ${JSON.stringify(error)}`;
+      log.warning(msg);
       status.lendingAdvisor.connection = `reconnect error ${JSON.stringify(error)}`;
       emitStatusUpdate();
     });
     socket.on("disconnect", function () {
-      log.notice(`Disconnected from server ${config.lendingAdvisor.server}`);
+      let msg = `Disconnected from server ${config.lendingAdvisor.server}`;
+      log.notice(msg);
       status.lendingAdvisor.connection = 'disconnected';
       emitStatusUpdate();
     });
     socket.on("reconnecting", function (attemptNumber) {
-      log.info(`Reconnecting to server ${config.lendingAdvisor.server} (${attemptNumber})`);
+      let msg =`Reconnecting to server ${config.lendingAdvisor.server} (${attemptNumber})`;
+      log.info(msg);
       status.lendingAdvisor.connection = 'reconnecting';
       emitStatusUpdate();
     });
@@ -357,7 +364,8 @@ export const PoloLender = function(name) {
         });
       }
       catch (error) {
-        log.error(`Cannot parse loanOfferParameters ${smsg}`);
+        let msg = `Cannot parse loanOfferParameters ${smsg}`;
+        log.error(msg);
         debug(`Cannot parse loanOfferParameters: ${error.message}`);
       }
       emitAdvisorInfoUpdate();
@@ -378,7 +386,8 @@ export const PoloLender = function(name) {
           clientMessage.lastClientMessage = '';
         }
       } else {
-        log.error(`Cannot parse clientMessage ${smsg}`);
+        let msg = `Cannot parse clientMessage ${smsg}`;
+        log.error(msg);
       }
       emitClientMessageUpdate();
     });
@@ -426,9 +435,11 @@ export const PoloLender = function(name) {
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       let newActiveLoans;
       if (err) {
-        log.notice("returnActiveLoans: " + err.message);
+        let msg = "returnActiveLoans: " + err.message;
+        log.notice(msg);
         if (_.includes(err.message, 'IP has been banned')) {
-          log.info('API activity stopped for 1 minute');
+          let msg = 'API activity stopped for 1 minute';
+          log.info(msg);
           waitOneMinute = Date.now();
         }
 
@@ -460,9 +471,11 @@ export const PoloLender = function(name) {
       let apiMethod = 'returnOpenLoanOffers';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
       if (err) {
-        log.notice("returnOpenLoanOffers: " + err.message);
+        let msg = "returnOpenLoanOffers: " + err.message;
+        log.notice(msg);
         if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-          log.info('API activity stopped for 1 minute');
+          let msg = 'API activity stopped for 1 minute';
+          log.info(msg);
           waitOneMinute = Date.now();
         }
 
@@ -488,9 +501,12 @@ export const PoloLender = function(name) {
       let apiMethod = 'returnAvailableAccountBalances';
       emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod ,params: [], error: err && err.message || null, data: null });
       if (err) {
-        log.notice("returnAvailableAccountBalances: " + err.message);
+        let msg = "returnAvailableAccountBalances: " + err.message;
+        log.notice(msg);
+        log.notice(msg);
         if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-          log.info('API activity stopped for 1 minute');
+          let msg = 'API activity stopped for 1 minute';
+          log.info(msg);
           waitOneMinute = Date.now();
         }
 
@@ -538,9 +554,11 @@ export const PoloLender = function(name) {
               let apiMethod = 'cancelLoanOffer';
               emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
               if (err) {
-                log.notice(`cancelLoanOffer: ${err.message} (#${offer.id})`);
+                let msg = `cancelLoanOffer: ${err.message} (#${offer.id})`;
+                log.notice(msg);
                 if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-                  log.info('API activity stopped for 1 minute');
+                  let msg = 'API activity stopped for 1 minute';
+                  log.info(msg);
                   waitOneMinute = Date.now();
                 }
 
@@ -613,9 +631,11 @@ export const PoloLender = function(name) {
           let apiMethod = 'createLoanOffer';
           emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
           if (err) {
-            log.notice("createLoanOffer: " + err.message);
+            let msg = "createLoanOffer: " + err.message;
+            log.notice(msg);
             if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-              log.info('API activity stopped for 1 minute');
+              let msg = 'API activity stopped for 1 minute';
+              log.info(msg);
               waitOneMinute = Date.now();
             }
 
@@ -652,7 +672,8 @@ export const PoloLender = function(name) {
         data: null
       });
       if (err) {
-        log.notice("returnTicker: " + err.message);
+        let msg = "returnTicker: " + err.message;
+        log.notice(msg);
         return;
       }
 
@@ -668,7 +689,8 @@ export const PoloLender = function(name) {
   const updateRateBTCUSD = function updateRateBTCUSD() {
     bfxPublic.ticker("btcusd", function (err, result) {
       if(err) {
-        log.notice("bfxPublic.ticker: " + err.message);
+        let msg = "bfxPublic.ticker: " + err.message;
+        log.notice(msg);
         return;
       }
 
@@ -778,11 +800,13 @@ export const PoloLender = function(name) {
             }
 
             if (!config.isTradingEnabled && newConfig.isTradingEnabled) {
-              log.info('execTrades: Lending engine has been enabled!');
+              let msg  = 'execTrades: Lending engine has been enabled!';
+              log.info(msg);
             }
 
             if (config.isTradingEnabled && !newConfig.isTradingEnabled) {
-              log.warning('execTrades: Lending engine has been disabled!');
+              let msg = 'execTrades: Lending engine has been disabled!';
+              log.warning(msg);
             }
 
             if (!_.isEqual(config, newConfig)) {
@@ -826,7 +850,8 @@ export const PoloLender = function(name) {
                     if (err && (err.message.toLowerCase().includes('invalid api key') || err.message.toLowerCase().includes('api key and secret required'))) {
                       config.isTradingEnabled = false;
                       config.status.lendingEngineStopReason = err.message;
-                      log.warning(`execTrades: Lending engine will be disabled`);
+                      let msg = `execTrades: Lending engine will be disabled`;
+                      log.warning(msg);
                       saveConfig(config, (err, config) => {
                         emitConfigUpdate();
                         callback(err, "OK");
@@ -921,7 +946,8 @@ export const PoloLender = function(name) {
         let timeout = Math.max(0, config.apiCallsDurationMS - (timeNow - apiCallTimes[0]), waitOneMinute && 60000 || 0);
         setTimeout(function() {
           if (waitOneMinute) {
-            log.info('API activity resumed');
+            let msg = 'API activity resumed';
+            log.info(msg);
           }
           waitOneMinute = null;
 
@@ -947,9 +973,11 @@ export const PoloLender = function(name) {
           });
 
           if (err) {
-            log.notice(`${apiMethod}: ${err.message}`);
+            let msg = `${apiMethod}: ${err.message}`;
+            log.notice(msg);
             if (_.includes(err.message, 'throttled') || (err.message === 'Poloniex error 429: Too Many Requests')) {
-              log.info('API activity stopped for 1 minute');
+              let msg = 'API activity stopped for 1 minute';
+              log.info(msg);
               waitOneMinute = Date.now();
             }
 
