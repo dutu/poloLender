@@ -54,15 +54,18 @@ const setupOnEvents = function setupOnEvents() {
     hideProcessingDataMessage();
     if (!authClient.isReadAllowed) {
       webix.message({ type:'error', text: 'Invalid token' });
-      storage.browserAuth = {
-        isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
-      };
+      delete storage.browserAuth.token;
+      delete storage.browserAuth.isReadWriteAllowed;
+      delete storage.browserAuth.rememberUntil;
       store.set('poloLender',  { browserAuth: storage.browserAuth });
       return;
     }
 
     authUi.destructor();
     mainUi.show();
+
+    storage.browserAuth.isReadWriteAllowed = authClient.isReadWriteAllowed;
+    store.set('poloLender',  { browserAuth: storage.browserAuth });
 
     if (authClient.isReadWriteAllowed){
       webix.message({text: 'Authorized for read/write' });

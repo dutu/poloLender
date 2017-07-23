@@ -4,7 +4,7 @@ let liveStatusUi = null;
 const startRefreshingLiveUpdateStatus = function startRefreshingLiveUpdateStatus() {
   setInterval(function refreshLiveUpdateStatus() {
     liveStatusUi.refresh();
-  }, 50);
+  }, 1000/8);
 };
 
 const returnLoanRateTemplate = function returnLoanRateTemplate(obj) {
@@ -42,7 +42,7 @@ let liveStatusConfig = {
         }
 
         let activityHtml;
-        const indicatorOnForMs = 150;
+        const indicatorOnForMs = 1000/8;
         const banIconTimeoutMs = 60000;
         let ago = Date.now() - liveUpdatedAt;
         if (ago < indicatorOnForMs) {
@@ -131,15 +131,26 @@ let liveView = {
   ],
 };
 
-let updateLive = function updateLive(data) {
-  liveUpdatedAt = Date.now();
-  if (liveStatusUi) {
-    liveStatusUi.render();
+let activeLoans = [];
+let openOffers = [];
+
+let refreshLiveStatus = function refreshLiveStatus() {
+  let visibleView = $$('contentTabview').getMultiview().getValue();
+  if (visibleView !== 'liveView') {
+    return;
   }
 
-  let activeLoansTable = [];
-  data.activeLoans.forEach((activeLoan) => {
-    let newActiveLoan = {
+  liveUpdatedAt = Date.now();
+  if (liveStatusUi) {
+    liveStatusUi.refresh();
+  }
+
+  let activeLoansTableUi = $$('activeLoansTable');
+  let existingData = activeLoansTableUi.data.serialize();
+  let newData = _.differenceBy(activeLoans, existingData, 'id');
+  newData.reverse();
+  newData.forEach((activeLoan) => {
+    let newActiveLoanRow = {
       id: activeLoan.id,
       currency: activeLoan.currency,
       rate: parseFloat(activeLoan.rate),
@@ -149,19 +160,19 @@ let updateLive = function updateLive(data) {
       fees: parseFloat(activeLoan.fees),
       autoRenew: activeLoan.autoRenew,
     };
-    newActiveLoan.expiresAt = new Date(newActiveLoan.issuedAt.getTime() + newActiveLoan.duration * 24 * 60 * 60 * 1000);
-    activeLoansTable.push(newActiveLoan);
+    newActiveLoanRow.expiresAt = new Date(newActiveLoanRow.issuedAt.getTime() + newActiveLoanRow.duration * 24 * 60 * 60 * 1000);
+    activeLoansTableUi.add(newActiveLoanRow);
   });
 
-  let activeLoansTableUi = $$('activeLoansTable');
-  activeLoansTableUi.clearAll();
-  activeLoansTableUi.define({
-    'data': activeLoansTable,
+  let removedData = _.differenceBy(existingData, activeLoans, 'id');
+  removedData.forEach((activeLoan) => {
+    activeLoansTableUi.remove(activeLoan.id);
   });
-  activeLoansTableUi.refreshColumns();
+
+  activeLoansTableUi.refresh();
 
   let openOffersTable = [];
-  _.forEach(data.openOffers, (value, key) => {
+  _.forEach(openOffers, (value, key) => {
     let currency = key;
     let currencyOffers = value;
     currencyOffers.forEach((openOffer) => {
@@ -177,12 +188,25 @@ let updateLive = function updateLive(data) {
       openOffersTable.push(newOpenOffer);
     })
   });
-
   let openOffersTableUi = $$('openOffersTable');
-  openOffersTableUi.clearAll();
-  openOffersTableUi.define({
-    'data': openOffersTable,
+  existingData = openOffersTableUi.data.serialize();
+  newData = _.differenceBy(openOffersTable, existingData, 'id');
+  newData.reverse();
+
+  newData.forEach((openOffer) => {
+    openOffersTableUi.add(openOffer);
   });
-  openOffersTableUi.refreshColumns();
+
+  removedData = _.differenceBy(existingData, openOffersTable, 'id');
+  removedData.forEach((openOffer) => {
+    openOffersTableUi.remove(openOffer.id);
+  });
+
+  openOffersTableUi.refresh();
 };
 
+let updateLive = function updateLive(data) {
+  activeLoans = data.activeLoans;
+  openOffers = data.openOffers;
+  refreshLiveStatus();
+};

@@ -75,7 +75,7 @@ let logtrailListConfig = {
 };
 
 let logtrailView = {
-  id: 'logtrail',
+  id: 'logtrailView',
   borderless: true,
   type: 'clean',
   sizeToContent: true,

@@ -131,11 +131,19 @@ let performanceReportView = {
   ],
 };
 
+
 let performanceReportTable = [];
-let updatePerformanceReport = function updatePerformanceReport(data) {
+let performanceReportData = {};
+
+let refreshPerformanceView = function refreshPerformanceView() {
+  let visibleView = $$('contentTabview').getMultiview().getValue();
+  if (visibleView !== 'performanceView') {
+    return;
+  }
+
   let runningDays = parseFloat(moment().diff(poloLenderAppStatusData.runningSince, "minutes", true).toString()) / 60 / 24;
   lendingCurrencies.slice().reverse().forEach((currency) => {
-    let performanceData = data[currency];
+    let performanceData = performanceReportData[currency];
     let existingCurrencyDataIndex = _.findIndex(performanceReportTable, { currency: currency });
 
     if (existingCurrencyDataIndex > -1 && !performanceData) {
@@ -188,4 +196,9 @@ let updatePerformanceReport = function updatePerformanceReport(data) {
   ['totalFunds', 'wmr', 'ewmr'].forEach((row) => {
     performanceReportTableUi.adjustColumn(row, 'data');
   });
+};
+
+let updatePerformanceReport = function updatePerformanceReport(data) {
+  performanceReportData = data;
+  refreshPerformanceView();
 };
