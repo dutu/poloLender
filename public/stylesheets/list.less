@@ -37,12 +37,8 @@
   border-left-color: #2489cc;
 }
 
-.logtrail-list {
-  background-color: black;
-}
 
-.logtrail-list .webix_list_item {
-  .list-section-item;
+.custom-list {
   white-space: pre;
   font-family: monaco,monospace;
   line-height: 16px;
@@ -59,6 +55,23 @@
   word-wrap: break-word;
   border-top-width: 0;
   border-bottom-width: 0;
+}
+
+.logtrail-list {
+  background-color: black;
+}
+
+.logtrail-list .webix_list_item.webix_selected {
+  .custom-list;
+  background-color: darkslategray;
+  border-bottom-width: 0;
+}
+
+
+
+.logtrail-list .webix_list_item {
+  .list-section-item;
+  .custom-list;
 }
 
 .logtrail-list .webix_list_item:hover {
