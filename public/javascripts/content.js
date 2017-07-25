@@ -100,6 +100,7 @@ webix.ready(function () {
   setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();
+  startUpdateDonations();
 
   $$('contentTabview').getMultiview().attachEvent("onViewChange", function(prevID, nextID){
     isInitialView = true;

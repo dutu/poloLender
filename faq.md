@@ -8,7 +8,9 @@ Yes, please [raise an issue on github](https://github.com/dutu/pololender/issues
 
 **Q: Where can I donate some coins to support the project?**
 
-If this bot helped you in any way, if you'd like to see this project supported, you can always leave me a tip at:  
+poloLender is a free service. If it helped you in any way, if you would to contribute to the project and see it continue as a free service.
+
+You can make a donation at BTC address below:  
 		
 ![](http://i.imgur.com/cIfRJuU.png)
 

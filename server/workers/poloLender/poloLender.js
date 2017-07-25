@@ -552,8 +552,11 @@ export const PoloLender = function(name) {
             let offerRate;
             let amountTrading;
 
-            offerRate = new Big(offer.rate);
-            if (offerRate.eq(advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05')){
+            offerRate = parseFloat(offer.rate);
+            let recommendedRate = parseFloat(advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05');
+            let minRate = parseFloat(config.offerMinRate[currency] || 0) / 100;
+            recommendedRate = Math.max(minRate, recommendedRate);
+            if (offerRate === recommendedRate){
               // lend offers is on correct price
               return cb(null);
             }
