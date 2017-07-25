@@ -558,17 +558,13 @@ export const PoloLender = function(name) {
             recommendedRate = Math.max(minRate, recommendedRate);
             if (offerRate === recommendedRate){
               // lend offers is on correct price
-              return cb(null);
-            }
-
-            if (!(config.offerMaxAmount[currency] === "")) {
-              // only if we are reserving any amount check if we are already trading more then offerMaxAmount
               amountTrading = new Big(depositFunds[currency]).minus(availableFunds[currency]);
-              if(amountTrading.gte(config.offerMaxAmount[currency] || 9999999)) {
+              if(amountTrading.lte(config.offerMaxAmount[currency] || 9999999)) {
                 // we are already trading higher then offerMaxAmount
                 return cb(null);
               }
             }
+
             if (process.env[self.me+"_NOTRADE"] === "true") {
               log.notice("cancelHighOffers: NO TRADE");
               return cb(null);
