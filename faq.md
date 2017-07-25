@@ -8,7 +8,11 @@ Yes, please [raise an issue on github](https://github.com/dutu/pololender/issues
 
 **Q: Where can I donate some coins to support the project?**
 
-If this bot helped you in any way, you can always leave me a tip at (BTC) **1DTNRjLcBKug24YbXKaYm7JQMWMjZszYNa**  
+If this bot helped you in any way, if you'd like to see this project supported, you can always leave me a tip at:  
+		
+![](http://i.imgur.com/cIfRJuU.png)
+
+**16oQxZYyFbS5Anju7EUAxTEUq7hBm3qfyu**
 
 ---
 
