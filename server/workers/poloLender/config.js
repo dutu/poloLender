@@ -64,9 +64,9 @@ let ConfigModel;
 if (isMongo) {
   dbConn = mongoose.createConnection(mongodbURI, (err) => {
     if (err) {
-      log.error(`dbConn: ${err.message}`);
+      log.error(`dbConn.config: ${err.message}`);
     } else {
-      log.info(`dbConn: mongodb connection successful`);
+      log.info(`dbConn.config: mongodb connection successful`);
     }
 
   });
@@ -83,7 +83,7 @@ if (isMongo) {
 
   ConfigModel = dbConn.model('poloLenderConfig', configSchema, 'poloLenderConfig');
   dbConn.on('error', function (err) {
-    log.crit(`dbConn: ${err.message}`);
+    log.error(`dbConn.config: ${err.message}`);
   });
 } else {
   db = lowdb('config.json');

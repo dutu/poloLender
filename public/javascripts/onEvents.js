@@ -9,6 +9,7 @@ const setupOnEvents = function setupOnEvents() {
     }
     hideConnectionErrorMessage();
     updatePoloLenderAppStatus();
+    resetLogtrail();
   });
   socket.on('reconnect', function () {
     poloLenderAppConnection = 'connected';

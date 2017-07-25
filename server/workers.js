@@ -9,6 +9,7 @@ export class Workers {
   }
 
   start() {
+    log.warning(`*****  poloLender is restarting...  *****`);
     const startWorker = function startWorker(worker) {
       if(_.isFunction(worker.start)) {
         worker.start();

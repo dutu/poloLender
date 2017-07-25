@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import lowdb from 'lowdb'
 import _ from 'lodash';
 
+import { log } from "../../loggers"
+
 const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
 
@@ -16,9 +18,9 @@ let LogtrailModel;
 if (isMongo) {
   dbConn = mongoose.createConnection(mongodbURI, (err) => {
     if (err) {
-      console.log(`dbConn error: ${err.message}`);
+      console.log(`dbConn.logtrail error: ${err.message}`);
     } else {
-      console.log(`dbConn: mongodb connection successful`);
+      log.info(`dbConn.logtrail: mongodb connection successful`);
     }
 
   });
@@ -26,7 +28,7 @@ if (isMongo) {
   let logtrailSchema = new Schema({}, { strict: false });
   LogtrailModel = dbConn.model('poloLenderLogtrail', logtrailSchema, 'poloLenderLogtrail');
   dbConn.on('error', function (err) {
-    log.crit(`dbConn: ${err.message}`);
+    log.error(`dbConn.logtrail: ${err.message}`);
   });
 } else {
   db = lowdb('logtrail.json');
@@ -86,9 +88,15 @@ export const getLogTrailItems = function getLogTrailItems(params, callback) {
       db.defaults({ poloLenderLogtrail: [] })
         .write();
     }
-    db.get('poloLenderLogtrail')
-      .push(item)
-      .write();
-    _.isFunction(callback) && callback(null, item);
+    let data = db.get('poloLenderLogtrail')
+      .filter((item) => {
+        return new Date(item.timestamp) < endTime;
+      })
+      .sortBy((item) => {
+        return -(new Date(item.timestamp).getTime());
+      })
+      .take(count + 1)
+      .value();
+    _.isFunction(callback) && callback(null, data);
   }
 };

@@ -69,7 +69,7 @@ webix.ready(function () {
               isReadWriteAllowed: false,
               isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
               rememberForDays: auth.rememberForDays,
-              rememberUntil: auth.rememberForDays === '0' ? -1 : new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
+              rememberUntil: new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
             };
             store.set('poloLender',  { browserAuth: storage.browserAuth });
             socket.emit('authorization', storage.browserAuth.token);
@@ -113,11 +113,11 @@ webix.ready(function () {
 
   storage = store.get('poloLender') || {};
 
-  if (!storage || !storage.browserAuth || !storage.browserAuth.token || !storage.browserAuth.expiresOn) {
+  if (!storage || !storage.browserAuth || !storage.browserAuth.token || !storage.browserAuth.rememberUntil) {
     storage.browserAuth = {};
     store.set('poloLender',  { browserAuth: {} });
   } else {
-    if (storage.browserAuth.expiresOn === 'never' || Date.now() < new Date(storage.browserAuth.expiresOn).getTime()) {
+    if (Date.now() < new Date(storage.browserAuth.rememberUntil).getTime()) {
       socket.emit('authorization', storage.browserAuth.token, ``);
     } else {
       webix.message({ type:'error', text: 'Authorization token expired' });

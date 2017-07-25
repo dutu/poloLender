@@ -1060,9 +1060,9 @@ export const PoloLender = function(name) {
             saveConfig(config)
           }
 
-          log.info(`Your read/only authorization token is: ${config.authToken.readOnly}`);
-          log.info(`Your read/write authorization token is: ${config.authToken.readWrite}`);
-          log.info(`Token expires on: ${config.authToken.tokenExpiresOn}`);
+          console.log(`Your read/only authorization token is: ${config.authToken.readOnly}`);
+          console.log(`Your read/write authorization token is: ${config.authToken.readWrite}`);
+          console.log(`Token expires on: ${config.authToken.tokenExpiresOn}`);
 
           httpServerStart(config.port);
           currentApiKey = config.apiKey;

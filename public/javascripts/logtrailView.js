@@ -32,7 +32,7 @@ const loadBuffer = function loadBuffer() {
     let needMoreCount = visibleCount * 4;
     let firstRow = logtrailListUi.getItem(logtrailListUi.getFirstId());
     let params = {
-      endTime: firstRow && firstRow.timestamp,
+      endTime: firstRow && firstRow.timestamp || new Date(),
       count: needMoreCount,
     };
     showProcessingDataMessage();
@@ -58,7 +58,17 @@ const updateLogtrail = function updateLogtrail(errMessage, result) {
   if (isInitialView) {
     scrollToLast();
     isInitialView = false;
+    isAutoScroll = true;
+    $$('logtrailScrollButton').setValue('1');
   }
+};
+
+const resetLogtrail = function resetLogtrail() {
+  $$('logtrailList').clearAll();
+  isInitialView = true;
+  loadBuffer();
+  isAutoScroll = true;
+  $$('logtrailScrollButton').setValue('1');
 };
 
 const returnLogtrailItemListTemplate = function returnLogtrailItemListTemplate(obj) {
