@@ -99,7 +99,7 @@ let openOffersTableConfig = {
     { id: 'rate', header:[{ text: 'Rate', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, template: returnLoanRateTemplate },
     { id: 'amount', header:[{ text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight, template: returnAmountTemplate },
     { id: 'duration', header: [{text: 'Duration', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignCenter },
-    { id: 'issuedAt', header:[{ text: 'Issued', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, cssFormat: alignRight, template: returnIssuedAgoTemplate },
+    { id: 'issuedAt', header:[{ text: 'Issued', css: 'table-header-center' }], autowidth: true, adjust: true, sort: 'date', tooltip: tooltip, template: returnIssuedAgoTemplate },
   ],
   fixedRowHeight:false,  rowLineHeight:25, rowHeight:25,
   data: [],
@@ -134,7 +134,7 @@ let liveView = {
 let activeLoans = [];
 let openOffers = [];
 
-let refreshLiveStatus = function refreshLiveStatus() {
+let refreshLiveStatusView = function refreshLiveStatusView() {
   let visibleView = $$('contentTabview').getMultiview().getValue();
   if (visibleView !== 'liveView') {
     return;
@@ -148,8 +148,7 @@ let refreshLiveStatus = function refreshLiveStatus() {
   let activeLoansTableUi = $$('activeLoansTable');
   let existingData = activeLoansTableUi.data.serialize();
   let newData = _.differenceBy(activeLoans, existingData, 'id');
-  newData.reverse();
-  newData.forEach((activeLoan) => {
+  let dataToParse = newData.map((activeLoan) => {
     let newActiveLoanRow = {
       id: activeLoan.id,
       currency: activeLoan.currency,
@@ -161,8 +160,15 @@ let refreshLiveStatus = function refreshLiveStatus() {
       autoRenew: activeLoan.autoRenew,
     };
     newActiveLoanRow.expiresAt = new Date(newActiveLoanRow.issuedAt.getTime() + newActiveLoanRow.duration * 24 * 60 * 60 * 1000);
-    activeLoansTableUi.add(newActiveLoanRow);
+    if (existingData.length) {
+      activeLoansTableUi.add(newActiveLoanRow, 0);
+    }
+    return newActiveLoanRow;
   });
+
+  if (!existingData.length) {
+    activeLoansTableUi.parse(dataToParse);
+  }
 
   let removedData = _.differenceBy(existingData, activeLoans, 'id');
   removedData.forEach((activeLoan) => {
@@ -208,5 +214,5 @@ let refreshLiveStatus = function refreshLiveStatus() {
 let updateLive = function updateLive(data) {
   activeLoans = data.activeLoans;
   openOffers = data.openOffers;
-  refreshLiveStatus();
+  refreshLiveStatusView();
 };

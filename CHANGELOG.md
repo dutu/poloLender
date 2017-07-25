@@ -7,6 +7,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Web UI tab for Logtrail
+- log console error when telegram userId or token are invalid
 
 
 ## [1.1.0] - 2017-07-18

@@ -16,6 +16,7 @@ import { migrateConfig } from './dbMigrate';
 import { io } from '../../httpServer';
 import { connectDb, getConfig, saveConfig } from './config';
 import { debugApiCallDuration, debugCycleDuration, debugTimer } from './debug';
+import { getLogTrailItems } from "./logtrail";
 
 debug('pololender');
 
@@ -79,6 +80,11 @@ export const PoloLender = function(name) {
   const isWriteAllowed = function isWriteAllowed(cliendId) {
     let authClient = _.find(authClients, { id: cliendId });
     return authClient && authClient.isReadWriteAllowed;
+  };
+
+  const isReadAllowed = function isReadAllowed(cliendId) {
+    let authClient = _.find(authClients, { id: cliendId });
+    return authClient && authClient.isReadAllowed;
   };
 
   const authClientsEmit = function authClientsEmit() {
@@ -249,11 +255,26 @@ export const PoloLender = function(name) {
     });
   };
 
+  const onReturnLogtrailBuffer = function onReturnLogtrailBuffer(params) {
+    let clientId = this.id;
+    if (!isReadAllowed(clientId)) {
+      return;
+    }
+
+    getLogTrailItems(params, (errMessage, result) => {
+      let client = io.sockets.clients().connected[clientId];
+      if (client) {
+        client.emit('logtrailBuffer', errMessage, result);
+      }
+    });
+  };
+
   const onBrowserConnection = function onBrowserConnection(socket) {
     socket.on('authorization', onAuthorization);
     socket.on(`validateToken`, onValidateToken);
     socket.on(`generateNewToken`, onGenerateNewToken);
     socket.on('returnLendingHistory', onReturnLendingHistory);
+    socket.on('returnLogtrailBuffer', onReturnLogtrailBuffer);
     socket.on(`updateConfig`, onUpdateConfig);
 
   };
@@ -785,6 +806,7 @@ export const PoloLender = function(name) {
   };
 
   let currentApiKey = {};
+  let currentTelegramUserInfo = {};
   const execTrade = function execTrade() {
     async.series(
       {
@@ -797,6 +819,12 @@ export const PoloLender = function(name) {
             if (!_.isEqual(currentApiKey, config.apiKey)) {
               currentApiKey = config.apiKey;
               poloPrivate = new Poloniex(currentApiKey.key, currentApiKey.secret, { socketTimeout: 60000 });
+            }
+
+            if (currentTelegramUserInfo.telegramUserId !== config.telegramReports.telegramUserId || currentTelegramUserInfo.telegramToken !== config.telegramReports.telegramToken) {
+              currentTelegramUserInfo.telegramUserId = config.telegramReports.telegramUserId;
+              currentTelegramUserInfo.telegramToken = config.telegramReports.telegramToken;
+              logTg = addTelegramLogger(config.telegramReports && config.telegramReports.telegramToken, config.telegramReports && config.telegramReports.telegramUserId);
             }
 
             if (!config.isTradingEnabled && newConfig.isTradingEnabled) {

@@ -121,6 +121,7 @@ winston.transports.LimiterTransport = LimiterTransport;
 
 export let log = new winston.Logger({
   levels: customLogLevels,
+  exitOnError: true,
   transports: [
     new (winston.transports.LimiterTransport)(),
   ],
@@ -144,13 +145,29 @@ export const addTelegramLogger = function addTelegramLogger(telegramToken, teleg
   customLogLevels.report = 0;
   return new (winston.Logger)({
     levels: customLogLevels,
-    exitOnError: false,
+    exitOnError: function (err) {
+      switch (err.context) {
+        case 400: {
+          log.error(`telegramLogger: Telegram server returned an error. Please check your Telegram userId`);
+          break;
+        }
+        case 401:
+        case 404: {
+          log.error(`telegramLogger: Telegram server returned an error. Please check your Telegram token`);
+          break;
+        }
+        default: {
+          log.error(`telegramLogger: Telegram server returned an error ${err.context}`);
+        }
+      }
+      return false;
+    },
     transports: [
       new (winston.transports.Telegram)({
         token : telegramToken,
         chatId : telegramUserId,
         level: 'report',
-//        handleExceptions: true,
+        handleExceptions: true,
       }),
     ]
   });

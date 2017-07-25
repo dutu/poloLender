@@ -102,9 +102,11 @@ webix.ready(function () {
   startRefreshingLiveUpdateStatus();
 
   $$('contentTabview').getMultiview().attachEvent("onViewChange", function(prevID, nextID){
-    refreshLiveStatus();
+    isInitialView = true;
+    refreshLiveStatusView();
     refreshPerformanceView();
     refreshStatusView();
+    refreshLogtrailView();
   });
 
 

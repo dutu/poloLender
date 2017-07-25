@@ -54,3 +54,41 @@ export const saveLogTrailItem = function saveLogTrailItem(item, callback) {
     _.isFunction(callback) && callback(null, item);
   }
 };
+
+export const getLogTrailItems = function getLogTrailItems(params, callback) {
+  let endTime = new Date(params.endTime);
+  let count = params.count || 0;
+  let result = {
+    errorMsg: '',
+    isStartReached: true,
+    buffer: [],
+  };
+  if (isMongo) {
+    LogtrailModel.find({ timestamp: { $lt: endTime }})
+      .sort('-timestamp')
+      .limit(count + 1)
+      .lean()
+      .then((result) => {
+        let data = result.map((item) => {
+          item.timestamp = item.timestamp.getTime();
+          delete item._id;
+          delete item._v;
+          return item;
+        });
+        _.isFunction(callback) && callback(null, data);
+      })
+      .catch((err) => {
+        log.warning(`LogtrailModel.find: ${err.message}`);
+        _.isFunction(callback) && callback(err.message, null);
+      });
+  } else {
+    if (!db.get('poloLenderLogtrail').value()) {
+      db.defaults({ poloLenderLogtrail: [] })
+        .write();
+    }
+    db.get('poloLenderLogtrail')
+      .push(item)
+      .write();
+    _.isFunction(callback) && callback(null, item);
+  }
+};

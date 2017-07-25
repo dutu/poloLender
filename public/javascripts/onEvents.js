@@ -98,6 +98,7 @@ const setupOnEvents = function setupOnEvents() {
   socket.on('performanceReport', updatePerformanceReport);
   socket.on('liveUpdates', updateLive);
   socket.on('lendingHistory', updateLendingHistory);
+  socket.on('logtrailBuffer', updateLogtrail);
   socket.on('updatedConfig', function updatedConfig(errMessage, newConfig, source) {
     if (_.isFunction(updatedConfigHandlers[source])) {
       updatedConfigHandlers[source].call();

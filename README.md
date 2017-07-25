@@ -20,8 +20,7 @@ The application code is open source and shared on github at https://github.com/d
 * [Updating the application](#updating-the-application)
     * Running locally
     * Running on Heroku
-* [poloLender Pro configuration](#ploLender-pro-configuration)
-* [FAQ](#faq)
+* [FAQ](https://github.com/dutu/poloLender/blob/master/faq.md)
 * [License](#license)
 
 
@@ -33,7 +32,7 @@ The application code is open source and shared on github at https://github.com/d
 * **Reports** can be sent to your phone **on Telegram** messenger.
 * **Web interface** (under developement, new features being added).
 * Can **run locally** on your PC **or in the cloud** (heroku).
-* **Activelly supported**. **Join** poloLender discussion/support group **on telegram: https://t.me/cryptozone** or [raise an issue](https://github.com/dutu/poloLender/issues).   
+* **Activelly supported**. **Join** poloLender discussion/support group **on telegram: [https://t.me/cryptozone](https://t.me/cryptozone)** or [raise an issue](https://github.com/dutu/poloLender/issues).   
 
 # What's new
 
@@ -44,6 +43,9 @@ Configuration is now done through the web UI (Settings tab)
 # Supported crypto-currencies
 
 ![](http://i.imgur.com/wj8Bf6o.jpg)
+
+> Note: As off July 25, support for lending XMR, XRP, ETH, CLAM and STR is temporarly suspended. This is due low lending rates for this particular currencies and also the need of resources to keep lending support active (funds and computing power). If you'd like to see lending support restored pls contact me on [telegram support group](https://t.me/cryptozone) or [raise an issue on Github](https://github.com/dutu/poloLender/issues).     
+ 
 
 # How it works
 
