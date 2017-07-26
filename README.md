@@ -44,7 +44,7 @@ Configuration is now done through the web UI (Settings tab)
 
 ![](http://i.imgur.com/wj8Bf6o.jpg)
 
-> Note: As off July 25, support for lending XMR, XRP, ETH, CLAM and STR is temporarly suspended. This is due low lending rates for this particular currencies and also the need of resources to keep lending support active (funds and computing power). If you'd like to see lending support restored pls contact me on [telegram support group](https://t.me/cryptozone) or [raise an issue on Github](https://github.com/dutu/poloLender/issues).     
+> Note: As of July 25, support for lending XMR, XRP, ETH and CLAM is temporarly suspended. This is due low lending rates for these particular currencies and also the need of resources to keep lending support active (funds and computing power). If you'd like to see lending support restored, please contact me on [telegram support group](https://t.me/cryptozone) or [raise an issue on Github](https://github.com/dutu/poloLender/issues).     
  
 
 # How it works
