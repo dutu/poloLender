@@ -883,11 +883,9 @@ export const PoloLender = function(name) {
                         emitConfigUpdate();
                         callback(err, "OK");
                       });
-                      return;
                     } else {
                       callback(err, err && err.message || "OK");
                     }
-                    config.status.lendingEngineStopReason = ''
                   });
                 }, nonceDelay, callback);
               },

@@ -151,6 +151,7 @@ let lendingEngineStatusConfig = {
             }
 
             config.isTradingEnabled = !config.isTradingEnabled;
+            config.status.lendingEngineStopReason = 'Manually stopped';
             showProcessingDataMessage();
             socket.emit('updateConfig', config);
           },
