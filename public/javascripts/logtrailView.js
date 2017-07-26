@@ -29,7 +29,7 @@ const loadBuffer = function loadBuffer() {
   let visibleCount = logtrailListUi.getVisibleCount();
   if (bufferUp < visibleCount * 3) {
     isUpdateLogtrailInProgress = true;
-    let needMoreCount = visibleCount * 4;
+    let needMoreCount = visibleCount * 6;
     let firstRow = logtrailListUi.getItem(logtrailListUi.getFirstId());
     let params = {
       endTime: firstRow && firstRow.timestamp || new Date(),
