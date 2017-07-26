@@ -554,7 +554,7 @@ export const PoloLender = function(name) {
 
             offerRate = parseFloat(offer.rate);
             let recommendedRate = parseFloat(advisorInfo[currency] && advisorInfo[currency].bestReturnRate || '0.05');
-            let minRate = parseFloat(config.offerMinRate[currency] || 0) / 100;
+            let minRate = parseFloat(new Big(config.offerMinRate[currency] || 0).div(100).toString());
             recommendedRate = Math.max(minRate, recommendedRate);
             if (offerRate === recommendedRate){
               // lend offers is on correct price
@@ -883,9 +883,11 @@ export const PoloLender = function(name) {
                         emitConfigUpdate();
                         callback(err, "OK");
                       });
+                      return;
                     } else {
                       callback(err, err && err.message || "OK");
                     }
+                    config.status.lendingEngineStopReason = ''
                   });
                 }, nonceDelay, callback);
               },
