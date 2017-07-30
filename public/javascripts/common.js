@@ -72,6 +72,9 @@ const formatDurationFromDays = function formatDurationFromDays(days) {
 };
 
 const setEnableConfigChanges = function setEnableConfigChanges (newValue, oldValue) {
+  if (newValue !== $$('browserAuth.isChangeEnabled').getValue()) {
+    $$('browserAuth.isChangeEnabled').setValue(newValue);
+  }
   let changeButtons = [ 'changeAndSetStartSettingsButton', 'changelendingSettingsButton', 'changeapiKeySettingsButton', 'changelendingSettingsButton', 'changeconsoleReportsSettingsButton', 'changetelegramReportsSettingsButton', 'changetelegramReportsSettingsButton', 'changelendingAdvisorSettingsButton', 'lendingEngineStartStopButton'];
   changeButtons.forEach((button) => {
     let buttonUi = $$(button);

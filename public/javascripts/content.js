@@ -37,13 +37,13 @@ let tabview = {
   id: 'contentTabview',
   animate: { type: "flip", subtype: "vertical" },
   cells:[
-    { header: "Status", body:{ view:"scrollview", scroll: "xy", body: statusView } },
-    { header: "Performance", body:{ view:"scrollview", scroll: "xy", body: performanceReportView } },
-    { header: "Live", body:{ view:"scrollview", scroll: "xy", body: liveView } },
+    { header: "Status", body:{ id: 'statusView', view:"scrollview", scroll: "xy", body: statusView } },
+    { header: "Performance", body:{ id: 'performanceView', view:"scrollview", scroll: "xy", body: performanceReportView } },
+    { header: "Live", body:{ id: 'liveView', view:"scrollview", scroll: "xy", body: liveView } },
     { header: "Logtrail", body: logtrailView },
-    { header: "History", body:{ view:"scrollview", scroll: "xy", body: historyView } },
-    { header: "Settings", body:{ view:"scrollview", scroll: "xy", body: settingsView } },
-    { header: "About", body:{ view:"scrollview", scroll: "xy", body: aboutView } },
+    { header: "History", body:{ id: 'historyView', view:"scrollview", scroll: "xy", body: historyView } },
+    { header: "Settings", body:{ id: 'settingsView', view:"scrollview", scroll: "xy", body: settingsView } },
+    { header: "About", body:{ id: 'abountView', view:"scrollview", scroll: "xy", body: aboutView } },
   ],
 };
 
@@ -67,9 +67,9 @@ webix.ready(function () {
             storage.browserAuth = {
               token: auth.token,
               isReadWriteAllowed: false,
-              expiresOn: auth.rememberForDays === '0' ? -1 : new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
               isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
               rememberForDays: auth.rememberForDays,
+              rememberUntil: new Date(Date.now() + parseFloat(auth.rememberForDays) * 24 * 60 * 60 * 1000),
             };
             store.set('poloLender',  { browserAuth: storage.browserAuth });
             socket.emit('authorization', storage.browserAuth.token);
@@ -90,7 +90,7 @@ webix.ready(function () {
   mainUi.hide();
 
   let s = store.get('poloLender');
-  let isChangeEnabled = s.browserAuth && s.browserAuth.hasOwnProperty('isChangeEnabled') ? s.browserAuth.isChangeEnabled : true;
+  let isChangeEnabled = s && s.browserAuth && s.browserAuth.hasOwnProperty('isChangeEnabled') ? s.browserAuth.isChangeEnabled : 1;
   setEnableConfigChanges(isChangeEnabled);
   $$("lendingHistoryInputForm").elements["period"].attachEvent("onChange", onPeriodChange);
   webix.extend($$('lendingHistoryTable'), webix.ProgressBar);
@@ -100,14 +100,24 @@ webix.ready(function () {
   setupOnEvents();
   startRefreshingStatus();
   startRefreshingLiveUpdateStatus();
+  startUpdateDonations();
+
+  $$('contentTabview').getMultiview().attachEvent("onViewChange", function(prevID, nextID){
+    isInitialView = true;
+    refreshLiveStatusView();
+    refreshPerformanceView();
+    refreshStatusView();
+    refreshLogtrailView();
+  });
+
 
   storage = store.get('poloLender') || {};
 
-  if (!storage || !storage.browserAuth || !storage.browserAuth.token || !storage.browserAuth.expiresOn) {
+  if (!storage || !storage.browserAuth || !storage.browserAuth.token || !storage.browserAuth.rememberUntil) {
     storage.browserAuth = {};
     store.set('poloLender',  { browserAuth: {} });
   } else {
-    if (storage.browserAuth.expiresOn === 'never' || Date.now() < new Date(storage.browserAuth.expiresOn).getTime()) {
+    if (Date.now() < new Date(storage.browserAuth.rememberUntil).getTime()) {
       socket.emit('authorization', storage.browserAuth.token, ``);
     } else {
       webix.message({ type:'error', text: 'Authorization token expired' });

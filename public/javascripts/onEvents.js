@@ -9,6 +9,7 @@ const setupOnEvents = function setupOnEvents() {
     }
     hideConnectionErrorMessage();
     updatePoloLenderAppStatus();
+    resetLogtrail();
   });
   socket.on('reconnect', function () {
     poloLenderAppConnection = 'connected';
@@ -54,15 +55,18 @@ const setupOnEvents = function setupOnEvents() {
     hideProcessingDataMessage();
     if (!authClient.isReadAllowed) {
       webix.message({ type:'error', text: 'Invalid token' });
-      storage.browserAuth = {
-        isChangeEnabled: storage.browserAuth && storage.browserAuth.hasOwnProperty('isChangeEnabled') ? storage.browserAuth.isChangeEnabled : true,
-      };
+      delete storage.browserAuth.token;
+      delete storage.browserAuth.isReadWriteAllowed;
+      delete storage.browserAuth.rememberUntil;
       store.set('poloLender',  { browserAuth: storage.browserAuth });
       return;
     }
 
     authUi.destructor();
     mainUi.show();
+
+    storage.browserAuth.isReadWriteAllowed = authClient.isReadWriteAllowed;
+    store.set('poloLender',  { browserAuth: storage.browserAuth });
 
     if (authClient.isReadWriteAllowed){
       webix.message({text: 'Authorized for read/write' });
@@ -95,6 +99,7 @@ const setupOnEvents = function setupOnEvents() {
   socket.on('performanceReport', updatePerformanceReport);
   socket.on('liveUpdates', updateLive);
   socket.on('lendingHistory', updateLendingHistory);
+  socket.on('logtrailBuffer', updateLogtrail);
   socket.on('updatedConfig', function updatedConfig(errMessage, newConfig, source) {
     if (_.isFunction(updatedConfigHandlers[source])) {
       updatedConfigHandlers[source].call();
