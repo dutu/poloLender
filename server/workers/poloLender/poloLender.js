@@ -627,6 +627,10 @@ export const PoloLender = function(name) {
           return callback(new Error("NO TRADE"));
         }
 
+        if (parseFloat(lendingRate) > 0.02) {
+          duration = '60';
+        }
+
         poloPrivate.createLoanOffer(currency, amount, duration, autoRenew, lendingRate, function (err, result) {
           let apiMethod = 'createLoanOffer';
           emitApiCallUpdate({ timestamp: Date.now(), apiServer: 'poloniex', apiMethod: apiMethod, params: [], error: err && err.message || null, data: null });
