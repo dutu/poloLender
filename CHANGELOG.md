@@ -3,6 +3,11 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.0] - 2017-07-31
+
+### Changed
+- loan offer duration fixed to 60 days for loan offers with rate > 2% 
+
 ## [1.2.1] - 2017-07-26
 
 ### Fixed
