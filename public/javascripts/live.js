@@ -175,6 +175,10 @@ let refreshLiveStatusView = function refreshLiveStatusView() {
     activeLoansTableUi.remove(activeLoan.id);
   });
 
+  activeLoansTableUi.eachRow((rowId) => {
+    let row = activeLoansTableUi.getItem(rowId);
+    row.fees = parseFloat(_.find(activeLoans, {id: rowId}).fees);
+  });
   activeLoansTableUi.refresh();
 
   let openOffersTable = [];

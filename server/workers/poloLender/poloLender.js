@@ -545,6 +545,10 @@ export const PoloLender = function(name) {
     async.forEachOfSeries(activeOffers,
       // for each currency in activeOffers
       function(activeOffersOneCurrency, currency, callback) {
+        if (!advisorInfo[currency]) {
+          return callback(null)
+        }
+
         async.forEachOfSeries(activeOffersOneCurrency,
           //for each offer in the array (for respective currency)
           function (offer, index, cb) {

@@ -86,8 +86,10 @@ const setEnableConfigChanges = function setEnableConfigChanges (newValue, oldVal
       }
     }
     let s = store.get('poloLender');
-    s.browserAuth.isChangeEnabled = newValue;
-    store.set('poloLender',  { browserAuth: s.browserAuth });
+    if (s && s.browserAuth) {
+      s.browserAuth.isChangeEnabled = newValue;
+      store.set('poloLender',  { browserAuth: s.browserAuth });
+    }
   });
 };
 
