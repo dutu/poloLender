@@ -3,6 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.1] - 2017-08-02
+
+### Changed
+- don't cancel loans offers for unsuported currencies 
+
+### Fixed
+- active loan fees don't update ([#112](https://github.com/dutu/poloLender/issues/112))
+- browser needs refresh to login after after authorization
+
 ## [1.3.0] - 2017-07-31
 
 ### Changed
