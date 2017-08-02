@@ -85,14 +85,15 @@ let performanceReportTableConfig = {
     { id: 'startBalance', header:[{ text: 'Start balance', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, cssFormat: alignRight },
     { id: 'totalFunds', header: [{text: 'Current balance', colspan: 2, css: 'table-header-center' }, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip , cssFormat: alignRight, template: returnTotalFundsTemplate },
     { id: 'totalFundsUSD', header:[null, { text: 'Worth USD', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
-    { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 2, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, minWidth: 51, cssFormat: alignCenter, tooltip: tooltip },
+    { id: 'activeLoansCount', header: [{text: 'Active loans', colspan: 6, css: 'table-header-center' },{ text: 'Count' }], adjust: 'data', autowidth: true, minWidth: 51, cssFormat: alignCenter, tooltip: tooltip },
     { id: 'activeLoansAmount', header:[null, { text: 'Amount', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
-    { id: 'profit', header:[{text: 'Profit', colspan: 3, css: 'table-header-center' }, {text: 'Currency', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitTemplate, cssFormat: alignRight },
+    { id: 'activeLoansFees', header:[null, { text: '<span title="Accumulated unrealized interest">Interest<i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></span>', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, cssFormat: alignRight },
+    { id: 'wmr', header: [null, {text: '<span title="Weighted daily rate">Average rate<i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></span>', css: 'table-header-center' }], autowidth: false, minWidth: 112, adjust: true, sort: "int", tooltip: tooltip, template: returnWmrTemplate, cssFormat: alignRight, tooltip: 'Weighted average rate of active loans' },
+    { id: 'ewmr', header: [null, {text: '<span title="Weighted daily rate minus Poloniex commision">effective<i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></span>', css: 'table-header-center' }], autowidth: false, minWidth: 90, adjust: true, sort: "int", tooltip: tooltip, template: returnEwmrTemplate, cssFormat: alignRight, tooltip: 'daily rate minus Poloniex commision' },
+    { id: 'apy', header:[null, { text: '<span title="Annual Percentage Yield\ntaking into account the effective daily rate and compound interest">APY<i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></span>', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnAPYTemplate, cssFormat: alignRight, tooltip: 'Annual Percentage Yield\ntaking into account the effective daily rate and compound interest' },
+    { id: 'profit', header:[{text: 'Realized profit', colspan: 3, css: 'table-header-center' }, {text: 'Currency', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitTemplate, cssFormat: alignRight },
     { id: 'profitPerc', header: [null, {text: '%', css: 'table-header-center' }], autowidth: true, adjust: true, sort: "int", tooltip: tooltip, template: returnProfitPercTemplate, cssFormat: alignRight },
     { id: 'profitUSD', header:[null, {text: 'Worth USD', css: 'table-header-center' }], autowidth: true, autoheight: true, adjust: true, tooltip: tooltip, template: returnProfitUSDTemplate, cssFormat: alignRight },
-    { id: 'wmr', header: [{text: '<span title="Weighted average rate of active loans">Weighted average rate<sup><i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></sup></span>', colspan: 2, css: 'table-header-center' },{ text: 'Daily', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnWmrTemplate, cssFormat: alignRight, tooltip: 'Weighted average rate of active loans' },
-    { id: 'ewmr', header: [null, {text: '<span title="Daily rate minus Poloniex commision">effective<sup><i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></sup></span>', css: 'table-header-center' }], autowidth: false, adjust: true, sort: "int", tooltip: tooltip, template: returnEwmrTemplate, cssFormat: alignRight, tooltip: 'daily rate minus Poloniex commision' },
-    { id: 'apy', header:[{ text: '<span title="Annual Percentage Yield\ntaking into account the effective daily rate and compound interest">APY<sup><i class="webix_icon fa-question-circle-o" style="font-size: 95%"></i></sup></span>', css: 'table-header-center' }], autowidth: true, adjust: true, tooltip: tooltip, template: returnAPYTemplate, cssFormat: alignRight, tooltip: 'Annual Percentage Yield\ntaking into account the effective daily rate and compound interest' },
   ],
   fixedRowHeight:false,  rowLineHeight:25, rowHeight:25,
 /*
@@ -284,6 +285,19 @@ let refreshPerformanceView = function refreshPerformanceView() {
       return (parseFloat(amount) * parseFloat(performanceData.rateBTC) * parseFloat(performanceData.rateBTCUSD));
     };
     let existingCurrencyData = existingCurrencyDataIndex > -1 && performanceReportTable[existingCurrencyDataIndex] || null;
+
+    performanceData.activeLoansFees = {};
+    _.forEach(activeLoans, (activeLoan) => {
+      if (!performanceData.activeLoansFees[activeLoan.currency]) {
+        performanceData.activeLoansFees[activeLoan.currency] = new Big(0);
+      } else {
+        performanceData.activeLoansFees[activeLoan.currency] = performanceData.activeLoansFees[activeLoan.currency].plus(activeLoan.fees);
+      }
+    });
+    _.forEach(performanceData.activeLoansFees, (activeLoansFee, currency) => {
+      performanceData.activeLoansFees[currency] = performanceData.activeLoansFees[currency].toFixed(8);
+    });
+
     let newRow = {
       currency: currency,
       rateBTC: performanceData.rateBTC || '',
@@ -293,6 +307,7 @@ let refreshPerformanceView = function refreshPerformanceView() {
       totalFundsUSD: toUSD(performanceData.totalFunds).toFixed(0),
       activeLoansCount: performanceData.activeLoansCount || 0,
       activeLoansAmount: performanceData.activeLoansAmount || '',
+      activeLoansFees: performanceData.activeLoansFees[currency] || '',
       bestReturnRate: performanceData.bestReturnRate || '',
       profit: (parseFloat(performanceData.totalFunds) - parseFloat(performanceData.startBalance)) || 0,
       wmr: performanceData.wmr,

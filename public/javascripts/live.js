@@ -131,9 +131,6 @@ let liveView = {
   ],
 };
 
-let activeLoans = [];
-let openOffers = [];
-
 let refreshLiveStatusView = function refreshLiveStatusView() {
   let visibleView = $$('contentTabview').getMultiview().getValue();
   if (visibleView !== 'liveView') {

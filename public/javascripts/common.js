@@ -12,6 +12,8 @@ let config = {};
 let status = {};
 let storage = {};
 let clientMessage = {};
+let activeLoans = [];
+let openOffers = [];
 
 const showProcessingDataMessage = function showSavingDataMessage() {
   savingDataMessage = webix.message({

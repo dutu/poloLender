@@ -3,6 +3,14 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.2] - 2017-08-02
+
+### Added
+- performance view shows accumulated unrealized interest  
+
+### Changed
+- minimal console output for http server  
+
 ## [1.3.1] - 2017-08-02
 
 ### Changed
