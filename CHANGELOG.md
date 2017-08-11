@@ -1,7 +1,12 @@
 # poloLender Pro Changelog
 
 All notable changes to this module are documented in this file.
-poloLender application adheres to [Semantic Versioning](http://semver.org/).
+poloLender application adheres to [Semantic Versioning](http://semver.org/
+
+## [1.3.3] - 2017-08-11
+
+### Fixed
+- performance counter doesn't include first active loan
 
 ## [1.3.2] - 2017-08-02
 

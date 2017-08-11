@@ -289,7 +289,7 @@ let refreshPerformanceView = function refreshPerformanceView() {
     performanceData.activeLoansFees = {};
     _.forEach(activeLoans, (activeLoan) => {
       if (!performanceData.activeLoansFees[activeLoan.currency]) {
-        performanceData.activeLoansFees[activeLoan.currency] = new Big(0);
+        performanceData.activeLoansFees[activeLoan.currency] = new Big(activeLoan.fees);
       } else {
         performanceData.activeLoansFees[activeLoan.currency] = performanceData.activeLoansFees[activeLoan.currency].plus(activeLoan.fees);
       }
