@@ -1,7 +1,7 @@
 # poloLender Pro Changelog
 
 All notable changes to this module are documented in this file.
-poloLender application adheres to [Semantic Versioning](http://semver.org/
+poloLender application adheres to [Semantic Versioning](http://semver.org/).
 
 ## [1.3.3] - 2017-08-11
 
@@ -19,7 +19,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 ## [1.3.1] - 2017-08-02
 
 ### Changed
-- don't cancel loans offers for unsuported currencies 
+- don't cancel loans offers for unsuported currencies
 
 ### Fixed
 - active loan fees don't update ([#112](https://github.com/dutu/poloLender/issues/112))
@@ -28,7 +28,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 ## [1.3.0] - 2017-07-31
 
 ### Changed
-- loan offer duration fixed to 60 days for loan offers with rate > 2% 
+- loan offer duration fixed to 60 days for loan offers with rate > 2%
 
 ## [1.2.1] - 2017-07-26
 
@@ -61,7 +61,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 ### Added
 - UI tab for Settings
 - timestamp for console log output
-- display the minimum offer amount in the "status" tab 
+- display the minimum offer amount in the "status" tab
 
 ### Changed
 - Configuration is only done through the UI (Settings tab)
@@ -113,7 +113,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 ## [0.8.2] - 2017-05-18
 
 ### Changed
-- Update socket timeout to 60 seconds to minimize error 429 issued by Cloudflare 
+- Update socket timeout to 60 seconds to minimize error 429 issued by Cloudflare
 
 ## [0.8.1] - 2017-05-15
 
@@ -130,7 +130,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 ### Fixed
 - update dependency on `poloniex-api-node` module for better handling of Poloniex API errors
 - only update currency list only when all set of API calls is complete
- 
+
 ### Changed
 - only show status for coins with balance > 0
 
@@ -142,7 +142,7 @@ poloLender application adheres to [Semantic Versioning](http://semver.org/
 
 ### Changed
 - more robust API calls throttling to comply with Poloniex limits
-- support any currency for which lendingRate is received from **poloLending-Advisor** server 
+- support any currency for which lendingRate is received from **poloLending-Advisor** server
 
 ## [0.7.0] - 2017-04-06
 
