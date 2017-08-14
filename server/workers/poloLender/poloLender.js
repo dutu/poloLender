@@ -402,7 +402,7 @@ export const PoloLender = function(name) {
           lastClientSemver: msg.lastClientSemver,
         };
         if(clientMessage.lastClientSemver && semver.gt(clientMessage.lastClientSemver, pjson.version)) {
-          clientMessage.lastClientMessage = ` - available ${clientMessage.lastClientSemver}. Please update your app!`;
+          clientMessage.lastClientMessage = ` - Newer version available: <a href="https://github.com/dutu/poloLender/blob/master/CHANGELOG.md">${clientMessage.lastClientSemver}</a>. Please update your app!`;
         } else {
           clientMessage.lastClientMessage = '';
         }
