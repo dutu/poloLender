@@ -4,7 +4,7 @@ import Big from 'big.js';
 import moment from 'moment';
 import async from 'async';
 import Debug from 'debug';
-import Bitfinex from 'bitfinex';
+import  Bitfinex from 'bitfinex-api-node';
 import semver from 'semver';
 import Poloniex from 'poloniex-api-node';
 import uniqid from 'uniqid';
@@ -71,7 +71,7 @@ export const PoloLender = function(name) {
 	let waitOneMinute = null;
 	let callsLast100 = [];
 
-	let bfxPublic = new Bitfinex();
+	let bfxPublic = new Bitfinex().rest;
   let poloPublic = new Poloniex();
 
   let _debugApiCallDuration = _.bind(debugApiCallDuration, this);
@@ -718,12 +718,12 @@ export const PoloLender = function(name) {
   const updateRateBTCUSD = function updateRateBTCUSD() {
     bfxPublic.ticker("btcusd", function (err, result) {
       if(err) {
-        let msg = "bfxPublic.ticker: " + err.message;
+        let msg = `bfxPublic.ticker: ${err}`;
         log.notice(msg);
         return;
       }
 
-      rateBTCUSD = new Big(result.last_price).toString();
+      rateBTCUSD = result.last_price;
     });
 
   };

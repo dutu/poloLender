@@ -39,7 +39,7 @@
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "big.js": "^3.2.0",
-    "bitfinex": "^1.0.3",
+    "bitfinex-api-node": "^1.2.1",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.9",
