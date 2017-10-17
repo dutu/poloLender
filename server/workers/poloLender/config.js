@@ -62,7 +62,7 @@ let db = null;
 let ConfigModel;
 
 if (isMongo) {
-  dbConn = mongoose.createConnection(mongodbURI, (err) => {
+  dbConn = mongoose.createConnection(mongodbURI, { useMongoClient: true }, (err) => {
     if (err) {
       log.error(`dbConn.config: ${err.message}`);
     } else {

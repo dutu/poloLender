@@ -16,7 +16,7 @@ let db = null;
 let LogtrailModel;
 
 if (isMongo) {
-  dbConn = mongoose.createConnection(mongodbURI, (err) => {
+  dbConn = mongoose.createConnection(mongodbURI, { useMongoClient: true }, (err) => {
     if (err) {
       console.log(`dbConn.logtrail error: ${err.message}`);
     } else {
