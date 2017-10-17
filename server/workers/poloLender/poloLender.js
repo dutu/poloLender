@@ -71,7 +71,7 @@ export const PoloLender = function(name) {
 	let waitOneMinute = null;
 	let callsLast100 = [];
 
-	let bfxPublic = new Bitfinex(null, null, { version: 2, autoOpen: false }).rest;
+	let bfxPublic = new Bitfinex(null, null, { version: 1, autoOpen: false }).rest;
   let poloPublic = new Poloniex();
 
   let _debugApiCallDuration = _.bind(debugApiCallDuration, this);
