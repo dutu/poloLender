@@ -114,7 +114,7 @@ let performanceReportTableConfig = {
   tooltip: true,
 };
 
-let btcAddress = '16oQxZYyFbS5Anju7EUAxTEUq7hBm3qfyu';
+let btcAddress = '3C6oygw1w7v1nNyePB3mQYjPmxVyeDZMj7';
 let btcDonationsReceived = 0;
 let btcDonationsCount = 0;
 let usdDonationsReceived = 0;
@@ -222,7 +222,7 @@ let donationsConfig = {
       ]
     },
     { id: 'dotationsSoFar', template: function (obj) {
-      let msg  = `<br>${btcDonationsCount} donations since July 1, 2017: BTC ${btcDonationsReceived} (USD ${Math.round(btcDonationsReceived * rateBTCUSD) || 0})`;
+      let msg  = `<br>${btcDonationsCount} donations since August 1, 2017: BTC ${btcDonationsReceived} (USD ${Math.round(btcDonationsReceived * rateBTCUSD) || 0})`;
       msg += '<br>If you have made a donation please also feel free to <a href="mailto:dutu@protonmail.com">drop me a message</a>.';
       msg += '<br>We continue adding features and developing new software, contributors will have priority access to free and premium features/services.';
       return msg;
