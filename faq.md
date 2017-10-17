@@ -12,9 +12,9 @@ poloLender is a free service. If it helped you in any way, if you would to contr
 
 You can make a donation at BTC address below:  
 		
-![](http://i.imgur.com/cIfRJuU.png)
+![](https://i.imgur.com/NIOREzU.jpg)
 
-**16oQxZYyFbS5Anju7EUAxTEUq7hBm3qfyu**
+**3C6oygw1w7v1nNyePB3mQYjPmxVyeDZMj7**
 
 ---
 
@@ -27,9 +27,9 @@ Once you've created the bot, you receive a link to your new bot and the authoriz
 
 3) Open your new bot by clicking on the link sent by the BotFather.
 
-3) Go back to the BotFather, copy the authorization token and set the environement variable `POLOLENDER_TELEGRAM_TOKEN` with the authorization token. 
+3) Go back to the BotFather, copy the authorization token and set the field `Telegram token` (`Settings` tab in poloLender web GUI) 
 
-4) Set environement variable `POLOLENDER_TELEGRAM_USERID` with your telegram userId.
+4) Set the field `Telegram userId`  with your telegram userId (`Settings` tab in poloLender web GUI)
 
 >Note: if you don't know your telegram userId, talk to [@cryptozonebot](tg://resolve?domain=cryptozonebot) to find it out.
 
@@ -55,11 +55,11 @@ The **average loan holding time** is a key parameter for determining the time th
 
 As explained at **Q4** above, the algorithm for determining the rate with the best return takes into calculation the **average loan holding time**. Based on the value of the average holding time, the bot will wait shorter or longer before offering loans at lower rates.
 
-During the periods when the average loan holding time is higher (e.g. +8hours) and it is more profitable to wait longer for lending at a higher rate.
+During the periods when the average loan holding time is higher (e.g. +8 hours) and it is more profitable to wait longer for lending at a higher rate.
 
-On the contrary, when the average loan holding time is shorter (e.g. 1hour) and it would be more profitable to wait less at a high rate and place offers at a lower rate quicker. 
+On the contrary, when the average loan holding time is shorter (e.g. 1 hour) and it would be more profitable to wait less at a high rate and place offers at a lower rate quicker. 
 
-The optimal waiting time and the best return rate are mathematically calculated and at times it may look counterintuitive: 
+The optimal waiting time and the best return rate are mathematically calculated and at times it may look counter-intuitive: 
 
 Users have reported situations when they perceive the bot is lowering the rate to quick; at the same time situations when they perceive the bot is not lowering the rate quick enough.   
 

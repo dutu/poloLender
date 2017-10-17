@@ -3,10 +3,15 @@
 All notable changes to this module are documented in this file.
 poloLender application adheres to [Semantic Versioning](http://semver.org/)
 
-## [1.3.3] - 2017-10-17
+## [1.3.4] - 2017-10-17
 
 ### Changed
-- 
+- donation address changed to Segwit address
+- updated log output for debugging API call limit
+- updated FAQ for setting up telegram reports
+
+### Fixed
+- warning message when connecting to mongodb
 
 ## [1.3.3] - 2017-08-11
 

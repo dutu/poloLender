@@ -3,7 +3,7 @@ import _ from 'lodash';
 import Big from 'big.js';
 import moment from 'moment';
 import async from 'async';
-import debug from 'debug';
+import Debug from 'debug';
 import Bitfinex from 'bitfinex';
 import semver from 'semver';
 import Poloniex from 'poloniex-api-node';
@@ -18,7 +18,7 @@ import { connectDb, getConfig, saveConfig } from './config';
 import { debugApiCallDuration, debugCycleDuration, debugTimer } from './debug';
 import { getLogTrailItems } from "./logtrail";
 
-debug('pololender');
+const debug  = Debug('pololender');
 
 const pjson = require('../../../package.json');
 
@@ -282,15 +282,16 @@ export const PoloLender = function(name) {
   const apiCallLimitDelay = function apiCallLimitDelay(methodName, callback) {
     let timeNow = Date.now();
     if (debug.enabled) {
+      let duration = 1000 || config.apiCallsDurationMS;
       callsLast100.push(timeNow);
       let callsLastSecond = callsLast100.reduce((count, callTimestamp) => {
-        if (timeNow - callTimestamp < config.apiCallsDurationMS) {
+        if (timeNow - callTimestamp < duration) {
           return count += 1;
         } else {
           return count;
         }
       }, 0);
-      debug(`${methodName} timestamp: ${timeNow}. Calls during last ${config.apiCallsDurationMS} Ms: ${callsLastSecond}`);
+      debug(`${(methodName + '                     ').slice(0,32)} timestamp: ${moment(timeNow).toISOString()}. Calls during last ${duration} Ms: ${callsLastSecond}`);
       callsLast100.splice(0, callsLast100.length - 20);
     }
 
