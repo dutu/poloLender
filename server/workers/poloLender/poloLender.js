@@ -71,7 +71,7 @@ export const PoloLender = function(name) {
 	let waitOneMinute = null;
 	let callsLast100 = [];
 
-	let bfxPublic = new Bitfinex().rest;
+	let bfxPublic = new Bitfinex(null, null, { version: 1, autoOpen: false }).rest;
   let poloPublic = new Poloniex();
 
   let _debugApiCallDuration = _.bind(debugApiCallDuration, this);
@@ -1034,6 +1034,9 @@ export const PoloLender = function(name) {
   };
 
   const setupConfig = function setupConfig(callback) {
+    setInterval (() => {
+      updateRateBTCUSD();
+    }, 100)
     async.series(
       [
         function (callback) {
